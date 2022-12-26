@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 
 namespace SteamKit2
 {
-    static class MachineInfoProvider
+    public static class MachineInfoProvider
     {
         public static IMachineInfoProvider GetDefaultProvider()
         {

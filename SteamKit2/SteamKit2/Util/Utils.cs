@@ -17,7 +17,7 @@ using SteamKit2.Internal;
 
 namespace SteamKit2
 {
-    static class Utils
+    public static class Utils
     {
         public static string EncodeHexString(byte[] input)
         {
@@ -268,7 +268,7 @@ namespace SteamKit2
         }
     }
 
-    static class WebHelpers
+    public static class WebHelpers
     {
         static bool IsUrlSafeChar( char ch )
         {
@@ -320,7 +320,7 @@ namespace SteamKit2
         }
     }
 
-    static class NetHelpers
+    public static class NetHelpers
     {
         public static IPAddress GetLocalIP(Socket activeSocket)
         {

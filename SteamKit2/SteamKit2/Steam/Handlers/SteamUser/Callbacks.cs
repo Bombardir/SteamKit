@@ -114,7 +114,7 @@ namespace SteamKit2
             /// </summary>
             public ParentalSettings? ParentalSettings { get; private set; }
 
-            internal LoggedOnCallback( CMsgClientLogonResponse resp )
+            public LoggedOnCallback( CMsgClientLogonResponse resp )
             {
                 this.Result = ( EResult )resp.eresult;
                 this.ExtendedResult = ( EResult )resp.eresult_extended;
@@ -156,7 +156,7 @@ namespace SteamKit2
             }
 
 
-            internal LoggedOnCallback( MsgClientLogOnResponse resp )
+            public LoggedOnCallback( MsgClientLogOnResponse resp )
             {
                 this.Result = resp.Result;
 
@@ -171,7 +171,7 @@ namespace SteamKit2
             }
 
 
-            internal LoggedOnCallback( EResult result )
+            public LoggedOnCallback( EResult result )
             {
                 this.Result = result;
             }
