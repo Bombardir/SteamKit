@@ -114,10 +114,8 @@ namespace SteamKit2
             /// </summary>
             public ParentalSettings? ParentalSettings { get; private set; }
 
-            public LoggedOnCallback( JobID jobId, CMsgClientLogonResponse resp )
+            public LoggedOnCallback( CMsgClientLogonResponse resp )
             {
-                this.JobID = jobId;
-
                 this.Result = ( EResult )resp.eresult;
                 this.ExtendedResult = ( EResult )resp.eresult_extended;
 
@@ -158,10 +156,8 @@ namespace SteamKit2
             }
 
 
-            public LoggedOnCallback( JobID jobId, MsgClientLogOnResponse resp )
+            public LoggedOnCallback( MsgClientLogOnResponse resp )
             {
-                this.JobID = jobId;
-
                 this.Result = resp.Result;
 
                 this.OutOfGameSecsPerHeartbeat = resp.OutOfGameHeartbeatRateSec;
