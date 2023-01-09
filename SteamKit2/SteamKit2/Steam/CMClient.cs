@@ -416,11 +416,11 @@ namespace SteamKit2.Internal
             }
             else if ( protocol.HasFlagsFast( ProtocolTypes.Tcp ) )
             {
-                return new EnvelopeEncryptedConnection( new TcpConnection( this ), Universe, this, DebugNetworkListener );
+                return new EnvelopeEncryptedConnection( new TcpConnection( Configuration.LocalEndPoint, this ), Universe, this, DebugNetworkListener );
             }
             else if ( protocol.HasFlagsFast( ProtocolTypes.Udp ) )
             {
-                return new EnvelopeEncryptedConnection( new UdpConnection( this ), Universe, this, DebugNetworkListener );
+                return new EnvelopeEncryptedConnection( new UdpConnection( Configuration.LocalEndPoint, this ), Universe, this, DebugNetworkListener );
             }
 
             throw new ArgumentOutOfRangeException( nameof( protocol ), protocol, "Protocol bitmask has no supported protocols set." );

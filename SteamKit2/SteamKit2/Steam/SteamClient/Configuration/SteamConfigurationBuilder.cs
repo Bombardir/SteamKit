@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using SteamKit2.Discovery;
@@ -22,6 +23,8 @@ namespace SteamKit2
         {
             return new SteamConfigurationState
             {
+                LocalEndPoint = new IPEndPoint( IPAddress.Any, 0 ),
+
                 AllowDirectoryFetch = true,
 
                 ConnectionTimeout = TimeSpan.FromSeconds(5),
@@ -41,7 +44,7 @@ namespace SteamKit2
 
                 Universe = EUniverse.Public,
 
-                WebAPIBaseAddress = WebAPI.DefaultBaseAddress
+                WebAPIBaseAddress = WebAPI.DefaultBaseAddress,
             };
         }
 
@@ -49,6 +52,12 @@ namespace SteamKit2
 
         public SteamConfiguration Build()
             => new SteamConfiguration(state);
+
+        public ISteamConfigurationBuilder WithLocalEndPoint(EndPoint localEndPoint)
+        {
+            state.LocalEndPoint = localEndPoint;
+            return this;
+        }
 
         public ISteamConfigurationBuilder WithCellID(uint cellID)
         {

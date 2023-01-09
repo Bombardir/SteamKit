@@ -91,11 +91,9 @@ namespace SteamKit2
 
         private ILogContext log;
 
-        public UdpConnection(ILogContext log)
+        public UdpConnection(EndPoint localEndPoint, ILogContext log)
         {
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
-
-            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
             sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, System.Net.Sockets.ProtocolType.Udp);
             sock.Bind(localEndPoint);

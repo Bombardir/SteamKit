@@ -4,7 +4,6 @@
 */
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -16,6 +15,8 @@ namespace SteamKit2
     {
         const uint MAGIC = 0x31305456; // "VT01"
 
+        private readonly EndPoint _localEndPoint;
+
         private ILogContext log;
         private Socket? socket;
         private Thread? netThread;
@@ -26,8 +27,9 @@ namespace SteamKit2
         private CancellationTokenSource? cancellationToken;
         private object netLock;
 
-        public TcpConnection(ILogContext log)
+        public TcpConnection(EndPoint localEndPoint, ILogContext log)
         {
+            _localEndPoint = localEndPoint;
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
             netLock = new object();
         }
@@ -196,6 +198,7 @@ namespace SteamKit2
                 cancellationToken = new CancellationTokenSource();
 
                 socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
+                socket.Bind( _localEndPoint );
                 socket.ReceiveTimeout = timeout;
                 socket.SendTimeout = timeout;
 
@@ -203,7 +206,6 @@ namespace SteamKit2
                 log.LogDebug( nameof( TcpConnection ), "Connecting to {0}...", CurrentEndPoint );
                 TryConnect( timeout );
             }
-
         }
 
         public void Disconnect( bool userInitiated )

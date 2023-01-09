@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Net;
 using System.Net.Http;
 using SteamKit2.Discovery;
 
@@ -16,6 +17,8 @@ namespace SteamKit2
     /// </summary>
     public interface ISteamConfigurationBuilder
     {
+        ISteamConfigurationBuilder WithLocalEndPoint( EndPoint localEndPoint );
+
         /// <summary>
         /// Configures this <see cref="SteamConfiguration" /> for a particular Steam cell.
         /// </summary>

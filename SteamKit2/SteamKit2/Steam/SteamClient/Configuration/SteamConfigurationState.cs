@@ -5,12 +5,14 @@
 
 
 using System;
+using System.Net;
 using SteamKit2.Discovery;
 
 namespace SteamKit2
 {
     struct SteamConfigurationState
     {
+        public EndPoint LocalEndPoint;
         public bool AllowDirectoryFetch;
         public uint CellID;
         public TimeSpan ConnectionTimeout;
