@@ -557,14 +557,14 @@ namespace SteamKit2
             {
                 var logonResp = new ClientMsgProtobuf<CMsgClientLogonResponse>( packetMsg );
 
-                var callback = new LoggedOnCallback( logonResp.Body );
+                var callback = new LoggedOnCallback( logonResp.TargetJobID, logonResp.Body );
                 this.Client.PostCallback( callback );
             }
             else
             {
                 var logonResp = new ClientMsg<MsgClientLogOnResponse>( packetMsg );
 
-                var callback = new LoggedOnCallback( logonResp.Body );
+                var callback = new LoggedOnCallback( logonResp.TargetJobID, logonResp.Body );
                 this.Client.PostCallback( callback );
             }
         }
