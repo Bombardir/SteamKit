@@ -274,7 +274,7 @@ namespace SteamKit2
             // If we've been idle but completely acked for more than two seconds, the next sent
             // packet will trip the resend detection. This fixes that.
             if ( outSeqSent == outSeqAcked )
-                nextResend = DateTime.Now.AddSeconds(RESEND_DELAY);
+                nextResend = DateTime.UtcNow.AddSeconds(RESEND_DELAY);
 
             // Sending should generally carry on from the packet most recently sent, even if it was a
             // resend (who knows what else was lost).
@@ -298,7 +298,7 @@ namespace SteamKit2
         {
             lock ( outPackets )
             {
-                if ( DateTime.Now > nextResend && outSeqSent > outSeqAcked )
+                if ( DateTime.UtcNow > nextResend && outSeqSent > outSeqAcked )
                 {
                     // If we can't clear the send queue during a Disconnect, clear out the pending messages
                     if ( state == ( int )State.Disconnecting )
@@ -312,7 +312,7 @@ namespace SteamKit2
                     for ( int i = 0; i < RESEND_COUNT && i < outPackets.Count; i++ )
                         SendPacket( outPackets[ i ] );
 
-                    nextResend = DateTime.Now.AddSeconds( RESEND_DELAY );
+                    nextResend = DateTime.UtcNow.AddSeconds( RESEND_DELAY );
                 }
                 else if ( outSeqSent < outSeqAcked + AHEAD_COUNT )
                 {
@@ -387,8 +387,8 @@ namespace SteamKit2
 
             if ( CurrentEndPoint != null )
             {
-                timeOut = DateTime.Now.AddSeconds(TIMEOUT_DELAY);
-                nextResend = DateTime.Now.AddSeconds(RESEND_DELAY);
+                timeOut = DateTime.UtcNow.AddSeconds(TIMEOUT_DELAY);
+                nextResend = DateTime.UtcNow.AddSeconds(RESEND_DELAY);
 
                 if ( Interlocked.CompareExchange(ref state, (int)State.ChallengeReqSent, (int)State.Disconnected) != (int)State.Disconnected )
                 {
@@ -408,7 +408,7 @@ namespace SteamKit2
                 {
                     // Wait up to 150ms for data, if none is found and the timeout is exceeded, we're done here.
                     if ( !sock.Poll(150000, SelectMode.SelectRead)
-                        && DateTime.Now > timeOut )
+                        && DateTime.UtcNow > timeOut )
                     {
                         log.LogDebug("UdpConnection", "Connection timed out");
 
@@ -427,7 +427,7 @@ namespace SteamKit2
                             continue;
 
                         // Data from the desired server was received; delay timeout
-                        timeOut = DateTime.Now.AddSeconds(TIMEOUT_DELAY);
+                        timeOut = DateTime.UtcNow.AddSeconds(TIMEOUT_DELAY);
 
                         MemoryStream ms = new MemoryStream(buf, 0, length);
                         UdpPacket packet = new UdpPacket(ms);
@@ -516,7 +516,7 @@ namespace SteamKit2
                     outSeqSent = outSeqAcked;
 
                 outPackets.RemoveAll( x => x.Header.SeqThis <= outSeqAcked );
-                nextResend = DateTime.Now.AddSeconds(RESEND_DELAY);
+                nextResend = DateTime.UtcNow.AddSeconds(RESEND_DELAY);
             }
 
             // inSeq should always be the latest value that we can ack, so advance it as far as is possible.
