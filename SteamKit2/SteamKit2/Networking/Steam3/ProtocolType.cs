@@ -36,7 +36,7 @@ namespace SteamKit2
         All = Tcp | Udp | WebSocket
     }
 
-    static class ProtocolTypesExtensions
+    public static class ProtocolTypesExtensions
     {
         public static bool HasFlagsFast(this ProtocolTypes self, ProtocolTypes flags)
             => (self & flags) > 0;
