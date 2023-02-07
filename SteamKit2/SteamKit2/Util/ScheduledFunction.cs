@@ -56,7 +56,14 @@ namespace SteamKit2
 
         void Tick( object? state )
         {
-            func?.Invoke();
+            try
+            {
+                func?.Invoke();
+            }
+            catch ( Exception ex )
+            {
+                Console.WriteLine( "Scheduled function error: {0}", ex );
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ namespace SteamKit2
             /// <summary>
             /// Gets or sets the region that servers will be returned from.
             /// </summary>
-            public ERegionCode Region { get; set; }
+            public ERegionCode? Region { get; set; }
 
             /// <summary>
             /// Gets or sets the IP address that will be GeoIP located.
@@ -44,7 +44,7 @@ namespace SteamKit2
             /// <summary>
             /// Gets or sets the maximum number of servers to return.
             /// </summary>
-            public uint MaxServers { get; set; }
+            public uint? MaxServers { get; set; }
         }
 
 
@@ -84,9 +84,12 @@ namespace SteamKit2
             }
 
             query.Body.filter_text = details.Filter;
-            query.Body.region_code = ( uint )details.Region;
 
-            query.Body.max_servers = details.MaxServers;
+            if ( details.Region.HasValue)
+                query.Body.region_code = ( uint )details.Region;
+
+            if ( details.MaxServers.HasValue)
+                query.Body.max_servers = details.MaxServers.Value;
 
             this.Client.Send( query );
 

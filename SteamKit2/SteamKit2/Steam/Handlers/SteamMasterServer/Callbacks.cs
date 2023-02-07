@@ -3,6 +3,7 @@
  * file 'license.txt', which is part of this source code package.
  */
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
@@ -22,42 +23,57 @@ namespace SteamKit2
             /// </summary>
             public sealed class Server
             {
-                /// <summary>
-                /// Gets the IP endpoint of the server.
-                /// </summary>
-                public IPEndPoint EndPoint { get; private set; }
+                public IPAddress Ip { get; }
+                public uint QueryPort { get; }
+                public uint AuthPlayers { get; }
+                public uint MaxPlayers { get; }
+                public string? Name { get; }
 
-                /// <summary>
-                /// Gets the number of Steam authenticated players on this server.
-                /// </summary>
-                public uint AuthedPlayers { get; private set; }
-
-
-                internal Server( CMsgGMSClientServerQueryResponse.Server server )
+                internal Server( IPAddress ip, uint queryPort, uint authPlayers, uint maxPlayers, string? name )
                 {
-                    EndPoint = new IPEndPoint(
-                        server.server_ip.GetIPAddress(),
-                        ( int )server.query_port );
-
-                    AuthedPlayers = server.auth_players;
+                    Ip = ip;
+                    QueryPort = queryPort;
+                    AuthPlayers = authPlayers;
+                    MaxPlayers = maxPlayers;
+                    Name = name;
                 }
             }
 
             /// <summary>
             /// Gets the list of servers.
             /// </summary>
-            public ReadOnlyCollection<Server> Servers { get; private set; }
+            public IReadOnlyList<Server> Servers { get; private set; }
 
 
             internal QueryCallback( JobID jobID, CMsgGMSClientServerQueryResponse msg )
             {
                 JobID = jobID;
 
-                var serverList = msg.servers
-                    .Select( s => new Server( s ) )
-                    .ToList();
+                var serverList = new Server[msg.servers.Count];
 
-                this.Servers = new ReadOnlyCollection<Server>( serverList );
+                for ( var index = 0; index < msg.servers.Count; index++ )
+                {
+                    var serverResponse = msg.servers[ index ];
+                    string? name;
+
+                    if ( !string.IsNullOrEmpty(serverResponse.name_str) )
+                        name = serverResponse.name_str;
+                    else if ( serverResponse.ShouldSerializename_strindex() )
+                        name = msg.server_strings[ ( int )serverResponse.name_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        name = msg.default_server_data.name_str;
+                    else
+                        name = null;
+
+                    var ip = serverResponse.server_ip.GetIPAddress();
+                    var queryPort = serverResponse.query_port;
+                    var authPlayers = serverResponse.auth_players;
+                    var maxPlayers = serverResponse.max_players;
+
+                    serverList[index] = new Server( ip, queryPort, authPlayers, maxPlayers, name );
+                }
+
+                this.Servers = serverList;
             }
         }
     }
