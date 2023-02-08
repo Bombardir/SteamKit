@@ -8,7 +8,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SteamKit2
 {
@@ -20,17 +19,17 @@ namespace SteamKit2
 
         private ILogContext log;
         private Socket? socket;
-        private Task? netThread;
+        private Thread? netThread;
+        private NetworkStream? netStream;
+        private BinaryReader? netReader;
+        private BinaryWriter? netWriter;
+
         private CancellationTokenSource? cancellationToken;
         private object netLock;
-        private readonly byte[] _readBuffer;
-        private readonly byte[] _writeBuffer;
 
         public TcpConnection(EndPoint localEndPoint, ILogContext log)
         {
             _localEndPoint = localEndPoint;
-            _readBuffer = new byte[ 0x10000 ];
-            _writeBuffer = new byte[ 8 ];
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
             netLock = new object();
         }
@@ -73,6 +72,24 @@ namespace SteamKit2
                     cancellationToken = null;
                 }
 
+                if (netWriter != null)
+                {
+                    netWriter.Dispose();
+                    netWriter = null;
+                }
+
+                if (netReader != null)
+                {
+                    netReader.Dispose();
+                    netReader = null;
+                }
+
+                if (netStream != null)
+                {
+                    netStream.Dispose();
+                    netStream = null;
+                }
+
                 if (socket != null)
                 {
                     socket.Dispose();
@@ -108,9 +125,19 @@ namespace SteamKit2
             {
                 lock (netLock)
                 {
-                    netThread = Task.Run( NetLoop ).IgnoringCancellation( cancellationToken.Token );
+                    netStream = new NetworkStream(socket, false);
+                    netReader = new BinaryReader(netStream);
+                    netWriter = new BinaryWriter(netStream);
+
+                    netThread = new Thread( NetLoop )
+                    {
+                        Name = "SK2-TcpConn"
+                    };
+
                     CurrentEndPoint = socket!.RemoteEndPoint;
                 }
+
+                netThread.Start();
 
                 Connected?.Invoke( this, EventArgs.Empty );
             }
@@ -186,9 +213,8 @@ namespace SteamKit2
             lock ( netLock )
             {
                 cancellationToken?.Cancel();
+
                 Disconnected?.Invoke( this, new DisconnectedEventArgs( userInitiated ) );
-                netThread?.Wait();
-                netThread?.Dispose();
             }
         }
 
@@ -196,26 +222,32 @@ namespace SteamKit2
         /// <summary>
         /// Nets the loop.
         /// </summary>
-        private async Task NetLoop()
+        void NetLoop()
         {
+            // poll for readable data every 100ms
+            const int POLL_MS = 100;
+
             DebugLog.Assert( cancellationToken != null, nameof( TcpConnection ), "null cancellationToken in NetLoop" );
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                int readBytes = 0;
+                bool canRead = false;
 
                 try
                 {
-                    readBytes = await socket!.ReceiveAsync( _readBuffer, cancellationToken.Token );
+                    canRead = socket!.Poll(POLL_MS * 1000, SelectMode.SelectRead);
                 }
-                catch ( Exception ex )
+                catch (SocketException ex)
                 {
                     log.LogDebug( nameof( TcpConnection ), "Socket exception while polling: {0}", ex );
                     break;
                 }
 
-                if ( readBytes < 9 )
-                    break;
+                if (!canRead)
+                {
+                    // nothing to read yet
+                    continue;
+                }
 
                 byte[] packData;
 
@@ -224,7 +256,7 @@ namespace SteamKit2
                     // read the packet off the network
                     packData = ReadPacket();
                 }
-                catch ( Exception ex )
+                catch (IOException ex)
                 {
                     log.LogDebug( nameof( TcpConnection ), "Socket exception occurred while reading packet: {0}", ex );
                     break;
@@ -257,9 +289,6 @@ namespace SteamKit2
             uint packetLen;
             uint packetMagic;
 
-            using var memorySteam = new MemoryStream( _readBuffer );
-            using var netReader = new BinaryReader( memorySteam );
-
             try
             {
                 packetLen = netReader!.ReadUInt32();
@@ -270,7 +299,7 @@ namespace SteamKit2
                 throw new IOException("Connection lost while reading packet header.", ex);
             }
 
-            if (packetMagic != MAGIC)
+            if (packetMagic != TcpConnection.MAGIC)
             {
                 throw new IOException("Got a packet with invalid magic!");
             }
@@ -290,21 +319,17 @@ namespace SteamKit2
         {
             lock ( netLock )
             {
-                if (!(socket is {Connected: true}))
+                if (socket == null || netStream == null)
                 {
                     log.LogDebug( nameof( TcpConnection ), "Attempting to send client data when not connected." );
                     return;
                 }
 
-                using var memorySteam = new MemoryStream( _writeBuffer );
-                using var netWriter = new BinaryWriter( memorySteam );
-
                 try
                 {
                     netWriter!.Write((uint)data.Length);
                     netWriter.Write(MAGIC);
-
-                    socket.Send( new [] { new ArraySegment<byte>( _writeBuffer ), new ArraySegment<byte>( data ) } );
+                    netWriter.Write(data);
                 }
                 catch (IOException ex)
                 {
