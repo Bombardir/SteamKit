@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SteamKit2
 {
@@ -85,8 +81,7 @@ namespace SteamKit2
                 return;
             }
 
-            asyncJob.SetFailed( dueToRemoteFailure: true );
-            
+            TryFailAsyncJob( asyncJob, dueToRemoteFailure: true );
         }
 
         /// <summary>
@@ -96,10 +91,22 @@ namespace SteamKit2
         {
             foreach ( AsyncJob asyncJob in asyncJobs.Values )
             {
-                asyncJob.SetFailed( dueToRemoteFailure: false );
+                TryFailAsyncJob(asyncJob, dueToRemoteFailure: false);
             }
 
             asyncJobs.Clear();
+        }
+
+        private static void TryFailAsyncJob(AsyncJob asyncJob, bool dueToRemoteFailure)
+        {
+            try
+            {
+                asyncJob.SetFailed( dueToRemoteFailure );
+            }
+            catch ( Exception e )
+            {
+                // Empty
+            }
         }
 
 
@@ -131,8 +138,7 @@ namespace SteamKit2
             {
                 if ( job.IsTimedout )
                 {
-                    job.SetFailed( dueToRemoteFailure: false );
-
+                    TryFailAsyncJob( job, dueToRemoteFailure: false );
                     asyncJobs.TryRemove( job, out _);
                 }
             }

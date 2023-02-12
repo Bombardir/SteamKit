@@ -247,7 +247,6 @@ namespace SteamKit2
                 // if we time out, we trigger a normal cancellation
                 tcs.TrySetCanceled();
             }
-            
         }
     }
 

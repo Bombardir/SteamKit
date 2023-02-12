@@ -28,14 +28,25 @@ namespace SteamKit2
                 public uint AuthPlayers { get; }
                 public uint MaxPlayers { get; }
                 public string? Name { get; }
+                public string? Version { get; }
+                public string? Map { get; }
+                public string? GameDir { get; }
+                public string? GameDesc { get; }
+                public string? Tags { get; set; }
 
-                internal Server( IPAddress ip, uint queryPort, uint authPlayers, uint maxPlayers, string? name )
+                internal Server( IPAddress ip, uint queryPort, uint authPlayers, uint maxPlayers, string? name, string? version, string? map, 
+                    string? gameDir, string? gameDesc, string? tags )
                 {
                     Ip = ip;
                     QueryPort = queryPort;
                     AuthPlayers = authPlayers;
                     MaxPlayers = maxPlayers;
                     Name = name;
+                    Version = version;
+                    Map = map;
+                    GameDir = gameDir;
+                    GameDesc = gameDesc;
+                    Tags = tags;
                 }
             }
 
@@ -54,8 +65,8 @@ namespace SteamKit2
                 for ( var index = 0; index < msg.servers.Count; index++ )
                 {
                     var serverResponse = msg.servers[ index ];
-                    string? name;
 
+                    string? name;
                     if ( !string.IsNullOrEmpty(serverResponse.name_str) )
                         name = serverResponse.name_str;
                     else if ( serverResponse.ShouldSerializename_strindex() )
@@ -65,12 +76,62 @@ namespace SteamKit2
                     else
                         name = null;
 
+                    string? version;
+                    if ( !string.IsNullOrEmpty( serverResponse.version_str ) )
+                        version = serverResponse.version_str;
+                    else if ( serverResponse.ShouldSerializeversion_strindex() )
+                        version = msg.server_strings[ ( int )serverResponse.version_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        version = msg.default_server_data.version_str;
+                    else
+                        version = null;
+
+                    string? map;
+                    if ( !string.IsNullOrEmpty( serverResponse.map_str ) )
+                        map = serverResponse.map_str;
+                    else if ( serverResponse.ShouldSerializemap_strindex() )
+                        map = msg.server_strings[ ( int )serverResponse.map_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        map = msg.default_server_data.map_str;
+                    else
+                        map = null;
+
+                    string? gamedir;
+                    if ( !string.IsNullOrEmpty( serverResponse.gamedir_str ) )
+                        gamedir = serverResponse.gamedir_str;
+                    else if ( serverResponse.ShouldSerializegamedir_strindex() )
+                        gamedir = msg.server_strings[ ( int )serverResponse.gamedir_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        gamedir = msg.default_server_data.gamedir_str;
+                    else
+                        gamedir = null;
+
+                    string? gamedesc;
+                    if ( !string.IsNullOrEmpty( serverResponse.game_description_str ) )
+                        gamedesc = serverResponse.game_description_str;
+                    else if ( serverResponse.ShouldSerializegame_description_strindex() )
+                        gamedesc = msg.server_strings[ ( int )serverResponse.game_description_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        gamedesc = msg.default_server_data.game_description_str;
+                    else
+                        gamedesc = null;
+
+                    string? tags;
+                    if ( !string.IsNullOrEmpty( serverResponse.gametype_str ) )
+                        tags = serverResponse.gametype_str;
+                    else if ( serverResponse.ShouldSerializegametype_strindex() )
+                        tags = msg.server_strings[ ( int )serverResponse.gametype_strindex ];
+                    else if ( serverResponse.ShouldSerializerevision() )
+                        tags = msg.default_server_data.gametype_str;
+                    else
+                        tags = null;
+
                     var ip = serverResponse.server_ip.GetIPAddress();
                     var queryPort = serverResponse.query_port;
                     var authPlayers = serverResponse.auth_players;
                     var maxPlayers = serverResponse.max_players;
 
-                    serverList[index] = new Server( ip, queryPort, authPlayers, maxPlayers, name );
+                    serverList[index] = new Server( ip, queryPort, authPlayers, maxPlayers, name, version, map, gamedir, gamedesc, tags );
                 }
 
                 this.Servers = serverList;
