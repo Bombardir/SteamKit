@@ -23,14 +23,23 @@ namespace SteamKit2.Networking.Steam3
             public Action<byte[]> OnSocketMessage { get; }
             public Socket Socket { get; }
             public ConcurrentQueue<byte[]> SendQueue { get; }
-            public byte[]? ReceiveBuffer;
-            public int ReceiveBufferDataLen;
+
+            public byte[] ReceiveHeaderBuffer;
+            public int ReceivedHeaderBytes;
+
+            public byte[]? ReceiveDataBuffer;
+            public int ReceivedDataBytes;
+
+            public byte[]? SendBuffer;
+            public int SentBytes;
+            public int BytesToSend;
 
             public SocketHandler( Socket socket, Action<byte[]> onSocketMessage, Action onSocketError )
             {
                 Socket = socket;
                 OnSocketMessage = onSocketMessage;
                 SendQueue = new ConcurrentQueue<byte[]>();
+                ReceiveHeaderBuffer = new byte[ 8 ];
                 _onSocketError = onSocketError;
             }
 
@@ -49,7 +58,6 @@ namespace SteamKit2.Networking.Steam3
 
         private readonly Task _listenThread;
         private readonly byte[] _receiveBuffer;
-        private readonly ArraySegment<byte>[] _sendSegments;
 
         private readonly ConcurrentDictionary<nint, SocketHandler> _socketHandlers;
         private readonly List<Socket> _listenSocketList;
@@ -62,16 +70,12 @@ namespace SteamKit2.Networking.Steam3
         {
             _log = log;
             _receiveBuffer = new byte[ 0x10000 ];
-            _sendSegments = new ArraySegment<byte>[ 2 ];
-            _sendSegments[0] = new byte[8];
 
             _socketHandlers = new ConcurrentDictionary<nint, SocketHandler>(2, socketsCount );
             _listenSocketList = new List<Socket>(socketsCount);
             _writeSocketList = new List<Socket>(socketsCount);
             _errorSocketList = new List<Socket>(socketsCount);
             _listenThread = Task.Run( ListenThreadSafe ).IgnoringCancellation( CancellationToken.None );
-
-            BinaryPrimitives.WriteUInt32LittleEndian( _sendSegments[0].AsSpan(4), TcpConnection.MAGIC );
         }
 
         public void ListenSocket( Socket socket, Action<byte[]> onSocketMessage, Action onSocketError )
@@ -155,15 +159,13 @@ namespace SteamKit2.Networking.Steam3
 
                 try
                 {
-                    ReceiveSocket(socketHandler);
+                    await ReceiveSocket(socketHandler);
                 }
                 catch ( Exception e )
                 {
                     _log.LogDebug( nameof(SocketHandler), "Socket message receive failed for socket {0}: {1}", socket.Handle, e );
                     socketHandler.OnSocketErrorSafe( _log );
                 }
-
-                await SleepAfterOperationIfNeeded();
             }
 
             foreach ( var socket in _writeSocketList )
@@ -171,71 +173,171 @@ namespace SteamKit2.Networking.Steam3
                 if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
                     continue;
 
-                while ( socketHandler.SendQueue.TryDequeue( out var data ) )
+                try
                 {
-                    try
-                    {
-                        SendSocket( data, socketHandler );
-                    }
-                    catch ( Exception e )
-                    {
-                        _log.LogDebug( nameof( SocketHandler ), "Socket message send failed for socket {0}: {1}", socketHandler.Socket.Handle, e );
-                        socketHandler.OnSocketErrorSafe( _log );
-                        socketHandler.SendQueue.Clear();
-                        break;
-                    }
-
-                    await SleepAfterOperationIfNeeded();
+                    await SendFromSocket( socketHandler );
+                }
+                catch ( Exception e )
+                {
+                    _log.LogDebug( nameof( SocketHandler ), "Socket message send failed for socket {0}: {1}", socketHandler.Socket.Handle, e );
+                    socketHandler.OnSocketErrorSafe( _log );
+                    break;
                 }
             }
 
             return true;
         }
 
-        private void SendSocket(byte[] data, SocketHandler socketHandler)
+        private async Task SendFromSocket(SocketHandler socketHandler)
         {
-            BinaryPrimitives.WriteUInt32LittleEndian(_sendSegments[0], (uint) data.Length);
-            _sendSegments[1] = data;
-            socketHandler.Socket.Send(_sendSegments);
+            if ( socketHandler.BytesToSend > 0 )
+            {
+                var isBuffetSent = SendSocketBufferData( socketHandler );
+
+                await SleepAfterOperationIfNeeded();
+
+                if (!isBuffetSent)
+                    return;
+            }
+
+            while (socketHandler.SendQueue.TryDequeue(out var data))
+            {
+                socketHandler.SentBytes = 0;
+                socketHandler.BytesToSend = data.Length + 8;
+
+                if ( socketHandler.SendBuffer == null || socketHandler.SendBuffer.Length < socketHandler.BytesToSend )
+                {
+                    socketHandler.SendBuffer = new byte[ socketHandler.BytesToSend ];
+                    BinaryPrimitives.WriteUInt32LittleEndian( socketHandler.SendBuffer.AsSpan( 4 ), TcpConnection.MAGIC );
+                }
+
+                BinaryPrimitives.WriteUInt32LittleEndian( socketHandler.SendBuffer, ( uint )data.Length );
+
+                data.CopyTo( socketHandler.SendBuffer, 8 );
+
+                var isBuffetSent = SendSocketBufferData( socketHandler );
+
+                await SleepAfterOperationIfNeeded();
+
+                if (!isBuffetSent)
+                    break;
+            }
         }
 
-        private void ReceiveSocket(SocketHandler socketHandler)
+        private bool SendSocketBufferData(SocketHandler socketHandler)
         {
-            var receivedBytes = socketHandler.Socket.Receive(_receiveBuffer);
+            var data = socketHandler.SendBuffer.AsSpan( socketHandler.SentBytes, socketHandler.BytesToSend );
 
-            using var memoryStream = new MemoryStream(_receiveBuffer, 0, receivedBytes, writable: false);
-            using var netReader = new BinaryReader(memoryStream);
+            var sentBytes = socketHandler.Socket.Send(data, SocketFlags.None, out var errorCode);
 
-            while ( memoryStream.Position < receivedBytes )
+            if (errorCode != SocketError.Success)
+            {
+                if (IsBlockingSocketErrorCode(errorCode))
+                {
+                    _log.LogDebug(nameof(SocketHandler), "Got send socket blocked error: {0}", errorCode);
+                    return false;
+                }
+
+                socketHandler.SendQueue.Clear();
+                throw new SocketException((int) errorCode);
+            }
+
+            socketHandler.SentBytes += sentBytes;
+            socketHandler.BytesToSend -= sentBytes;
+
+            return socketHandler.BytesToSend <= 0;
+        }
+
+        private static bool IsBlockingSocketErrorCode(SocketError error) => error is SocketError.AlreadyInProgress or SocketError.WouldBlock;
+
+        private async Task ReceiveSocket(SocketHandler socketHandler)
+        {
+            int receivedBytes = socketHandler.Socket.Receive( _receiveBuffer, SocketFlags.None, out var errorCode);
+
+            if ( errorCode != SocketError.Success )
+            {
+                if ( IsBlockingSocketErrorCode( errorCode ) )
+                {
+                    _log.LogDebug( nameof( SocketHandler ), "Got receive socket blocked error: {0}", errorCode );
+                    return;
+                }
+
+                throw new SocketException( ( int )errorCode );
+            }
+
+            using var receiveStream = new MemoryStream(_receiveBuffer, 0, receivedBytes, writable: false);
+            using var netReader = new BinaryReader( receiveStream );
+
+            while ( receiveStream.Position < receivedBytes )
             {
                 int bytesToRead;
 
-                if ( socketHandler.ReceiveBuffer == null )
-                { 
-                    var packetLen = (int) netReader!.ReadUInt32();
-                    var packetMagic = netReader.ReadUInt32();
+                if ( socketHandler.ReceiveDataBuffer == null)
+                {
+                    if (!ReceivePacketHeader(socketHandler, netReaderAvailableBytes: receivedBytes - (int) receiveStream.Position, netReader, out var packetLen)) 
+                        continue;
 
-                    if ( packetMagic != TcpConnection.MAGIC )
-                        throw new Exception( "Invalid TCP header" );
-
-                    socketHandler.ReceiveBuffer = new byte[ packetLen ];
-                    socketHandler.ReceiveBufferDataLen = 0;
+                    socketHandler.ReceiveDataBuffer = new byte[ packetLen ];
+                    socketHandler.ReceivedDataBytes = 0;
                     bytesToRead = packetLen;
                 }
                 else
                 {
-                    bytesToRead = socketHandler.ReceiveBuffer.Length - socketHandler.ReceiveBufferDataLen;
+                    bytesToRead = socketHandler.ReceiveDataBuffer.Length - socketHandler.ReceivedDataBytes;
                 }
 
-                socketHandler.ReceiveBufferDataLen += netReader.Read( socketHandler.ReceiveBuffer, socketHandler.ReceiveBufferDataLen, bytesToRead );
+                socketHandler.ReceivedDataBytes += netReader.Read( socketHandler.ReceiveDataBuffer, socketHandler.ReceivedDataBytes, bytesToRead );
 
-                if ( socketHandler.ReceiveBufferDataLen == socketHandler.ReceiveBuffer.Length )
+                if ( socketHandler.ReceivedDataBytes == socketHandler.ReceiveDataBuffer.Length )
                 {
-                    socketHandler.OnSocketMessage.Invoke( socketHandler.ReceiveBuffer );
-                    socketHandler.ReceiveBuffer = null;
-                    socketHandler.ReceiveBufferDataLen = 0;
+                    socketHandler.OnSocketMessage.Invoke( socketHandler.ReceiveDataBuffer );
+                    socketHandler.ReceiveDataBuffer = null;
+                    socketHandler.ReceivedHeaderBytes = 0;
+                    socketHandler.ReceivedDataBytes = 0;
                 }
+
+                await SleepAfterOperationIfNeeded();
             }
+        }
+
+        private static bool ReceivePacketHeader(SocketHandler socketHandler, int netReaderAvailableBytes, BinaryReader netReader, out int packetLen)
+        {
+            const int headerLen = 4 + 4;
+
+            if ( socketHandler.ReceivedHeaderBytes >= headerLen )
+                throw new Exception( "Header is already received" );
+
+            uint packetMagic;
+
+            if ( socketHandler.ReceivedHeaderBytes == 0 && netReaderAvailableBytes >= headerLen )
+            {
+                packetLen = ( int )netReader!.ReadUInt32();
+                packetMagic = netReader.ReadUInt32();
+                socketHandler.ReceivedHeaderBytes = headerLen;
+            }
+            else
+            {
+                socketHandler.ReceivedHeaderBytes += netReader.Read( socketHandler.ReceiveHeaderBuffer,
+                    index: socketHandler.ReceivedHeaderBytes,
+                    count: headerLen - socketHandler.ReceivedHeaderBytes );
+
+                if ( socketHandler.ReceivedHeaderBytes < headerLen )
+                {
+                    packetLen = 0;
+                    return false;
+                }
+
+                using var headerStream = new MemoryStream( socketHandler.ReceiveHeaderBuffer, 0, socketHandler.ReceivedHeaderBytes, writable: false );
+                using var headerReader = new BinaryReader( headerStream );
+
+                packetLen = ( int )headerReader!.ReadUInt32();
+                packetMagic = headerReader.ReadUInt32();
+            }
+
+            if (packetMagic != TcpConnection.MAGIC)
+                throw new Exception("Invalid TCP header");
+
+            return true;
         }
 
         private async ValueTask SleepAfterOperationIfNeeded()
