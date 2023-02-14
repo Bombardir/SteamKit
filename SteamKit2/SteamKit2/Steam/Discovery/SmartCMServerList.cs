@@ -327,7 +327,7 @@ namespace SteamKit2.Discovery
 
             if ( !WaitForServersFetched() )
             {
-                return new ServerRecord[0];
+                return Array.Empty<ServerRecord>();
             }
 
             lock ( listLock )

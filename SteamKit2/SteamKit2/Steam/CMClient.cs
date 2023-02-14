@@ -78,7 +78,19 @@ namespace SteamKit2.Internal
         /// <value>
         /// 	<c>true</c> if this instance is connected; otherwise, <c>false</c>.
         /// </value>
-        public bool IsConnected { get; private set; }
+        public bool IsConnected
+        {
+            get
+            {
+                lock ( connectionLock )
+                    return _isConnected;
+            }
+            set
+            {
+                lock ( connectionLock )
+                    _isConnected = value;
+            }
+        }
 
         /// <summary>
         /// Gets the session token assigned to this client from the AM.
@@ -96,21 +108,45 @@ namespace SteamKit2.Internal
         /// This value will be <c>null</c> if the client is logged off of Steam.
         /// </summary>
         /// <value>The session ID.</value>
-        public int? SessionID { get; private set; }
+        public int? SessionID
+        {
+            get
+            {
+                lock ( connectionLock )
+                    return _sessionId;
+            }
+            set
+            {
+                lock ( connectionLock )
+                    _sessionId = value;
+            }
+        }
         /// <summary>
         /// Gets the SteamID of this client. This value is assigned after a logon attempt has succeeded.
         /// This value will be <c>null</c> if the client is logged off of Steam.
         /// </summary>
         /// <value>The SteamID.</value>
-        public SteamID? SteamID { get; private set; }
+        public SteamID? SteamID
+        {
+            get
+            {
+                lock (connectionLock )
+                    return _steamId;
+            }
+            set
+            {
+                lock ( connectionLock )
+                    _steamId = value;
+            }
+        }
 
-        /// <summary>
-        /// Gets or sets the connection timeout used when connecting to the Steam server.
-        /// </summary>
-        /// <value>
-        /// The connection timeout.
-        /// </value>
-        public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
+/// <summary>
+/// Gets or sets the connection timeout used when connecting to the Steam server.
+/// </summary>
+/// <value>
+/// The connection timeout.
+/// </value>
+public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
         /// <summary>
         /// Gets or sets the network listening interface. Use this for debugging only.
@@ -118,13 +154,29 @@ namespace SteamKit2.Internal
         /// </summary>
         public IDebugNetworkListener? DebugNetworkListener { get; set; }
 
-        internal bool ExpectDisconnection { get; set; }
+        internal bool ExpectDisconnection
+        {
+            get
+            {
+                lock ( connectionLock )
+                    return _expectDisconnection;
+            }
+            set
+            {
+                lock ( connectionLock )
+                    _expectDisconnection = value;
+            }
+        }
 
         // connection lock around the setup and tear down of the connection task
         object connectionLock = new object();
         CancellationTokenSource? connectionCancellation;
         Task? connectionSetupTask;
         volatile IConnection? connection;
+        private bool _isConnected;
+        private SteamID? _steamId;
+        private int? _sessionId;
+        private bool _expectDisconnection;
 
         ScheduledFunction heartBeatFunc;
 
@@ -222,7 +274,7 @@ namespace SteamKit2.Internal
                     newConnection.Connected += Connected;
                     newConnection.Disconnected += Disconnected;
 
-                    await GlobalConnectQuota.WaitAsync();
+                    await GlobalConnectQuota.WaitAsync(token);
 
                     try
                     {
@@ -233,12 +285,23 @@ namespace SteamKit2.Internal
                         GlobalConnectQuota.Release();
                     }
 
-                }).ContinueWith( t =>
+                }).ContinueWith( async t =>
                 {
                     if ( t.IsFaulted || t.IsCanceled )
                     {
                         LogDebug( nameof( CMClient ), "Unhandled exception when attempting to connect to Steam: {0}", t.Exception );
                         OnClientDisconnected( userInitiated: false );
+                    }
+
+                    if ( !IsConnected )
+                    {
+                        await Task.Delay( ConnectionTimeout, token );
+
+                        if ( !IsConnected )
+                        {
+                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event.");
+                            Disconnect( userInitiated: false );
+                        }
                     }
                 });
             }
@@ -443,41 +506,45 @@ namespace SteamKit2.Internal
 
         void Connected( object? sender, EventArgs e )
         {
-            DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object after connecting." );
-            DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint after connecting - cannot update server list" );
+            lock ( connectionLock )
+            {
+                DebugLog.Assert( connection != null, nameof(CMClient), "No connection object after connecting." );
+                DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
 
-            Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
+                Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
 
-            IsConnected = true;
-            OnClientConnected();
+                _isConnected = true;
+                OnClientConnected();
+            }
         }
 
         void Disconnected( object? sender, DisconnectedEventArgs e )
         {
-            var connectionRelease = Interlocked.Exchange( ref connection, null );
-            if ( connectionRelease == null )
+            lock ( connectionLock )
             {
-                return;
+                var connectionRelease = Interlocked.Exchange( ref connection, null );
+                if ( connectionRelease == null )
+                    return;
+
+                IsConnected = true;
+
+                if ( !e.UserInitiated && !_expectDisconnection )
+                {
+                    DebugLog.Assert( connectionRelease.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
+                    Servers.TryMark( connectionRelease.CurrentEndPoint!, connectionRelease.ProtocolTypes, ServerQuality.Bad );
+                }
+
+                _sessionId = null;
+                _steamId = null;
+
+                connectionRelease.NetMsgReceived -= NetMsgReceived;
+                connectionRelease.Connected -= Connected;
+                connectionRelease.Disconnected -= Disconnected;
+
+                heartBeatFunc.Stop();
+
+                OnClientDisconnected( userInitiated: e.UserInitiated || _expectDisconnection );
             }
-
-            IsConnected = false;
-
-            if ( !e.UserInitiated && !ExpectDisconnection )
-            {
-                DebugLog.Assert( connectionRelease.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
-                Servers.TryMark( connectionRelease.CurrentEndPoint!, connectionRelease.ProtocolTypes, ServerQuality.Bad );
-            }
-
-            SessionID = null;
-            SteamID = null;
-
-            connectionRelease.NetMsgReceived -= NetMsgReceived;
-            connectionRelease.Connected -= Connected;
-            connectionRelease.Disconnected -= Disconnected;
-
-            heartBeatFunc.Stop();
-
-            OnClientDisconnected( userInitiated: e.UserInitiated || ExpectDisconnection );
         }
 
         internal static IPacketMsg? GetPacketMsg( byte[] data, ILogContext log )
