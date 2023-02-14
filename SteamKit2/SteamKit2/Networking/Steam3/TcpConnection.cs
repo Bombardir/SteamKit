@@ -36,6 +36,7 @@ namespace SteamKit2
             netLock = new object();
             socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
             socket.Bind( _localEndPoint );
+            socket.Blocking = false;
         }
 
         public event EventHandler<NetMsgEventArgs>? NetMsgReceived;
