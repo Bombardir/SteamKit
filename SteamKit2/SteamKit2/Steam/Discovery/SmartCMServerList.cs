@@ -271,13 +271,11 @@ namespace SteamKit2.Discovery
                 ResetOldScores();
 
                 var query = 
-                    from o in servers.Select((server, index) => new { server, index })
-                    let server = o.server
-                    let index = o.index
+                    from server in servers
                     where server.Protocol.HasFlagsFast( supportedProtocolTypes )
                     let lastBadConnectionTime = server.LastBadConnectionTimeUtc.GetValueOrDefault()
                     orderby lastBadConnectionTime, Random.Shared.Next()
-                    select new { EndPoint = server.Record.EndPoint, Protocol = server.Protocol };
+                    select new { server.Record.EndPoint, server.Protocol };
 
                 var result = query.FirstOrDefault();
                 
