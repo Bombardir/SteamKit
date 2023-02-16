@@ -82,12 +82,12 @@ namespace SteamKit2.Internal
         {
             get
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     return _isConnected;
             }
             set
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     _isConnected = value;
             }
         }
@@ -112,12 +112,12 @@ namespace SteamKit2.Internal
         {
             get
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     return _sessionId;
             }
             set
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     _sessionId = value;
             }
         }
@@ -130,12 +130,12 @@ namespace SteamKit2.Internal
         {
             get
             {
-                lock (connectionLock )
+                lock ( syncLock )
                     return _steamId;
             }
             set
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     _steamId = value;
             }
         }
@@ -158,21 +158,22 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         {
             get
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     return _expectDisconnection;
             }
             set
             {
-                lock ( connectionLock )
+                lock ( syncLock )
                     _expectDisconnection = value;
             }
         }
 
         // connection lock around the setup and tear down of the connection task
         object connectionLock = new object();
+        object syncLock = new object();
+
         CancellationTokenSource? connectionCancellation;
         Task? connectionSetupTask;
-        Task? connectionTimeoutTask;
         volatile IConnection? connection;
         private bool _isConnected;
         private SteamID? _steamId;
@@ -205,12 +206,12 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
         public bool IsConnecting()
         {
-            lock ( connectionLock )
+            lock ( syncLock )
             {
                 return !IsConnected && connection != null;
             }
         }
-
+         
         /// <summary>
         /// Connects this client to a Steam3 server.
         /// This begins the process of connecting and encrypting the data channel between the client and the server.
@@ -226,8 +227,6 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         /// </param>
         public void Connect( ServerRecord? cmServer = null )
         {
-            Interlocked.Exchange( ref connectionTimeoutTask, null )?.Wait();
-
             lock ( connectionLock )
             {
                 Disconnect( userInitiated: true );
@@ -251,7 +250,7 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
                     recordTask = Task.FromResult( ( ServerRecord? )cmServer );
                 }
 
-                connectionSetupTask = Task.Run(() => recordTask).ContinueWith( async t =>
+                connectionSetupTask = Task.Run(() => recordTask).ContinueWith(async t =>
                 {
                     if ( token.IsCancellationRequested )
                     {
@@ -295,7 +294,6 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
                     {
                         GlobalConnectQuota.Release();
                     }
-
                 }).ContinueWith( async t =>
                 {
                     if ( t.IsFaulted || t.IsCanceled && !token.IsCancellationRequested )
@@ -305,30 +303,16 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
                         return;
                     }
 
-                    var newConnectionTimeoutTask = Task.Run( async () =>
-                    {
-                        if ( IsConnected )
-                            return;
+                    if ( IsConnected )
+                        return;
 
-                        await Task.Delay( ConnectionTimeout, token );
+                    await Task.Delay( ConnectionTimeout, token );
 
-                        lock ( connectionLock )
-                        {
-                            token.ThrowIfCancellationRequested();
+                    if ( IsConnected )
+                        return;
 
-                            if ( _isConnected)
-                                return;
-
-                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-                            connection?.Disconnect( userInitiated: false );
-                        }
-
-                    }, token ).IgnoringCancellation( token );
-
-                    var oldTask = Interlocked.Exchange( ref connectionTimeoutTask, newConnectionTimeoutTask );
-
-                    if (oldTask != null)
-                        LogDebug( nameof( CMClient ), "Old connection timeout task was not awaited and set to null.");
+                    LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
+                    connection?.Disconnect( userInitiated: false );
                 } );
             }
         }
@@ -530,45 +514,38 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
         void Connected( object? sender, EventArgs e )
         {
-            lock ( connectionLock )
-            {
-                DebugLog.Assert( connection != null, nameof(CMClient), "No connection object after connecting." );
-                DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
+            DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object after connecting." );
+            DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
+            Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
 
-                Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
-
-                _isConnected = true;
-                OnClientConnected();
-            }
+            IsConnected = true;
+            OnClientConnected();
         }
 
         void Disconnected( object? sender, DisconnectedEventArgs e )
         {
-            lock ( connectionLock )
+            var connectionRelease = Interlocked.Exchange( ref connection, null );
+            if ( connectionRelease == null )
+                return;
+
+            IsConnected = false;
+
+            if ( !e.UserInitiated && !ExpectDisconnection )
             {
-                var connectionRelease = connection;
-                if ( connectionRelease == null )
-                    return;
-
-                IsConnected = true;
-
-                if ( !e.UserInitiated && !_expectDisconnection )
-                {
-                    DebugLog.Assert( connectionRelease.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
-                    Servers.TryMark( connectionRelease.CurrentEndPoint!, connectionRelease.ProtocolTypes, ServerQuality.Bad );
-                }
-
-                _sessionId = null;
-                _steamId = null;
-
-                connectionRelease.NetMsgReceived -= NetMsgReceived;
-                connectionRelease.Connected -= Connected;
-                connectionRelease.Disconnected -= Disconnected;
-
-                heartBeatFunc.Stop();
-
-                OnClientDisconnected( userInitiated: e.UserInitiated || _expectDisconnection );
+                DebugLog.Assert( connectionRelease.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
+                Servers.TryMark( connectionRelease.CurrentEndPoint!, connectionRelease.ProtocolTypes, ServerQuality.Bad );
             }
+
+            SessionID = null;
+            SteamID = null;
+
+            connectionRelease.NetMsgReceived -= NetMsgReceived;
+            connectionRelease.Connected -= Connected;
+            connectionRelease.Disconnected -= Disconnected;
+
+            heartBeatFunc.Stop();
+
+            OnClientDisconnected( userInitiated: e.UserInitiated || ExpectDisconnection );
         }
 
         internal static IPacketMsg? GetPacketMsg( byte[] data, ILogContext log )
