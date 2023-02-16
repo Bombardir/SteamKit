@@ -203,6 +203,14 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
             } );
         }
 
+        public bool IsConnecting()
+        {
+            lock ( connectionLock )
+            {
+                return !IsConnected && connection != null;
+            }
+        }
+
         /// <summary>
         /// Connects this client to a Steam3 server.
         /// This begins the process of connecting and encrypting the data channel between the client and the server.
@@ -538,7 +546,7 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         {
             lock ( connectionLock )
             {
-                var connectionRelease = Interlocked.Exchange( ref connection, null );
+                var connectionRelease = connection;
                 if ( connectionRelease == null )
                     return;
 
