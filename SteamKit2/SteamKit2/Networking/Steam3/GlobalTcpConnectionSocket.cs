@@ -11,7 +11,8 @@ namespace SteamKit2.Networking.Steam3
 {
     public class GlobalTcpConnectionSocket
     {
-        public const Int32 NetCycleTime = 100;
+        public const Int32 NetCycleTime = 200;
+
         public const Int32 MaxOpeationPerCycle = 100;
         public const Int32 SleepBetweenOpeations = 25;
 
