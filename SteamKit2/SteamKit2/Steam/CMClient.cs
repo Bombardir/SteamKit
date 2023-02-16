@@ -172,6 +172,7 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         object connectionLock = new object();
         CancellationTokenSource? connectionCancellation;
         Task? connectionSetupTask;
+        Task? connectionTimeoutTask;
         volatile IConnection? connection;
         private bool _isConnected;
         private SteamID? _steamId;
@@ -217,6 +218,8 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         /// </param>
         public void Connect( ServerRecord? cmServer = null )
         {
+            Interlocked.Exchange( ref connectionTimeoutTask, null )?.Wait();
+
             lock ( connectionLock )
             {
                 Disconnect( userInitiated: true );
@@ -287,32 +290,45 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
                 }).ContinueWith( async t =>
                 {
-                    if ( t.IsFaulted || t.IsCanceled )
+                    if ( t.IsFaulted || t.IsCanceled && !token.IsCancellationRequested )
                     {
                         LogDebug( nameof( CMClient ), "Unhandled exception when attempting to connect to Steam: {0}", t.Exception );
                         OnClientDisconnected( userInitiated: false );
+                        return;
                     }
 
-                    if ( !IsConnected )
+                    var newConnectionTimeoutTask = Task.Run( async () =>
                     {
+                        if ( IsConnected )
+                            return;
+
                         await Task.Delay( ConnectionTimeout, token );
 
-                        if ( !IsConnected )
+                        lock ( connectionLock )
                         {
-                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event.");
-                            Disconnect( userInitiated: false );
+                            token.ThrowIfCancellationRequested();
+
+                            if ( _isConnected)
+                                return;
+
+                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
+                            connection?.Disconnect( userInitiated: false );
                         }
-                    }
-                });
+
+                    }, token ).IgnoringCancellation( token );
+
+                    var oldTask = Interlocked.Exchange( ref connectionTimeoutTask, newConnectionTimeoutTask );
+
+                    if (oldTask != null)
+                        LogDebug( nameof( CMClient ), "Old connection timeout task was not awaited and set to null.");
+                } );
             }
         }
 
         /// <summary>
         /// Disconnects this client.
         /// </summary>
-        public void Disconnect() => Disconnect( userInitiated: true );
-
-        private protected void Disconnect( bool userInitiated )
+        public void Disconnect( bool userInitiated = true )
         {
             lock ( connectionLock )
             {
