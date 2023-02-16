@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,16 +80,54 @@ namespace SteamKit2.Networking.Steam3
             _listenThread = Task.Run( ListenThreadSafe ).IgnoringCancellation( CancellationToken.None );
         }
 
-        public void ListenSocket( Socket socket, Action<byte[]> onSocketMessage, Action onSocketError )
+        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
         {
-            if (!_socketHandlers.TryAdd( socket.Handle, new SocketHandler( socket, onSocketMessage, onSocketError ) ))
-                throw new Exception("Failed to start listen socket: socket is already added");
+            var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
+
+            try
+            {
+                socket.Bind( localEndPoint );
+                socket.Blocking = false;
+
+                await socket.ConnectAsync( targetEndPoint, token );
+
+                if ( !_socketHandlers.TryAdd( socket.Handle, new SocketHandler( socket, onSocketMessage, onSocketError ) ) )
+                    throw new Exception( "Failed to start listen socket: socket is already added" );
+
+                return socket;
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
         }
 
-        public void StopSocketListen( Socket socket )
+        public Task StopSocketAsync( Socket socket )
         {
             if ( _socketHandlers.TryRemove( socket.Handle, out var socketHandler ) )
+            {
                 socketHandler.SendQueue.Clear();
+
+                if ( socketHandler.Socket.Connected )
+                {
+                    try
+                    {
+                        socket.Shutdown( SocketShutdown.Both );
+                        return socket.DisconnectAsync( false )
+                            .AsTask()
+                            .ContinueWith( _ => socket.Dispose() );
+                    }
+                    catch ( Exception e )
+                    {
+                        // Empty
+                    }
+                }
+
+                socket.Dispose();
+            }
+
+            return Task.CompletedTask;
         }
 
         public void Send( Socket socket, byte[] data )

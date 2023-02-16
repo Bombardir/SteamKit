@@ -25,8 +25,8 @@ namespace SteamKit2
 
         private readonly EndPoint _localEndPoint;
         private ILogContext log;
-        private Socket socket;
-        private ValueTask? _disconnectTask;
+        private Socket? socket;
+        private Task? _disconnectTask;
         private readonly object netLock;
 
         public TcpConnection(EndPoint localEndPoint, ILogContext log)
@@ -34,9 +34,6 @@ namespace SteamKit2
             _localEndPoint = localEndPoint;
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
             netLock = new object();
-            socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-            socket.Bind( _localEndPoint );
-            socket.Blocking = false;
         }
 
         public event EventHandler<NetMsgEventArgs>? NetMsgReceived;
@@ -53,22 +50,10 @@ namespace SteamKit2
         {
             lock ( netLock )
             {
-                try
-                {
-                    _globalTcpConnection.StopSocketListen( socket );
+                if ( socket != null )
+                    _disconnectTask = _globalTcpConnection.StopSocketAsync( socket );
 
-                    if ( socket.Connected )
-                    {
-                        socket.Shutdown( SocketShutdown.Both );
-                        _disconnectTask = socket.DisconnectAsync( false );
-                    }
-                }
-                catch
-                {
-                    // Shutdown is throwing when the remote end closes the connection before SteamKit attempts to
-                    // so this should be safe as a no-op
-                    // see: https://bitbucket.org/VoiDeD/steamre/issue/41/socketexception-thrown-when-closing
-                }
+                socket = null;
             }
 
             Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
@@ -89,10 +74,7 @@ namespace SteamKit2
             try
             {
                 lock ( netLock )
-                {
-                    _globalTcpConnection.ListenSocket( socket, OnSocketMessage, OnSocketError );
                     CurrentEndPoint = socket!.RemoteEndPoint;
-                }
 
                 Connected?.Invoke( this, EventArgs.Empty );
             }
@@ -122,20 +104,20 @@ namespace SteamKit2
 
         private void TryConnect(int timeout)
         {
-            DebugLog.Assert( socket != null, nameof( TcpConnection ), "socket should not be null when connecting (we hold the net lock)" );
             DebugLog.Assert( CurrentEndPoint != null, nameof( TcpConnection ), "CurrentEndPoint should be non-null when connecting." );
 
             try
             {
                 using var timeoutTokenSource = new CancellationTokenSource( timeout );
-                socket.ConnectAsync( CurrentEndPoint, timeoutTokenSource.Token ).AsTask().Wait();
+                lock ( netLock )
+                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeoutTokenSource.Token, OnSocketMessage, OnSocketError ).Result;
             }
             catch ( Exception ex )
             {
                 log.LogDebug( nameof( TcpConnection ), "Exception while connecting to {0}: {1}", CurrentEndPoint, ex );
             }
 
-            ConnectCompleted( socket.Connected );
+            ConnectCompleted( socket?.Connected ?? false);
         }
 
         /// <summary>
@@ -149,15 +131,13 @@ namespace SteamKit2
             {
                 try
                 {
-                    _disconnectTask?.AsTask().Wait();
+                    _disconnectTask?.Wait();
                 }
                 catch ( Exception ex )
                 {
                     log.LogDebug( nameof( TcpConnection ), "Socket {0} disconnect ended with exception: {1}", CurrentEndPoint, ex );
                 }
 
-                socket.ReceiveTimeout = timeout;
-                socket.SendTimeout = timeout;
                 CurrentEndPoint = endPoint;
 
                 log.LogDebug( nameof( TcpConnection ), "Connecting to {0}...", CurrentEndPoint );
@@ -169,7 +149,7 @@ namespace SteamKit2
         {
             lock ( netLock )
             {
-                if (!socket.Connected)
+                if (socket is not {Connected: true})
                 {
                     log.LogDebug( nameof( TcpConnection ), "Attempting to send client data when not connected." );
                     return;
@@ -185,7 +165,7 @@ namespace SteamKit2
             {
                 try
                 {
-                    return NetHelpers.GetLocalIP(socket);
+                    return socket == null ? IPAddress.None : NetHelpers.GetLocalIP(socket);
                 }
                 catch (Exception ex)
                 {
