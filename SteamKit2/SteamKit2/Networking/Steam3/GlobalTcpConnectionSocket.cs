@@ -66,7 +66,7 @@ namespace SteamKit2.Networking.Steam3
 
         private int _operationCounter;
 
-        public GlobalTcpConnectionSocket( ILogContext log, int socketsCount = 2300 )
+        public GlobalTcpConnectionSocket( ILogContext log, int socketsCount = 1500 )
         {
             _log = log;
             _receiveBuffer = new byte[ 0x10000 ];
