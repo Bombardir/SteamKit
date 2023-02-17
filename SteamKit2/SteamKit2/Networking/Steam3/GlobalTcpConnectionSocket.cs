@@ -14,7 +14,7 @@ namespace SteamKit2.Networking.Steam3
     {
         public const Int32 NetCycleTime = 150;
 
-        public const Int32 MaxOpeationPerCycle = 100;
+        public const Int32 MaxOpeationPerCycle = 75;
         public const Int32 SleepBetweenOpeations = 25;
 
         private readonly ILogContext _log;
