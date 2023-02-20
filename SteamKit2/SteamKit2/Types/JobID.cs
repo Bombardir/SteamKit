@@ -6,10 +6,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using SteamKit2.Util;
 
 namespace SteamKit2
 {
@@ -174,8 +174,8 @@ namespace SteamKit2
     public sealed class AsyncJob<T> : AsyncJob
         where T : CallbackMsg
     {
-        readonly TaskCompletionSource<T> tcs;
-
+        private T? Result;
+        private Exception? Exception;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncJob{T}" /> class.
@@ -185,29 +185,36 @@ namespace SteamKit2
         public AsyncJob( SteamClient client, JobID jobId )
             : base( client, jobId )
         {
-            tcs = new TaskCompletionSource<T>( TaskCreationOptions.RunContinuationsAsynchronously );
-
             RegisterJob( client );
         }
 
-
-        /// <summary>
-        /// Converts this <see cref="AsyncJob{T}"/> instance into a TPL <see cref="Task{T}"/>.
-        /// </summary>
-        /// <returns></returns>
-        public Task<T> ToTask()
+        public async ValueTask<T> WaitResultAsync()
         {
-            return tcs.Task;
+            T? result;
+            Exception exception;
+
+            while ( !TryGetResult(out result, out exception) )
+            {
+                await Task.Delay( GlobalScheduledFunction.FunctionCycleTime );
+            }
+
+            if ( exception != null )
+                throw exception;
+
+            return result ?? throw new Exception("Failed to wait for result");
         }
 
-        /// <summary>Gets an awaiter used to await this <see cref="AsyncJob{T}"/>.</summary>
-        /// <returns>An awaiter instance.</returns>
-        /// <remarks>This method is intended for compiler use rather than use directly in code.</remarks>
-        public TaskAwaiter<T> GetAwaiter()
+        public Boolean TryGetResult( out T? result, out Exception? exception)
         {
-            return ToTask().GetAwaiter();
-        }
+            exception = null;
+            result = Interlocked.CompareExchange( ref Result, null, null );
 
+            if ( result != null )
+                return true;
+
+            exception = Interlocked.CompareExchange( ref Exception, null, null );
+            return exception != null;
+        }
 
         /// <summary>
         /// Adds a callback to the async job's result set. For an <see cref="AsyncJob{T}"/>, this always completes the set.
@@ -221,10 +228,10 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof( callback ) );
             }
 
-            // we're complete with just this callback
-            tcs.TrySetResult( (T)callback );
+            var originalResult = Interlocked.CompareExchange( ref Result, (T)callback, null );
+            if ( originalResult  != null)
+                throw new Exception( "Result is already set" );
 
-            // inform steamclient that this job wishes to be removed from tracking since we've recieved the single callback we were waiting for
             return true;
         }
 
@@ -237,16 +244,13 @@ namespace SteamKit2
         /// </param>
         internal override void SetFailed( bool dueToRemoteFailure )
         {
-            if ( dueToRemoteFailure )
-            {
-                // if steam informs us of a remote failure, we cancel with our exception
-                tcs.TrySetException( new AsyncJobFailedException() );
-            }
-            else
-            {
-                // if we time out, we trigger a normal cancellation
-                tcs.TrySetCanceled();
-            }
+            Exception newException = dueToRemoteFailure
+                ? new AsyncJobFailedException()
+                : new OperationCanceledException();
+
+            var originalException = Interlocked.CompareExchange( ref Exception, newException, null );
+            if ( originalException != null )
+                throw new Exception( "Exception is already set" );
         }
     }
 

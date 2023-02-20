@@ -6,12 +6,15 @@ namespace SteamKit2.Util;
 
 internal class GlobalScheduledFunction
 {
+    public const int FunctionCycleTime = 1000;
+
     private readonly ConcurrentDictionary<ScheduledFunction, DateTime> _functionExecutionTimes;
+    private readonly Task _scheduleTask;
 
     public GlobalScheduledFunction()
     {
         _functionExecutionTimes = new ConcurrentDictionary<ScheduledFunction, DateTime>( 2, 2000 );
-        Task.Run( FunctionCycle );
+        _scheduleTask = Task.Factory.StartNew( FunctionCycle, TaskCreationOptions.LongRunning );
     }
 
     public void Start( ScheduledFunction func )
@@ -42,7 +45,7 @@ internal class GlobalScheduledFunction
                 _functionExecutionTimes.TryUpdate( func, currentTime, lastExecutionTime );
             }
 
-            await Task.Delay( 1000 );
+            await Task.Delay( FunctionCycleTime );
         }
     }
 }

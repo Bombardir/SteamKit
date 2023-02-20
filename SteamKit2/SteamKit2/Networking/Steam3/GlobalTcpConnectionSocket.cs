@@ -74,7 +74,7 @@ namespace SteamKit2.Networking.Steam3
             _listenSocketList = new List<Socket>(socketsCount);
             _writeSocketList = new List<Socket>(socketsCount);
             _errorSocketList = new List<Socket>(socketsCount);
-            _listenThread = Task.Run( ListenThreadSafe ).IgnoringCancellation( CancellationToken.None );
+            _listenThread = Task.Factory.StartNew( ListenThreadSafe, TaskCreationOptions.LongRunning );
         }
 
         public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
