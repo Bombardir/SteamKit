@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -12,6 +11,8 @@ namespace SteamKit2.Networking.Steam3
 {
     public class GlobalTcpConnectionSocket
     {
+        private const EPoll.epoll_events ListenEPollEvents = EPoll.epoll_events.EPOLLIN | EPoll.epoll_events.EPOLLOUT | EPoll.epoll_events.EPOLLRDHUP | EPoll.epoll_events.EPOLLRDHUP;
+
         public const Int32 NetCycleTimeMs = 150;
         public const Int32 MaxOpeationPerCycle = 500;
 
@@ -58,24 +59,15 @@ namespace SteamKit2.Networking.Steam3
 
         private readonly Task _listenThread;
         private readonly byte[] _receiveBuffer;
-
-        private readonly ConcurrentDictionary<nint, SocketHandler> _socketHandlers;
-        private readonly List<Socket> _socketsToListen;
-        private readonly SocketSelectList _listenSocketList;
-        private readonly SocketSelectList _errorSocketList;
-        private readonly SocketSelectList _writeSocketList;
+        private readonly EPollCustomGroup<SocketHandler> _pollGroup;
 
         private int _operationCounter;
 
-        public GlobalTcpConnectionSocket( ILogContext log, int socketsCount = 1500 )
+        public GlobalTcpConnectionSocket( ILogContext log )
         {
             _log = log;
             _receiveBuffer = System.GC.AllocateArray<byte>( 0x10000, pinned: true );
-            _socketHandlers = new ConcurrentDictionary<nint, SocketHandler>(2, socketsCount );
-            _socketsToListen = new List<Socket>( socketsCount );
-            _listenSocketList = new SocketSelectList();
-            _writeSocketList = new SocketSelectList();
-            _errorSocketList = new SocketSelectList();
+            _pollGroup = new EPollCustomGroup<SocketHandler>(2500);
             _listenThread = Task.Factory.StartNew( ListenThreadSafe, TaskCreationOptions.LongRunning );
         }
 
@@ -85,6 +77,7 @@ namespace SteamKit2.Networking.Steam3
 
             try
             {
+                socket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
                 socket.Bind( localEndPoint );
                 socket.Blocking = false;
                 socket.ReceiveTimeout = timeout;
@@ -92,8 +85,8 @@ namespace SteamKit2.Networking.Steam3
 
                 await socket.ConnectAsync( targetEndPoint, token );
 
-                if ( !_socketHandlers.TryAdd( socket.Handle, new SocketHandler( socket, onSocketMessage, onSocketError ) ) )
-                    throw new Exception( "Failed to start listen socket: socket is already added" );
+                var socketHandler = new SocketHandler( socket, onSocketMessage, onSocketError );
+                _pollGroup.Add( socket, socketHandler, ListenEPollEvents );
 
                 return socket;
             }
@@ -106,35 +99,35 @@ namespace SteamKit2.Networking.Steam3
 
         public Task StopSocketAsync( Socket socket )
         {
-            if ( _socketHandlers.TryRemove( socket.Handle, out var socketHandler ) )
+            var socketHandler = _pollGroup.Remove( socket );
+            socketHandler?.SendQueue.Clear();
+
+            if ( socket.Connected )
             {
-                socketHandler.SendQueue.Clear();
-
-                if ( socketHandler.Socket.Connected )
+                try
                 {
-                    try
-                    {
-                        socket.Shutdown( SocketShutdown.Both );
-                        return socket.DisconnectAsync( false )
-                            .AsTask()
-                            .ContinueWith( _ => socket.Dispose() );
-                    }
-                    catch ( Exception e )
-                    {
-                        // Empty
-                    }
+                    socket.Shutdown( SocketShutdown.Both );
+                    return socket.DisconnectAsync( false )
+                        .AsTask()
+                        .ContinueWith( _ => socket.Dispose() );
                 }
-
-                socket.Dispose();
+                catch ( Exception e )
+                {
+                    // Empty
+                }
             }
 
+            socket.Dispose();
             return Task.CompletedTask;
         }
 
         public void Send( Socket socket, byte[] data )
         {
-            if ( _socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
-                socketHandler.SendQueue.Enqueue( data );
+            var handler = _pollGroup.Get(socket);
+            if (handler == null)
+                return;
+
+            handler.SendQueue.Enqueue( data );
         }
 
         private async Task ListenThreadSafe()
@@ -155,31 +148,15 @@ namespace SteamKit2.Networking.Steam3
 
         private async ValueTask<bool> ListenThreadCycle()
         {
-            if ( _socketHandlers.IsEmpty )
+            if ( _pollGroup.IsEmpty() )
                 return true;
             
-            _socketsToListen.Clear();
 
-            foreach ( var socketHandler in _socketHandlers.Values )
-            {
-                var socket = socketHandler.Socket;
-
-                if (socket.Connected)
-                    _socketsToListen.Add( socketHandler.Socket );
-                else
-                    socketHandler.OnSocketErrorSafe( _log );
-            }
-
-            if ( _socketsToListen.Count == 0 )
-                return true;
-
-            _listenSocketList.SetValues( _socketsToListen );
-            _errorSocketList.SetValues( _socketsToListen );
-            _writeSocketList.SetValues( _socketsToListen );
+            int polledCount;
 
             try
             {
-                Socket.Select( _listenSocketList, _writeSocketList, _errorSocketList, 0 );
+                polledCount = _pollGroup.Poll(0);
             }
             catch ( Exception ex )
             {
@@ -187,52 +164,41 @@ namespace SteamKit2.Networking.Steam3
                 return false;
             }
 
-            for ( var i = 0; i < _errorSocketList.Count; i++ )
+            for ( int i = 0; i < polledCount; i++ )
             {
-                var socket = _errorSocketList.At(i);
+                var socketHandler = _pollGroup.GetPollResult( i, out var pollEvents );
 
-                if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
-                    continue;
-
-                socketHandler.OnSocketErrorSafe( _log );
-            }
-
-            for ( var i = 0; i < _listenSocketList.Count; i++ )
-            {
-                var socket = _listenSocketList.At(i);
-
-                if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
-                    continue;
-
-                try
+                if ( ( pollEvents & (EPoll.epoll_events.EPOLLERR | EPoll.epoll_events.EPOLLRDHUP) ) != 0 )
                 {
-                    await ReceiveSocket( socketHandler );
-                }
-                catch ( Exception e )
-                {
-                    _log.LogDebug( nameof(SocketHandler), "Socket message receive failed for socket {0}: {1}",
-                        socket.Handle, e );
                     socketHandler.OnSocketErrorSafe( _log );
-                }
-            }
-
-            for ( var i = 0; i < _writeSocketList.Count; i++ )
-            {
-                var socket = _writeSocketList.At(i);
-
-                if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
                     continue;
-
-                try
-                {
-                    await SendFromSocket( socketHandler );
                 }
-                catch ( Exception e )
+
+                if ( ( pollEvents & EPoll.epoll_events.EPOLLIN ) != 0 )
                 {
-                    _log.LogDebug( nameof(SocketHandler), "Socket message send failed for socket {0}: {1}",
-                        socketHandler.Socket.Handle, e );
-                    socketHandler.OnSocketErrorSafe( _log );
-                    break;
+                    try
+                    {
+                        await ReceiveSocket( socketHandler );
+                    }
+                    catch ( Exception e )
+                    {
+                        _log.LogDebug( nameof( SocketHandler ), "Socket message receive failed for socket {0}: {1}", socketHandler.Socket.Handle, e );
+                        socketHandler.OnSocketErrorSafe( _log );
+                        continue;
+                    }
+                }
+
+                if ( ( pollEvents & EPoll.epoll_events.EPOLLOUT ) != 0 )
+                {
+                    try
+                    {
+                        await SendFromSocket( socketHandler );
+                    }
+                    catch ( Exception e )
+                    {
+                        _log.LogDebug( nameof( SocketHandler ), "Socket message send failed for socket {0}: {1}", socketHandler.Socket.Handle, e );
+                        socketHandler.OnSocketErrorSafe( _log );
+                    }
                 }
             }
 
