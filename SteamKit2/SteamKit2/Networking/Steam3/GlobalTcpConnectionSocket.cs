@@ -60,9 +60,10 @@ namespace SteamKit2.Networking.Steam3
         private readonly byte[] _receiveBuffer;
 
         private readonly ConcurrentDictionary<nint, SocketHandler> _socketHandlers;
-        private readonly List<Socket> _listenSocketList;
-        private readonly List<Socket> _errorSocketList;
-        private readonly List<Socket> _writeSocketList;
+        private readonly List<Socket> _socketsToListen;
+        private readonly SocketSelectList _listenSocketList;
+        private readonly SocketSelectList _errorSocketList;
+        private readonly SocketSelectList _writeSocketList;
 
         private int _operationCounter;
 
@@ -71,9 +72,10 @@ namespace SteamKit2.Networking.Steam3
             _log = log;
             _receiveBuffer = System.GC.AllocateArray<byte>( 0x10000, pinned: true );
             _socketHandlers = new ConcurrentDictionary<nint, SocketHandler>(2, socketsCount );
-            _listenSocketList = new List<Socket>(socketsCount);
-            _writeSocketList = new List<Socket>(socketsCount);
-            _errorSocketList = new List<Socket>(socketsCount);
+            _socketsToListen = new List<Socket>( socketsCount );
+            _listenSocketList = new SocketSelectList();
+            _writeSocketList = new SocketSelectList();
+            _errorSocketList = new SocketSelectList();
             _listenThread = Task.Factory.StartNew( ListenThreadSafe, TaskCreationOptions.LongRunning );
         }
 
@@ -151,31 +153,33 @@ namespace SteamKit2.Networking.Steam3
             }
         }
 
-        private async Task<bool> ListenThreadCycle()
+        private async ValueTask<bool> ListenThreadCycle()
         {
             if ( _socketHandlers.IsEmpty )
                 return true;
-
-            _listenSocketList.Clear();
-            _errorSocketList.Clear();
-            _writeSocketList.Clear();
+            
+            _socketsToListen.Clear();
 
             foreach ( var socketHandler in _socketHandlers.Values )
             {
                 var socket = socketHandler.Socket;
 
                 if (socket.Connected)
-                    _listenSocketList.Add( socketHandler.Socket );
+                    _socketsToListen.Add( socketHandler.Socket );
                 else
                     socketHandler.OnSocketErrorSafe( _log );
             }
-            
-            _errorSocketList.AddRange( _listenSocketList );
-            _writeSocketList.AddRange( _listenSocketList );
+
+            if ( _socketsToListen.Count == 0 )
+                return true;
+
+            _listenSocketList.SetValues( _socketsToListen );
+            _errorSocketList.SetValues( _socketsToListen );
+            _writeSocketList.SetValues( _socketsToListen );
 
             try
             {
-                Socket.Select( _listenSocketList, _writeSocketList, _errorSocketList, NetCycleTimeMs * 1000 );
+                Socket.Select( _listenSocketList, _writeSocketList, _errorSocketList, 0 );
             }
             catch ( Exception ex )
             {
@@ -183,32 +187,39 @@ namespace SteamKit2.Networking.Steam3
                 return false;
             }
 
-            foreach ( var socket in _errorSocketList )
+            for ( var i = 0; i < _errorSocketList.Count; i++ )
             {
-                if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) ) 
+                var socket = _errorSocketList.At(i);
+
+                if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
                     continue;
 
                 socketHandler.OnSocketErrorSafe( _log );
             }
 
-            foreach (var socket in _listenSocketList)
+            for ( var i = 0; i < _listenSocketList.Count; i++ )
             {
+                var socket = _listenSocketList.At(i);
+
                 if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
                     continue;
 
                 try
                 {
-                    await ReceiveSocket(socketHandler);
+                    await ReceiveSocket( socketHandler );
                 }
                 catch ( Exception e )
                 {
-                    _log.LogDebug( nameof(SocketHandler), "Socket message receive failed for socket {0}: {1}", socket.Handle, e );
+                    _log.LogDebug( nameof(SocketHandler), "Socket message receive failed for socket {0}: {1}",
+                        socket.Handle, e );
                     socketHandler.OnSocketErrorSafe( _log );
                 }
             }
 
-            foreach ( var socket in _writeSocketList )
+            for ( var i = 0; i < _writeSocketList.Count; i++ )
             {
+                var socket = _writeSocketList.At(i);
+
                 if ( !_socketHandlers.TryGetValue( socket.Handle, out var socketHandler ) )
                     continue;
 
@@ -218,7 +229,8 @@ namespace SteamKit2.Networking.Steam3
                 }
                 catch ( Exception e )
                 {
-                    _log.LogDebug( nameof( SocketHandler ), "Socket message send failed for socket {0}: {1}", socketHandler.Socket.Handle, e );
+                    _log.LogDebug( nameof(SocketHandler), "Socket message send failed for socket {0}: {1}",
+                        socketHandler.Socket.Handle, e );
                     socketHandler.OnSocketErrorSafe( _log );
                     break;
                 }
@@ -227,7 +239,7 @@ namespace SteamKit2.Networking.Steam3
             return true;
         }
 
-        private async Task SendFromSocket(SocketHandler socketHandler)
+        private async ValueTask SendFromSocket(SocketHandler socketHandler)
         {
             if ( socketHandler.BytesToSend > 0 )
             {
@@ -289,7 +301,7 @@ namespace SteamKit2.Networking.Steam3
 
         private static bool IsBlockingSocketErrorCode(SocketError error) => error is SocketError.AlreadyInProgress or SocketError.WouldBlock;
 
-        private async Task ReceiveSocket(SocketHandler socketHandler)
+        private async ValueTask ReceiveSocket(SocketHandler socketHandler)
         {
             int receivedBytes = socketHandler.Socket.Receive( _receiveBuffer, SocketFlags.None, out var errorCode);
 
