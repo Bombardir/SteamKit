@@ -12,10 +12,8 @@ namespace SteamKit2.Networking.Steam3
 {
     public class GlobalTcpConnectionSocket
     {
-        public const Int32 NetCycleTime = 150;
-
-        public const Int32 MaxOpeationPerCycle = 75;
-        public const Int32 SleepBetweenOpeations = 25;
+        public const Int32 NetCycleTimeMs = 150;
+        public const Int32 MaxOpeationPerCycle = 500;
 
         private readonly ILogContext _log;
 
@@ -71,8 +69,7 @@ namespace SteamKit2.Networking.Steam3
         public GlobalTcpConnectionSocket( ILogContext log, int socketsCount = 1500 )
         {
             _log = log;
-            _receiveBuffer = new byte[ 0x10000 ];
-
+            _receiveBuffer = System.GC.AllocateArray<byte>( 0x10000, pinned: true );
             _socketHandlers = new ConcurrentDictionary<nint, SocketHandler>(2, socketsCount );
             _listenSocketList = new List<Socket>(socketsCount);
             _writeSocketList = new List<Socket>(socketsCount);
@@ -80,7 +77,7 @@ namespace SteamKit2.Networking.Steam3
             _listenThread = Task.Run( ListenThreadSafe ).IgnoringCancellation( CancellationToken.None );
         }
 
-        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
+        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
         {
             var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
 
@@ -88,6 +85,8 @@ namespace SteamKit2.Networking.Steam3
             {
                 socket.Bind( localEndPoint );
                 socket.Blocking = false;
+                socket.ReceiveTimeout = timeout;
+                socket.SendTimeout = timeout;
 
                 await socket.ConnectAsync( targetEndPoint, token );
 
@@ -176,7 +175,7 @@ namespace SteamKit2.Networking.Steam3
 
             try
             {
-                Socket.Select( _listenSocketList, _writeSocketList, _errorSocketList, NetCycleTime * 1000 );
+                Socket.Select( _listenSocketList, _writeSocketList, _errorSocketList, NetCycleTimeMs * 1000 );
             }
             catch ( Exception ex )
             {
@@ -392,7 +391,7 @@ namespace SteamKit2.Networking.Steam3
         private async ValueTask ResetOperationCounterAndSleep()
         {
             _operationCounter = 0;
-            await Task.Delay(SleepBetweenOpeations);
+            await Task.Delay(NetCycleTimeMs);
         }
     }
 }

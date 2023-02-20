@@ -110,7 +110,7 @@ namespace SteamKit2
             {
                 using var timeoutTokenSource = new CancellationTokenSource( timeout );
                 lock ( netLock )
-                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeoutTokenSource.Token, OnSocketMessage, OnSocketError ).Result;
+                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, OnSocketMessage, OnSocketError ).Result;
             }
             catch ( Exception ex )
             {

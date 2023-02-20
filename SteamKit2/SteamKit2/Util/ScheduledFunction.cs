@@ -3,21 +3,19 @@
  * file 'license.txt', which is part of this source code package.
  */
 
-
-
 using System;
-using System.Threading;
+using SteamKit2.Util;
 
 namespace SteamKit2
 {
     class ScheduledFunction
     {
+        private static GlobalScheduledFunction GlobalScheduling = new();
+
         public TimeSpan Delay { get; set; }
 
         Action func;
-
         bool bStarted;
-        Timer timer;
 
         public ScheduledFunction( Action func )
             : this( func, TimeSpan.FromMilliseconds( -1 ) )
@@ -28,21 +26,20 @@ namespace SteamKit2
         {
             this.func = func;
             this.Delay = delay;
-
-            timer = new Timer( Tick, null, TimeSpan.FromMilliseconds( -1 ), delay );
         }
+
         ~ScheduledFunction()
         {
             Stop();
         }
-
 
         public void Start()
         {
             if ( bStarted )
                 return;
 
-            bStarted = timer.Change( TimeSpan.Zero, Delay );
+            GlobalScheduling.Start( this );
+            bStarted = true;
         }
 
         public void Stop()
@@ -50,11 +47,11 @@ namespace SteamKit2
             if ( !bStarted )
                 return;
 
-            bStarted = !timer.Change( TimeSpan.FromMilliseconds( -1 ), Delay );
+            GlobalScheduling.Stop( this );
+            bStarted = false;
         }
 
-
-        void Tick( object? state )
+        public void InvokeSafe()
         {
             try
             {
