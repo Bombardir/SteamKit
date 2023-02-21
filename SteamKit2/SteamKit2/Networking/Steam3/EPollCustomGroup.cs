@@ -67,8 +67,8 @@ public sealed class EPollCustomGroup<T> where T : class
         ev.data.ptr = (IntPtr) gcHandle;
 
         int rc = _isWindows ?
-            EPoll.Windows.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, ( int )socket.Handle, ref ev ) :
-            EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, ( int )socket.Handle, ref ev );
+            EPoll.Windows.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, (int) socket.Handle, ref ev ) :
+            EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, (int) socket.Handle, ref ev );
 
         if (rc != 0)
         {
@@ -96,7 +96,6 @@ public sealed class EPollCustomGroup<T> where T : class
         return result;
     }
 
-    /*
     public void Modify( Socket socket, EPoll.epoll_events events )
     {
         if (!_socketHandles.TryGetValue(socket.Handle, out var gcHandle))
@@ -110,13 +109,12 @@ public sealed class EPollCustomGroup<T> where T : class
         ev.data.ptr = (IntPtr) gcHandle;
 
         int rc = _isWindows
-            ? EPoll.Windows.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, ( int )socket.Handle, ref ev )
-            : EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, ( int )socket.Handle, ref ev );
+            ? EPoll.Windows.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, (int) socket.Handle, ref ev )
+            : EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, (int) socket.Handle, ref ev );
 
         if ( rc != 0 )
             throw new Exception( $"epoll_ctl modify failed with error code {Marshal.GetLastWin32Error()}" );
     }
-    */
 
     public int Poll(int timeout)
     {

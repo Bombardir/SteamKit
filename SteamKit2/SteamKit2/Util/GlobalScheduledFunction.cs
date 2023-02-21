@@ -14,7 +14,7 @@ internal class GlobalScheduledFunction
     public GlobalScheduledFunction()
     {
         _functionExecutionTimes = new ConcurrentDictionary<ScheduledFunction, DateTime>( 2, 2000 );
-        _scheduleTask = Task.Factory.StartNew( FunctionCycle, TaskCreationOptions.LongRunning );
+        _scheduleTask = Task.Run( FunctionCycle );
     }
 
     public void Start( ScheduledFunction func )

@@ -11,7 +11,8 @@ namespace SteamKit2.Networking.Steam3
 {
     public class GlobalTcpConnectionSocket
     {
-        private const EPoll.epoll_events ListenEPollEvents = EPoll.epoll_events.EPOLLIN | EPoll.epoll_events.EPOLLOUT | EPoll.epoll_events.EPOLLRDHUP | EPoll.epoll_events.EPOLLRDHUP;
+        private const EPoll.epoll_events ListenEPollEvents = EPoll.epoll_events.EPOLLIN | EPoll.epoll_events.EPOLLRDHUP | EPoll.epoll_events.EPOLLRDHUP;
+        private const EPoll.epoll_events ListenAndSendEPollEvents = EPoll.epoll_events.EPOLLIN | EPoll.epoll_events.EPOLLOUT | EPoll.epoll_events.EPOLLRDHUP | EPoll.epoll_events.EPOLLRDHUP;
 
         public const Int32 NetCycleTimeMs = 150;
         public const Int32 MaxOpeationPerCycle = 500;
@@ -68,7 +69,7 @@ namespace SteamKit2.Networking.Steam3
             _log = log;
             _receiveBuffer = System.GC.AllocateArray<byte>( 0x10000, pinned: true );
             _pollGroup = new EPollCustomGroup<SocketHandler>(2500);
-            _listenThread = Task.Factory.StartNew( ListenThreadSafe, TaskCreationOptions.LongRunning );
+            _listenThread = Task.Run( ListenThreadSafe );
         }
 
         public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
@@ -77,7 +78,6 @@ namespace SteamKit2.Networking.Steam3
 
             try
             {
-                socket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
                 socket.Bind( localEndPoint );
                 socket.Blocking = false;
                 socket.ReceiveTimeout = timeout;
@@ -127,7 +127,11 @@ namespace SteamKit2.Networking.Steam3
             if (handler == null)
                 return;
 
-            handler.SendQueue.Enqueue( data );
+            lock ( handler.SendQueue )
+            {
+                handler.SendQueue.Enqueue( data );
+                _pollGroup.Modify( socket, ListenAndSendEPollEvents );
+            }
         }
 
         private async Task ListenThreadSafe()
@@ -151,7 +155,6 @@ namespace SteamKit2.Networking.Steam3
             if ( _pollGroup.IsEmpty() )
                 return true;
             
-
             int polledCount;
 
             try
@@ -238,6 +241,12 @@ namespace SteamKit2.Networking.Steam3
 
                 if (!isBuffetSent)
                     break;
+            }
+
+            lock ( socketHandler.SendQueue )
+            {
+                if (socketHandler.SendQueue.IsEmpty)
+                    _pollGroup.Modify( socketHandler.Socket, ListenEPollEvents );
             }
         }
 
