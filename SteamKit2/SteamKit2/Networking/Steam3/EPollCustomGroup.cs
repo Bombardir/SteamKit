@@ -56,6 +56,9 @@ public sealed class EPollCustomGroup<T> where T : class
             events = events
         };
 
+        if ( _isWindows )
+            ev.events |= EPoll.epoll_events.EPOLLOUT;
+
         var gcHandle = GCHandle.Alloc( handler );
 
         if ( !_socketHandles.TryAdd( socket.Handle, gcHandle ) )
@@ -108,9 +111,17 @@ public sealed class EPollCustomGroup<T> where T : class
 
         ev.data.ptr = (IntPtr) gcHandle;
 
-        int rc = _isWindows
-            ? EPoll.Windows.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, (int) socket.Handle, ref ev )
-            : EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, (int) socket.Handle, ref ev );
+        int rc;
+
+        if ( _isWindows )
+        {
+            // do nothing
+            rc = 0;
+        }
+        else
+        {
+            rc = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, ( int )socket.Handle, ref ev );
+        }
 
         if ( rc != 0 )
             throw new Exception( $"epoll_ctl modify failed with error code {Marshal.GetLastWin32Error()}" );

@@ -312,7 +312,9 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
                         return;
 
                     LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-                    connection?.Disconnect( userInitiated: false );
+
+                    lock ( syncLock )
+                        connection?.Disconnect( userInitiated: false );
                 } );
             }
         }
@@ -338,7 +340,9 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
                 connectionSetupTaskToWait?.Wait();
 
                 // Connection implementations are required to issue the Disconnected callback before Disconnect() returns
-                connection?.Disconnect( userInitiated );
+                lock ( syncLock )
+                    connection?.Disconnect( userInitiated );
+
                 DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was not released in disconnect." );
             }
         }
@@ -506,46 +510,60 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
             throw new ArgumentOutOfRangeException( nameof( protocol ), protocol, "Protocol bitmask has no supported protocols set." );
         }
 
-
         void NetMsgReceived( object? sender, NetMsgEventArgs e )
         {
-            OnClientMsgReceived( GetPacketMsg( e.Data, this ) );
+            lock ( syncLock )
+            {
+                if (!_isConnected)
+                    return;
+                
+                OnClientMsgReceived( GetPacketMsg( e.Data, this ) );
+            }
         }
 
         void Connected( object? sender, EventArgs e )
         {
-            DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object after connecting." );
-            DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
-            Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
+            lock ( syncLock )
+            {
+                if (connection == null)
+                    return;
 
-            IsConnected = true;
-            OnClientConnected();
+                DebugLog.Assert( connection != null, nameof(CMClient), "No connection object after connecting." );
+                DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
+                Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
+                _isConnected = true;
+                OnClientConnected();
+            }
         }
 
         void Disconnected( object? sender, DisconnectedEventArgs e )
         {
-            var connectionRelease = Interlocked.Exchange( ref connection, null );
-            if ( connectionRelease == null )
-                return;
-
-            IsConnected = false;
-
-            if ( !e.UserInitiated && !ExpectDisconnection )
+            lock ( syncLock )
             {
-                DebugLog.Assert( connectionRelease.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
-                Servers.TryMark( connectionRelease.CurrentEndPoint!, connectionRelease.ProtocolTypes, ServerQuality.Bad );
+                if ( connection == null )
+                    return;
+
+                _isConnected = false;
+
+                if ( !e.UserInitiated && !_expectDisconnection )
+                {
+                    DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint while disconnecting - cannot update server list" );
+                    Servers.TryMark( connection.CurrentEndPoint!, connection.ProtocolTypes, ServerQuality.Bad );
+                }
+
+                SessionID = null;
+                SteamID = null;
+
+                connection.NetMsgReceived -= NetMsgReceived;
+                connection.Connected -= Connected;
+                connection.Disconnected -= Disconnected;
+
+                connection = null;
+
+                heartBeatFunc.Stop();
+
+                OnClientDisconnected( userInitiated: e.UserInitiated || _expectDisconnection );
             }
-
-            SessionID = null;
-            SteamID = null;
-
-            connectionRelease.NetMsgReceived -= NetMsgReceived;
-            connectionRelease.Connected -= Connected;
-            connectionRelease.Disconnected -= Disconnected;
-
-            heartBeatFunc.Stop();
-
-            OnClientDisconnected( userInitiated: e.UserInitiated || ExpectDisconnection );
         }
 
         internal static IPacketMsg? GetPacketMsg( byte[] data, ILogContext log )

@@ -12,7 +12,7 @@ using SteamKit2.Networking.Steam3;
 
 namespace SteamKit2
 {
-    class TcpConnection : IConnection
+    public class TcpConnection : IConnection
     {
         public const uint MAGIC = 0x31305456; // "VT01"
 
@@ -85,12 +85,12 @@ namespace SteamKit2
             }
         }
 
-        private void OnSocketError()
+        public void OnSocketError()
         {
             Disconnect( userRequestedDisconnect: false );
         }
 
-        private void OnSocketMessage( byte[] packData )
+        public void OnSocketMessage( byte[] packData )
         {
             try
             {
@@ -110,7 +110,7 @@ namespace SteamKit2
             {
                 using var timeoutTokenSource = new CancellationTokenSource( timeout );
                 lock ( netLock )
-                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, OnSocketMessage, OnSocketError ).Result;
+                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this ).Result;
             }
             catch ( Exception ex )
             {

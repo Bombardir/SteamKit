@@ -137,9 +137,13 @@ namespace SteamKit2
 
         void Handle( ICallbackMsg call )
         {
-            registeredCallbacks
-                .FindAll( callback => callback.CallbackType.IsAssignableFrom( call.GetType() ) ) // find handlers interested in this callback
-                .ForEach( callback => callback.Run( call ) ); // run them
+            var type = call.GetType();
+
+            foreach ( var callback in registeredCallbacks )
+            {
+                if (callback.CallbackType.IsAssignableFrom(type))
+                    callback.Run( call );
+            }
         }
 
         void ICallbackMgrInternals.Unregister( CallbackBase call )

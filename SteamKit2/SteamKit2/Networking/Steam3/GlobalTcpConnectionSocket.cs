@@ -21,9 +21,8 @@ namespace SteamKit2.Networking.Steam3
 
         public class SocketHandler
         {
-            private Action _onSocketError { get; }
-            public Action<byte[]> OnSocketMessage { get; }
             public Socket Socket { get; }
+            public TcpConnection Connection { get; }
             public ConcurrentQueue<byte[]> SendQueue { get; }
 
             public byte[] ReceiveHeaderBuffer;
@@ -36,20 +35,19 @@ namespace SteamKit2.Networking.Steam3
             public int SentBytes;
             public int BytesToSend;
 
-            public SocketHandler( Socket socket, Action<byte[]> onSocketMessage, Action onSocketError )
+            public SocketHandler( Socket socket, TcpConnection connection )
             {
                 Socket = socket;
-                OnSocketMessage = onSocketMessage;
+                Connection = connection;
                 SendQueue = new ConcurrentQueue<byte[]>();
                 ReceiveHeaderBuffer = new byte[ 8 ];
-                _onSocketError = onSocketError;
             }
 
             public void OnSocketErrorSafe(ILogContext log)
             {
                 try
                 {
-                    _onSocketError.Invoke();
+                    Connection.OnSocketError();
                 }
                 catch ( Exception e )
                 {
@@ -72,7 +70,7 @@ namespace SteamKit2.Networking.Steam3
             _listenThread = Task.Run( ListenThreadSafe );
         }
 
-        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, Action<byte[]> onSocketMessage, Action onSocketError)
+        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, TcpConnection connection)
         {
             var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
 
@@ -85,7 +83,7 @@ namespace SteamKit2.Networking.Steam3
 
                 await socket.ConnectAsync( targetEndPoint, token );
 
-                var socketHandler = new SocketHandler( socket, onSocketMessage, onSocketError );
+                var socketHandler = new SocketHandler( socket, connection);
                 _pollGroup.Add( socket, socketHandler, ListenEPollEvents );
 
                 return socket;
@@ -264,6 +262,7 @@ namespace SteamKit2.Networking.Steam3
                     return false;
                 }
 
+                socketHandler.BytesToSend = 0;
                 socketHandler.SendQueue.Clear();
                 throw new SocketException((int) errorCode);
             }
@@ -316,7 +315,7 @@ namespace SteamKit2.Networking.Steam3
 
                 if ( socketHandler.ReceivedDataBytes == socketHandler.ReceiveDataBuffer.Length )
                 {
-                    socketHandler.OnSocketMessage.Invoke( socketHandler.ReceiveDataBuffer );
+                    socketHandler.Connection.OnSocketMessage( socketHandler.ReceiveDataBuffer );
                     socketHandler.ReceiveDataBuffer = null;
                     socketHandler.ReceivedHeaderBytes = 0;
                     socketHandler.ReceivedDataBytes = 0;

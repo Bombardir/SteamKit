@@ -4,7 +4,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using SteamKit2.Internal;
 
@@ -47,17 +46,9 @@ namespace SteamKit2
             public uint? MaxServers { get; set; }
         }
 
-
-        Dictionary<EMsg, Action<IPacketMsg>> dispatchMap;
-
         internal SteamMasterServer()
         {
-            dispatchMap = new Dictionary<EMsg, Action<IPacketMsg>>
-            {
-                { EMsg.GMSClientServerQueryResponse, HandleServerQueryResponse },
-            };
         }
-
 
         /// <summary>
         /// Requests a list of servers from the Steam game master server.
@@ -108,13 +99,12 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof(packetMsg) );
             }
 
-            if ( !dispatchMap.TryGetValue( packetMsg.MsgType, out var handlerFunc ) )
+            switch ( packetMsg.MsgType )
             {
-                // ignore messages that we don't have a handler function for
-                return;
+                case EMsg.GMSClientServerQueryResponse:
+                    HandleServerQueryResponse( packetMsg );
+                    break;
             }
-
-            handlerFunc( packetMsg );
         }
 
 

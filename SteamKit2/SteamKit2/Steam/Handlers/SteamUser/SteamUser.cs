@@ -4,7 +4,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -243,7 +242,6 @@ namespace SteamKit2
             }
         }
 
-
         /// <summary>
         /// Gets the SteamID of this client. This value is assigned after a logon attempt has succeeded.
         /// </summary>
@@ -253,28 +251,9 @@ namespace SteamKit2
             get { return this.Client.SteamID; }
         }
 
-
-        Dictionary<EMsg, Action<IPacketMsg>> dispatchMap;
-
         internal SteamUser()
         {
-            dispatchMap = new Dictionary<EMsg, Action<IPacketMsg>>
-            {
-                { EMsg.ClientLogOnResponse, HandleLogOnResponse },
-                { EMsg.ClientLoggedOff, HandleLoggedOff },
-                { EMsg.ClientNewLoginKey, HandleLoginKey },
-                { EMsg.ClientSessionToken, HandleSessionToken },
-                { EMsg.ClientUpdateMachineAuth, HandleUpdateMachineAuth },
-                { EMsg.ClientAccountInfo, HandleAccountInfo },
-                { EMsg.ClientEmailAddrInfo, HandleEmailAddrInfo },
-                { EMsg.ClientWalletInfoUpdate, HandleWalletInfo },
-                { EMsg.ClientRequestWebAPIAuthenticateUserNonceResponse, HandleWebAPIUserNonce },
-                { EMsg.ClientVanityURLChangedNotification, HandleVanityURLChangedNotification },
-                { EMsg.ClientMarketingMessageUpdate2, HandleMarketingMessageUpdate },
-                { EMsg.ClientPlayingSessionState, HandlePlayingSessionState },
-            };
         }
-
 
         /// <summary>
         /// Logs the client into the Steam3 network.
@@ -502,13 +481,46 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof( packetMsg ) );
             }
 
-            if ( !dispatchMap.TryGetValue( packetMsg.MsgType, out var handlerFunc ) )
-            {
-                // ignore messages that we don't have a handler function for
-                return;
-            }
 
-            handlerFunc( packetMsg );
+            switch ( packetMsg.MsgType )
+            {
+                case EMsg.ClientLogOnResponse:
+                    HandleLogOnResponse( packetMsg );
+                    break;
+                case EMsg.ClientLoggedOff:
+                    HandleLoggedOff( packetMsg );
+                    break;
+                case EMsg.ClientNewLoginKey:
+                    HandleLoginKey( packetMsg );
+                    break;
+                case EMsg.ClientSessionToken:
+                    HandleSessionToken( packetMsg );
+                    break;
+                case EMsg.ClientUpdateMachineAuth:
+                    HandleUpdateMachineAuth( packetMsg );
+                    break;
+                case EMsg.ClientAccountInfo:
+                    HandleAccountInfo( packetMsg );
+                    break;
+                case EMsg.ClientEmailAddrInfo:
+                    HandleEmailAddrInfo( packetMsg );
+                    break;
+                case EMsg.ClientWalletInfoUpdate:
+                    HandleWalletInfo( packetMsg );
+                    break;
+                case EMsg.ClientRequestWebAPIAuthenticateUserNonceResponse:
+                    HandleWebAPIUserNonce( packetMsg );
+                    break;
+                case EMsg.ClientVanityURLChangedNotification:
+                    HandleVanityURLChangedNotification( packetMsg );
+                    break;
+                case EMsg.ClientMarketingMessageUpdate2:
+                    HandleMarketingMessageUpdate( packetMsg );
+                    break;
+                case EMsg.ClientPlayingSessionState:
+                    HandlePlayingSessionState( packetMsg );
+                    break;
+            }
         }
 
 

@@ -3,12 +3,8 @@
  * file 'license.txt', which is part of this source code package.
  */
 
-
-
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -23,15 +19,13 @@ namespace SteamKit2
     /// </summary>
     public sealed partial class SteamClient : CMClient
     {
-        OrderedDictionary handlers;
+        readonly List<ClientMsgHandler> handlers;
 
         long currentJobId = 0;
         DateTime processStartTime;
 
-        object callbackLock = new object();
-        Queue<ICallbackMsg> callbackQueue;
-
-        Dictionary<EMsg, Action<IPacketMsg>> dispatchMap;
+        readonly object callbackLock = new object();
+        readonly Queue<ICallbackMsg> callbackQueue;
 
         internal AsyncJobManager jobManager;
 
@@ -72,44 +66,33 @@ namespace SteamKit2
         public SteamClient( SteamConfiguration configuration, string identifier )
             : base( configuration, identifier )
         {
-            callbackQueue = new Queue<ICallbackMsg>();
+            callbackQueue = new Queue<ICallbackMsg>(8);
 
-            this.handlers = new OrderedDictionary();
+            this.handlers = new List<ClientMsgHandler>(4);
 
             // Start calculating machine info so that it is (hopefully) ready by the time we get to logging in.
             HardwareUtils.Init( configuration.MachineInfoProvider );
 
             // add this library's handlers
             // notice: SteamFriends should be added before SteamUser due to AccountInfoCallback
-            this.AddHandler( new SteamFriends() );
+            //this.AddHandler( new SteamFriends() );
             this.AddHandler( new SteamUser() );
-            this.AddHandler( new SteamApps() );
-            this.AddHandler( new SteamGameCoordinator() );
-            this.AddHandler( new SteamUserStats() );
+            //this.AddHandler( new SteamApps() );
+            //this.AddHandler( new SteamGameCoordinator() );
+            //this.AddHandler( new SteamUserStats() );
             this.AddHandler( new SteamMasterServer() );
-            this.AddHandler( new SteamCloud() );
-            this.AddHandler( new SteamWorkshop() );
-            this.AddHandler( new SteamTrading() );
-            this.AddHandler( new SteamUnifiedMessages() );
-            this.AddHandler( new SteamScreenshots() );
-            this.AddHandler( new SteamMatchmaking() );
-            this.AddHandler( new SteamNetworking() );
-            this.AddHandler( new SteamContent() );
+            //this.AddHandler( new SteamCloud() );
+            //this.AddHandler( new SteamWorkshop() );
+            //this.AddHandler( new SteamTrading() );
+            //this.AddHandler( new SteamUnifiedMessages() );
+            //this.AddHandler( new SteamScreenshots() );
+            //this.AddHandler( new SteamMatchmaking() );
+            //this.AddHandler( new SteamNetworking() );
+            //this.AddHandler( new SteamContent() );
 
             using ( var process = Process.GetCurrentProcess() )
-            {
                 this.processStartTime = process.StartTime;
-            }
-
-            dispatchMap = new Dictionary<EMsg, Action<IPacketMsg>>
-            {
-                { EMsg.ClientCMList, HandleCMList },
-
-                // to support asyncjob life time
-                { EMsg.JobHeartbeat, HandleJobHeartbeat },
-                { EMsg.DestJobFailed, HandleJobFailed },
-            };
-
+            
             jobManager = new AsyncJobManager();
         }
 
@@ -127,14 +110,14 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof( handler ) );
             }
 
-            if ( handlers.Contains( handler.GetType() ) )
+            if ( handlers.Exists( hand => hand.GetType() == handler.GetType() ) )
             {
                 throw new InvalidOperationException( string.Format( "A handler of type \"{0}\" is already registered.", handler.GetType() ) );
 
             }
 
             handler.Setup( this );
-            handlers[ handler.GetType() ] = handler;
+            handlers.Add( handler );
         }
 
         /// <summary>
@@ -143,7 +126,7 @@ namespace SteamKit2
         /// <param name="handler">The handler name to remove.</param>
         public void RemoveHandler( Type handler )
         {
-            handlers.Remove( handler );
+            handlers.RemoveAll( hand => hand.GetType() == handler );
         }
         /// <summary>
         /// Removes a registered handler.
@@ -164,14 +147,8 @@ namespace SteamKit2
         public T? GetHandler<T>()
             where T : ClientMsgHandler
         {
-            Type type = typeof( T );
-
-            if ( handlers.Contains( type ) )
-            {
-                return handlers[ type ] as T;
-            }
-
-            return null;
+            Type type = typeof(T);
+            return handlers.Find( hand => hand.GetType() == type ) as T;
         }
         #endregion
 
@@ -363,31 +340,35 @@ namespace SteamKit2
                 return false;
             }
 
-            if ( dispatchMap.TryGetValue( packetMsg.MsgType, out var handlerFunc ) )
+            switch ( packetMsg.MsgType )
             {
-                // we want to handle some of the clientmsgs before we pass them along to registered handlers
-                handlerFunc( packetMsg );
+                case EMsg.ClientCMList:
+                    HandleCMList( packetMsg );
+                    break;
+                case EMsg.JobHeartbeat:
+                    HandleJobHeartbeat( packetMsg );
+                    break;
+                case EMsg.DestJobFailed:
+                    HandleJobFailed( packetMsg );
+                    break;
             }
 
             // pass along the clientmsg to all registered handlers
-            foreach ( DictionaryEntry kvp in handlers )
+            foreach ( var handler in handlers )
             {
-                var key = (Type) kvp.Key;
-                var value = (ClientMsgHandler) kvp.Value!;
-
                 try
                 {
-                    value.HandleMsg( packetMsg );
+                    handler.HandleMsg( packetMsg );
                 }
                 catch ( ProtoException ex )
                 {
-                    LogDebug( nameof( SteamClient ), $"'{key.Name}' handler failed to (de)serialize a protobuf: {ex}" );
+                    LogDebug( nameof( SteamClient ), $"'{handler.GetType().Name}' handler failed to (de)serialize a protobuf: {ex}" );
                     Disconnect( userInitiated: false );
                     return false;
                 }
                 catch ( Exception ex )
                 {
-                    LogDebug( nameof( SteamClient ), $"Unhandled exception from '{key.Name}' handler: {ex}" );
+                    LogDebug( nameof( SteamClient ), $"Unhandled exception from '{handler.GetType().Name}' handler: {ex}" );
                     Disconnect( userInitiated: false );
                     return false;
                 }
