@@ -222,13 +222,9 @@ namespace SteamKit2.Networking.Steam3
             {
                 socketHandler.SentBytes = 0;
                 socketHandler.BytesToSend = data.Length + 8;
+                socketHandler.SendBuffer = new byte[ socketHandler.BytesToSend ];
 
-                if ( socketHandler.SendBuffer == null || socketHandler.SendBuffer.Length < socketHandler.BytesToSend )
-                {
-                    socketHandler.SendBuffer = new byte[ socketHandler.BytesToSend ];
-                    BinaryPrimitives.WriteUInt32LittleEndian( socketHandler.SendBuffer.AsSpan( 4 ), TcpConnection.MAGIC );
-                }
-
+                BinaryPrimitives.WriteUInt32LittleEndian( socketHandler.SendBuffer.AsSpan( 4 ), TcpConnection.MAGIC );
                 BinaryPrimitives.WriteUInt32LittleEndian( socketHandler.SendBuffer, ( uint )data.Length );
 
                 data.CopyTo( socketHandler.SendBuffer, 8 );
@@ -263,14 +259,20 @@ namespace SteamKit2.Networking.Steam3
                 }
 
                 socketHandler.BytesToSend = 0;
+                socketHandler.SendBuffer = null;
                 socketHandler.SendQueue.Clear();
+
                 throw new SocketException((int) errorCode);
             }
 
             socketHandler.SentBytes += sentBytes;
             socketHandler.BytesToSend -= sentBytes;
 
-            return socketHandler.BytesToSend <= 0;
+            if ( socketHandler.BytesToSend > 0 )
+                return false;
+
+            socketHandler.SendBuffer = null;
+            return true;
         }
 
         private static bool IsBlockingSocketErrorCode(SocketError error) => error is SocketError.AlreadyInProgress or SocketError.WouldBlock;
