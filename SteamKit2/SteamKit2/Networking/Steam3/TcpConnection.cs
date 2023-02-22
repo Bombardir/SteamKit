@@ -23,17 +23,16 @@ namespace SteamKit2
             _globalTcpConnection = new GlobalTcpConnectionSocket( new DebugLogContext() );
         }
 
-        private readonly EndPoint _localEndPoint;
         private ILogContext log;
-        private Socket? socket;
-        private Task? _disconnectTask;
-        private readonly object netLock;
+
+        private readonly EndPoint _localEndPoint;
+        private volatile Socket? socket;
+        private volatile Task? _disconnectTask;
 
         public TcpConnection(EndPoint localEndPoint, ILogContext log)
         {
             _localEndPoint = localEndPoint;
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
-            netLock = new object();
         }
 
         public event EventHandler<NetMsgEventArgs>? NetMsgReceived;
@@ -48,15 +47,12 @@ namespace SteamKit2
 
         public void Disconnect( bool userRequestedDisconnect )
         {
-            lock ( netLock )
-            {
-                if ( socket != null )
-                    _disconnectTask = _globalTcpConnection.StopSocketAsync( socket );
+            var socketToDisconnect = Interlocked.Exchange( ref socket, null );
 
-                socket = null;
+            if ( socketToDisconnect != null )
+                _disconnectTask = _globalTcpConnection.StopSocketAsync( socketToDisconnect );
 
-                Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
-            }
+            Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
         }
 
         private void ConnectCompleted(bool success)
@@ -85,18 +81,14 @@ namespace SteamKit2
 
         public void OnSocketError()
         {
-            Disconnect( userRequestedDisconnect: false );
+            Disconnect(userRequestedDisconnect: false);
         }
 
         public void OnSocketMessage( byte[] packData )
         {
             try
             {
-                lock ( netLock )
-                {
-                    if (socket != null)
-                        NetMsgReceived?.Invoke( this, new NetMsgEventArgs( packData, CurrentEndPoint! ) );
-                }
+                NetMsgReceived?.Invoke( this, new NetMsgEventArgs( packData, CurrentEndPoint! ) );
             }
             catch ( Exception ex )
             {
@@ -104,15 +96,14 @@ namespace SteamKit2
             }
         }
 
-        private void TryConnect(int timeout)
+        private async Task TryConnect(int timeout)
         {
             DebugLog.Assert( CurrentEndPoint != null, nameof( TcpConnection ), "CurrentEndPoint should be non-null when connecting." );
 
             try
             {
                 using var timeoutTokenSource = new CancellationTokenSource( timeout );
-                lock ( netLock )
-                    socket = _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this ).Result;
+                socket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
             }
             catch ( Exception ex )
             {
@@ -127,53 +118,44 @@ namespace SteamKit2
         /// </summary>
         /// <param name="endPoint">The end point to connect to.</param>
         /// <param name="timeout">Timeout in milliseconds</param>
-        public void Connect(EndPoint endPoint, int timeout)
+        public async Task Connect(EndPoint endPoint, int timeout)
         {
-            lock ( netLock )
+            try
             {
-                try
-                {
-                    _disconnectTask?.Wait();
-                }
-                catch ( Exception ex )
-                {
-                    log.LogDebug( nameof( TcpConnection ), "Socket {0} disconnect ended with exception: {1}", CurrentEndPoint, ex );
-                }
-
-                CurrentEndPoint = endPoint;
-
-                log.LogDebug( nameof( TcpConnection ), "Connecting to {0}...", CurrentEndPoint );
-                TryConnect( timeout );
+                _disconnectTask?.Wait();
             }
+            catch ( Exception ex )
+            {
+                log.LogDebug( nameof( TcpConnection ), "Socket {0} disconnect ended with exception: {1}", CurrentEndPoint, ex );
+            }
+
+            CurrentEndPoint = endPoint;
+
+            log.LogDebug( nameof( TcpConnection ), "Connecting to {0}...", CurrentEndPoint );
+            await TryConnect( timeout );
         }
 
         public void Send( byte[] data )
         {
-            lock ( netLock )
+            if ( socket is not { Connected: true } )
             {
-                if (socket is not {Connected: true})
-                {
-                    log.LogDebug( nameof( TcpConnection ), "Attempting to send client data when not connected." );
-                    return;
-                }
-
-                _globalTcpConnection.Send( socket, data );
+                log.LogDebug( nameof( TcpConnection ), "Attempting to send client data when not connected." );
+                return;
             }
+
+            _globalTcpConnection.Send( socket, data );
         }
 
         public IPAddress GetLocalIP()
         {
-            lock (netLock)
+            try
             {
-                try
-                {
-                    return socket == null ? IPAddress.None : NetHelpers.GetLocalIP(socket);
-                }
-                catch (Exception ex)
-                {
-                    log.LogDebug( nameof( TcpConnection ), "Socket exception trying to read bound IP: {0}", ex );
-                    return IPAddress.None;
-                }
+                return socket == null ? IPAddress.None : NetHelpers.GetLocalIP( socket );
+            }
+            catch ( Exception ex )
+            {
+                log.LogDebug( nameof( TcpConnection ), "Socket exception trying to read bound IP: {0}", ex );
+                return IPAddress.None;
             }
         }
     }

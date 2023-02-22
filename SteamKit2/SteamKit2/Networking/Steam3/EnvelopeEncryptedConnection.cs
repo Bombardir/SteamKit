@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Threading.Tasks;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -35,7 +36,7 @@ namespace SteamKit2
 
         public event EventHandler<DisconnectedEventArgs>? Disconnected;
 
-        public void Connect( EndPoint endPoint, int timeout = 5000 )
+        public Task Connect( EndPoint endPoint, int timeout = 5000 )
             => inner.Connect( endPoint, timeout );
 
         public void Disconnect( bool userInitiated )

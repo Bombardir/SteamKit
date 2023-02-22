@@ -23,7 +23,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectQuota = new( 8, 8 );
+        private static SemaphoreSlim GlobalConnectQuota = new( 64, 64 );
 
         /// <summary>
         /// The configuration for this client.
@@ -288,7 +288,7 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
                     try
                     {
-                        newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
                     }
                     finally
                     {

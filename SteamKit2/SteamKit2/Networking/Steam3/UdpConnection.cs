@@ -11,6 +11,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -119,7 +120,7 @@ namespace SteamKit2
         /// </summary>
         /// <param name="endPoint">The endPoint to connect to</param>
         /// <param name="timeout">Timeout in milliseconds</param>
-        public void Connect( EndPoint endPoint, int timeout )
+        public Task Connect( EndPoint endPoint, int timeout )
         {
             outPackets.Clear();
             inPackets.Clear();
@@ -140,6 +141,8 @@ namespace SteamKit2
                 Name = "SK2-UdpConn"
             };
             netThread.Start(endPoint);
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

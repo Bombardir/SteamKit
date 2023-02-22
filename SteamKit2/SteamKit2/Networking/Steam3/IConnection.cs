@@ -39,7 +39,7 @@ namespace SteamKit2
         /// </summary>
         /// <param name="endPoint">The end point to connect to.</param>
         /// <param name="timeout">Timeout in milliseconds</param>
-        void Connect( EndPoint endPoint, int timeout = 5000 );
+        Task Connect( EndPoint endPoint, int timeout = 5000 );
         /// <summary>
         /// Disconnects this instance.
         /// </summary>

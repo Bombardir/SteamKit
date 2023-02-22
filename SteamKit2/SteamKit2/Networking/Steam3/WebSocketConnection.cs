@@ -25,7 +25,7 @@ namespace SteamKit2
         public EndPoint? CurrentEndPoint { get; set; }
         public ProtocolTypes ProtocolTypes => ProtocolTypes.WebSocket;
 
-        public void Connect( EndPoint endPoint, int timeout = 5000 )
+        public Task Connect( EndPoint endPoint, int timeout = 5000 )
         {
             var newContext = new WebSocketContext(this, endPoint);
             var oldContext = Interlocked.Exchange(ref currentContext, newContext);
@@ -38,6 +38,8 @@ namespace SteamKit2
 
             CurrentEndPoint = newContext.EndPoint;
             newContext.Start(TimeSpan.FromMilliseconds(timeout));
+
+            return Task.CompletedTask;
         }
 
         public void Disconnect(bool userInitiated)
