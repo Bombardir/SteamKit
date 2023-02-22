@@ -315,6 +315,10 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
                     lock ( syncLock )
                         connection?.Disconnect( userInitiated: false );
+                } )
+                .ContinueWith( t =>
+                {
+                    _ = Interlocked.Exchange( ref connectionSetupTask, null );
                 } );
             }
         }
