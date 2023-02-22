@@ -54,9 +54,9 @@ namespace SteamKit2
                     _disconnectTask = _globalTcpConnection.StopSocketAsync( socket );
 
                 socket = null;
-            }
 
-            Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
+                Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
+            }
         }
 
         private void ConnectCompleted(bool success)
@@ -73,9 +73,7 @@ namespace SteamKit2
 
             try
             {
-                lock ( netLock )
-                    CurrentEndPoint = socket!.RemoteEndPoint;
-
+                CurrentEndPoint = socket!.RemoteEndPoint;
                 Connected?.Invoke( this, EventArgs.Empty );
             }
             catch ( Exception ex )
@@ -94,7 +92,11 @@ namespace SteamKit2
         {
             try
             {
-                NetMsgReceived?.Invoke( this, new NetMsgEventArgs( packData, CurrentEndPoint! ) );
+                lock ( netLock )
+                {
+                    if (socket != null)
+                        NetMsgReceived?.Invoke( this, new NetMsgEventArgs( packData, CurrentEndPoint! ) );
+                }
             }
             catch ( Exception ex )
             {

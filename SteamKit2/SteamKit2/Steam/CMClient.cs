@@ -208,7 +208,7 @@ public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
         {
             lock ( syncLock )
             {
-                return !IsConnected && connection != null;
+                return !_isConnected && connection != null;
             }
         }
          
