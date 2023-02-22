@@ -23,7 +23,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectQuota = new( 64, 64 );
+        private static SemaphoreSlim GlobalConnectQuota = new( 32, 32 );
 
         /// <summary>
         /// The configuration for this client.
@@ -140,13 +140,13 @@ namespace SteamKit2.Internal
             }
         }
 
-/// <summary>
-/// Gets or sets the connection timeout used when connecting to the Steam server.
-/// </summary>
-/// <value>
-/// The connection timeout.
-/// </value>
-public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
+        /// <summary>
+        /// Gets or sets the connection timeout used when connecting to the Steam server.
+        /// </summary>
+        /// <value>
+        /// The connection timeout.
+        /// </value>
+        public TimeSpan ConnectionTimeout => Configuration.ConnectionTimeout;
 
         /// <summary>
         /// Gets or sets the network listening interface. Use this for debugging only.

@@ -99,24 +99,22 @@ namespace SteamKit2.Networking.Steam3
         {
             var socketHandler = _pollGroup.Remove( socket );
             socketHandler?.SendQueue.Clear();
+            var disconnectTask = Task.CompletedTask;
 
             if ( socket.Connected )
             {
                 try
                 {
                     socket.Shutdown( SocketShutdown.Both );
-                    return socket.DisconnectAsync( false )
-                        .AsTask()
-                        .ContinueWith( _ => socket.Dispose() );
+                    disconnectTask = socket.DisconnectAsync( false ).AsTask();
                 }
                 catch ( Exception e )
                 {
                     // Empty
                 }
             }
-
-            socket.Dispose();
-            return Task.CompletedTask;
+            
+            return disconnectTask.ContinueWith( _ => socket.Dispose() );
         }
 
         public void Send( Socket socket, byte[] data )
