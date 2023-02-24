@@ -44,13 +44,27 @@ namespace SteamKit2.Internal
         /// Returns the local IP of this client.
         /// </summary>
         /// <returns>The local IP.</returns>
-        public IPAddress? LocalIP => connection?.GetLocalIP();
+        public IPAddress? LocalIP
+        {
+            get
+            {
+                lock ( syncLock )
+                    return connection?.GetLocalIP();
+            }
+        }
 
         /// <summary>
         /// Returns the current endpoint this client is connected to.
         /// </summary>
         /// <returns>The current endpoint.</returns>
-        public EndPoint? CurrentEndPoint => connection?.CurrentEndPoint;
+        public EndPoint? CurrentEndPoint
+        {
+            get
+            {
+                lock ( syncLock )
+                    return connection?.CurrentEndPoint;
+            }
+        }
 
         /// <summary>
         /// Gets the public IP address of this client. This value is assigned after a logon attempt has succeeded.
@@ -174,7 +188,7 @@ namespace SteamKit2.Internal
 
         CancellationTokenSource? connectionCancellation;
         Task? connectionSetupTask;
-        volatile IConnection? connection;
+        IConnection? connection;
         private bool _isConnected;
         private SteamID? _steamId;
         private int? _sessionId;
@@ -207,9 +221,7 @@ namespace SteamKit2.Internal
         public bool IsConnecting()
         {
             lock ( syncLock )
-            {
                 return !_isConnected && connection != null;
-            }
         }
          
         /// <summary>
@@ -275,10 +287,13 @@ namespace SteamKit2.Internal
                         return;
                     }
 
-                    var newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+                    IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
 
-                    var connectionRelease = Interlocked.Exchange( ref connection, newConnection );
-                    DebugLog.Assert( connectionRelease == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                    lock ( syncLock )
+                    {
+                        DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                        connection = newConnection;
+                    }
 
                     newConnection.NetMsgReceived += NetMsgReceived;
                     newConnection.Connected += Connected;
@@ -308,13 +323,15 @@ namespace SteamKit2.Internal
 
                     await Task.Delay( ConnectionTimeout, token );
 
-                    if ( IsConnected )
-                        return;
-
-                    LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-
                     lock ( syncLock )
-                        connection?.Disconnect( userInitiated: false );
+                    {
+                        if (connection == null || _isConnected)
+                            return;
+
+                        LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
+
+                        connection.Disconnect( userInitiated: false );
+                    }
                 } )
                 .ContinueWith( t =>
                 {
@@ -345,9 +362,10 @@ namespace SteamKit2.Internal
 
                 // Connection implementations are required to issue the Disconnected callback before Disconnect() returns
                 lock ( syncLock )
+                {
                     connection?.Disconnect( userInitiated );
-
-                DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was not released in disconnect." );
+                    DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was not released in disconnect." );
+                }
             }
         }
 
@@ -396,7 +414,8 @@ namespace SteamKit2.Internal
 
             try
             {
-                connection?.Send( serialized );
+                lock ( syncLock )
+                    connection?.Send( serialized );
             }
             catch ( IOException )
             {
@@ -686,9 +705,10 @@ namespace SteamKit2.Internal
             }
             else if ( logonResult == EResult.TryAnotherCM || logonResult == EResult.ServiceUnavailable )
             {
-                if ( connection?.CurrentEndPoint != null )
+                lock ( syncLock )
                 {
-                    Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
+                    if ( connection?.CurrentEndPoint != null )
+                        Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
                 }
             }
         }
@@ -710,9 +730,12 @@ namespace SteamKit2.Internal
 
                 if ( logoffResult == EResult.TryAnotherCM || logoffResult == EResult.ServiceUnavailable )
                 {
-                    DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object during ClientLoggedOff." );
-                    DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint during ClientLoggedOff - cannot update server list status" );
-                    Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
+                    lock ( syncLock )
+                    {
+                        DebugLog.Assert( connection != null, nameof(CMClient), "No connection object during ClientLoggedOff." );
+                        DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint during ClientLoggedOff - cannot update server list status" );
+                        Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
+                    }
                 }
             }
         }
