@@ -215,7 +215,7 @@ namespace SteamKit2
         /// </returns>
         public override byte[] Serialize()
         {
-            using MemoryStream ms = new SharedArrayMemoryStream();
+            using MemoryStream ms = new MemoryStream();
             Header.Serialize( ms );
             Serializer.Serialize( ms, Body );
             Payload.WriteTo( ms );
@@ -378,7 +378,7 @@ namespace SteamKit2
         /// </returns>
         public override byte[] Serialize()
         {
-            using MemoryStream ms = new SharedArrayMemoryStream();
+            using MemoryStream ms = new MemoryStream();
             Header.Serialize( ms );
             Body.Serialize( ms );
             Payload.WriteTo( ms );
@@ -533,7 +533,7 @@ namespace SteamKit2
         /// </returns>
         public override byte[] Serialize()
         {
-            using MemoryStream ms = new SharedArrayMemoryStream();
+            using MemoryStream ms = new MemoryStream();
             Header.Serialize( ms );
             Body.Serialize( ms );
             Payload.WriteTo( ms );

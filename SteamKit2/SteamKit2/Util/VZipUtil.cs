@@ -67,7 +67,7 @@ namespace SteamKit2
 
         public static byte[] Compress(byte[] buffer)
         {
-            using (MemoryStream ms = new SharedArrayMemoryStream())
+            using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(ms))
             {
                 byte[] crc = CryptoHelper.CRCHash(buffer);

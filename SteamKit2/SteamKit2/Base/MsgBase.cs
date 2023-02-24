@@ -85,9 +85,10 @@ namespace SteamKit2
         /// <summary>
         /// Initializes a new instance of the <see cref="MsgBase"/> class.
         /// </summary>
-        public MsgBase()
+        /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
+        public MsgBase( int payloadReserve = 0 )
         {
-            Payload = new SharedArrayMemoryStream();
+            Payload = new MemoryStream( payloadReserve );
             reader = new BinaryReader( Payload );
             writer = new BinaryWriter( Payload );
         }
@@ -494,7 +495,7 @@ namespace SteamKit2
         /// </summary>
         /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
         public MsgBase( int payloadReserve = 0 )
-            : base()
+            : base( payloadReserve )
         {
             Header = new THeader();
         }

@@ -360,7 +360,7 @@ namespace SteamKit2
                     }
                 }
 
-                using var ms = new SharedArrayMemoryStream();
+                using var ms = new MemoryStream();
                 keyValue.SaveToStream( ms, true );
                 return ms.ToArray();
             }

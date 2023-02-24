@@ -6,7 +6,6 @@
 
 
 using System;
-using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -116,7 +115,7 @@ namespace SteamKit2
                 aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateEncryptor( key, iv ) )
-                using ( var ms = new SharedArrayMemoryStream() )
+                using ( var ms = new MemoryStream() )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Write ) )
                 {
                     cs.Write( input, 0, input.Length );
@@ -215,17 +214,19 @@ namespace SteamKit2
                 aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateEncryptor( key, iv ) )
-                using ( var ms = new SharedArrayMemoryStream() )
+                using ( var ms = new MemoryStream() )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Write ) )
                 {
                     cs.Write( input, 0, input.Length );
                     cs.FlushFinalBlock();
 
+                    var cipherText = ms.ToArray();
+
                     // final output is 16 byte ecb crypted IV + cbc crypted plaintext
-                    var output = new byte[ cryptedIv.Length + ms.Length ];
+                    var output = new byte[ cryptedIv.Length + cipherText.Length ];
 
                     Array.Copy( cryptedIv, 0, output, 0, cryptedIv.Length );
-                    Array.Copy( ms.GetBuffer(), 0, output, cryptedIv.Length, ms.Length );
+                    Array.Copy( cipherText, 0, output, cryptedIv.Length, cipherText.Length );
 
                     return output;
                 }
@@ -247,17 +248,8 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof(key) );
             }
 
-            var iv = ArrayPool<byte>.Shared.Rent( 16 );
-
-            try
-            {
-                GenerateRandomBlock( iv, 0, 16 );
-                return SymmetricEncryptWithIV( input, key, iv );
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return( iv );
-            }
+            var iv = GenerateRandomBlock( 16 );
+            return SymmetricEncryptWithIV( input, key, iv );
         }
 
         /// <summary>
@@ -281,28 +273,22 @@ namespace SteamKit2
             }
 
             // IV is HMAC-SHA1(Random(3) + Plaintext) + Random(3). (Same random values for both)
-            var iv = ArrayPool<byte>.Shared.Rent( 16 );
-            try
+            var iv = new byte[ 16 ];
+            var random = GenerateRandomBlock( 3 );
+            Array.Copy( random, 0, iv, iv.Length - random.Length, random.Length );
+
+            using ( var hmac = new HMACSHA1( hmacSecret ) )
+            using ( var ms = new MemoryStream() )
             {
-                GenerateRandomBlock( iv, iv.Length - 3, 3 );
+                ms.Write( random, 0, random.Length );
+                ms.Write( input, 0, input.Length );
+                ms.Seek( 0, SeekOrigin.Begin );
 
-                using ( var hmac = new HMACSHA1( hmacSecret ) )
-                using ( var ms = new SharedArrayMemoryStream() )
-                {
-                    ms.Write( iv, iv.Length - 3, 3 );
-                    ms.Write( input, 0, input.Length );
-                    ms.Seek( 0, SeekOrigin.Begin );
-
-                    var hash = hmac.ComputeHash( ms );
-                    Array.Copy( hash, iv, iv.Length - 3 );
-                }
-
-                return SymmetricEncryptWithIV( input, key, iv );
+                var hash = hmac.ComputeHash( ms );
+                Array.Copy( hash, iv, iv.Length - random.Length );
             }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return( iv );
-            }
+            
+            return SymmetricEncryptWithIV( input, key, iv );
         }
 
         /// <summary>
@@ -344,26 +330,15 @@ namespace SteamKit2
             }
 
             DebugLog.Assert( key.Length >= 16, "CryptoHelper", "SymmetricDecryptHMACIV used with a key smaller than 16 bytes." );
+            var truncatedKeyForHmac = new byte[ 16 ];
+            Array.Copy( key, 0, truncatedKeyForHmac, 0, truncatedKeyForHmac.Length );
 
-            byte[]? plaintextData;
-            byte[]? iv;
-            var truncatedKeyForHmac = ArrayPool<byte>.Shared.Rent( 16 );
+            var plaintextData = SymmetricDecrypt( input, key, out var iv );
 
-            try
-            {
-                Array.Copy( key, 0, truncatedKeyForHmac, 0, truncatedKeyForHmac.Length );
-                plaintextData = SymmetricDecrypt( input, key, out iv );
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return( truncatedKeyForHmac );
-            }
-
-#if DEBUG
             // validate HMAC
             byte[] hmacBytes;
             using ( var hmac = new HMACSHA1( hmacSecret ) )
-            using ( var ms = new SharedArrayMemoryStream() )
+            using ( var ms = new MemoryStream() )
             {
                 ms.Write( iv, iv.Length - 3, 3 );
                 ms.Write( plaintextData, 0, plaintextData.Length );
@@ -374,10 +349,9 @@ namespace SteamKit2
 
             if ( !hmacBytes.Take( iv.Length - 3 ).SequenceEqual( iv.Take( iv.Length - 3 ) ) )
             {
-                throw new CryptographicException( string.Format( CultureInfo.InvariantCulture, "{0} was unable to decrypt packet: HMAC from server did not match computed HMAC.", nameof( NetFilterEncryption ) ) );
+                throw new CryptographicException( string.Format( CultureInfo.InvariantCulture, "{0} was unable to decrypt packet: HMAC from server did not match computed HMAC.", nameof(NetFilterEncryption) ) );
             }
-#endif
-            
+
             return plaintextData;
         }
 
@@ -403,11 +377,14 @@ namespace SteamKit2
                 aes.BlockSize = 128;
                 aes.KeySize = 256;
 
-                // first 16 bytes of input is the ECB encrypted IV\
-                const int cryptedIvLength = 16;
+                // first 16 bytes of input is the ECB encrypted IV
+                byte[] cryptedIv = new byte[ 16 ];
+                iv = new byte[ cryptedIv.Length ];
+                Array.Copy( input, 0, cryptedIv, 0, cryptedIv.Length );
 
                 // the rest is ciphertext
-                var cipherTextLen = input.Length - cryptedIvLength;
+                byte[] cipherText = new byte[ input.Length - cryptedIv.Length ];
+                Array.Copy( input, cryptedIv.Length, cipherText, 0, cipherText.Length );
 
                 // decrypt the IV using ECB
                 aes.Mode = CipherMode.ECB;
@@ -415,7 +392,7 @@ namespace SteamKit2
 
                 using ( var aesTransform = aes.CreateDecryptor( key, null ) )
                 {
-                    iv = aesTransform.TransformFinalBlock( input, 0, cryptedIvLength );
+                    iv = aesTransform.TransformFinalBlock( cryptedIv, 0, cryptedIv.Length );
                 }
 
                 // decrypt the remaining ciphertext in cbc with the decrypted IV
@@ -423,23 +400,18 @@ namespace SteamKit2
                 aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateDecryptor( key, iv ) )
-                using ( var ms = new MemoryStream( input, cryptedIvLength, cipherTextLen ) )
+                using ( var ms = new MemoryStream( cipherText ) )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Read ) )
                 {
                     // plaintext is never longer than ciphertext
-                    byte[] plaintext = ArrayPool<byte>.Shared.Rent(cipherTextLen);
+                    byte[] plaintext = new byte[ cipherText.Length ];
 
-                    try
-                    {
-                        int len = cs.ReadAll( plaintext );
-                        byte[] output = new byte[ len ];
-                        Array.Copy( plaintext, 0, output, 0, len );
-                        return output;
-                    }
-                    finally
-                    {
-                        ArrayPool<byte>.Shared.Return( plaintext );
-                    }
+                    int len = cs.ReadAll( plaintext );
+
+                    byte[] output = new byte[ len ];
+                    Array.Copy( plaintext, 0, output, 0, len );
+
+                    return output;
                 }
             }
         }
@@ -556,15 +528,14 @@ namespace SteamKit2
         /// </summary>
         public static byte[] GenerateRandomBlock( int size )
         {
-            var block = new byte[ size ];
-            GenerateRandomBlock( block, offset: 0, count: size );
-            return block;
-        }
+            using ( var rng = RandomNumberGenerator.Create() )
+            {
+                var block = new byte[ size ];
 
-        public static void GenerateRandomBlock( byte[] buffer, int offset, int count )
-        {
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes( buffer, offset, count );
+                rng.GetBytes( block );
+
+                return block;
+            }
         }
     }
 }
