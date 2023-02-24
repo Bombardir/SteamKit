@@ -649,8 +649,7 @@ namespace SteamKit2.Internal
                 {
                     using var compressedStream = new MemoryStream( payload );
                     using var gzipStream = new GZipStream( compressedStream, CompressionMode.Decompress );
-                    using var decompressedStream = new MemoryStream();
-                    gzipStream.CopyTo( decompressedStream );
+                    using var decompressedStream = new SharedArrayMemoryStream();
                     payload = decompressedStream.ToArray();
                 }
                 catch ( Exception ex )

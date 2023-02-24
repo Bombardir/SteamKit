@@ -127,14 +127,13 @@ namespace SteamKit2.GC
         /// </returns>
         public override byte[] Serialize()
         {
-            using ( MemoryStream ms = new MemoryStream() )
-            {
-                Header.Serialize( ms );
-                Serializer.Serialize( ms, Body );
-                Payload.WriteTo( ms );
+            using MemoryStream ms = new SharedArrayMemoryStream();
 
-                return ms.ToArray();
-            }
+            Header.Serialize( ms );
+            Serializer.Serialize( ms, Body );
+            Payload.WriteTo( ms );
+
+            return ms.ToArray();
         }
         /// <summary>
         /// Initializes this gc message by deserializing the specified data.
@@ -273,14 +272,12 @@ namespace SteamKit2.GC
         /// </returns>
         public override byte[] Serialize()
         {
-            using ( MemoryStream ms = new MemoryStream() )
-            {
-                Header.Serialize( ms );
-                Body.Serialize( ms );
-                Payload.WriteTo( ms );
+            using MemoryStream ms = new SharedArrayMemoryStream();
+            Header.Serialize( ms );
+            Body.Serialize( ms );
+            Payload.WriteTo( ms );
 
-                return ms.ToArray();
-            }
+            return ms.ToArray();
         }
         /// <summary>
         /// Initializes this gc message by deserializing the specified data.
