@@ -364,7 +364,7 @@ namespace SteamKit2
 
             MachineID machineId = generateTask.Result;
 
-            using MemoryStream ms = new MemoryStream();
+            using MemoryStream ms = new SharedArrayMemoryStream();
             machineId.WriteToStream( ms );
             return ms.ToArray();
         }

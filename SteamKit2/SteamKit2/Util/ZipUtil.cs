@@ -74,7 +74,7 @@ namespace SteamKit2
 
         public static byte[] Compress( byte[] buffer )
         {
-            using ( MemoryStream ms = new MemoryStream() )
+            using ( MemoryStream ms = new SharedArrayMemoryStream() )
             using ( BinaryWriter writer = new BinaryWriter( ms ) )
             {
                 uint checkSum = Crc32.Compute( buffer );
@@ -273,7 +273,7 @@ namespace SteamKit2
 
         private static byte[] DeflateBuffer( byte[] uncompressedBuffer )
         {
-            using ( MemoryStream ms = new MemoryStream() )
+            using ( MemoryStream ms = new SharedArrayMemoryStream() )
             {
                 using ( DeflateStream deflateStream = new DeflateStream( ms, CompressionMode.Compress ) )
                 {

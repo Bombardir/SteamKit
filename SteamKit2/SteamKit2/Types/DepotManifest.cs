@@ -249,7 +249,7 @@ namespace SteamKit2
                 return null;
 
             using ( var fs = File.Open( filename, FileMode.Open ) )
-            using ( var ms = new MemoryStream() )
+            using ( var ms = new SharedArrayMemoryStream() )
             {
                 fs.CopyTo( ms );
                 return Deserialize( ms.ToArray() );
@@ -430,7 +430,7 @@ namespace SteamKit2
             metadata.unique_chunks = ( uint )uniqueChunks.Count;
 
             // Calculate payload CRC
-            using ( var ms_payload = new MemoryStream() )
+            using ( var ms_payload = new SharedArrayMemoryStream() )
             {
                 Serializer.Serialize<ContentManifestPayload>( ms_payload, payload );
 
@@ -452,11 +452,11 @@ namespace SteamKit2
                 }
             }
 
-            using var ms = new MemoryStream();
+            using var ms = new SharedArrayMemoryStream();
             using var bw = new BinaryWriter( ms );
 
             // Write Protobuf payload
-            using ( var ms_payload = new MemoryStream() )
+            using ( var ms_payload = new SharedArrayMemoryStream() )
             {
                 Serializer.Serialize<ContentManifestPayload>( ms_payload, payload );
                 bw.Write( DepotManifest.PROTOBUF_PAYLOAD_MAGIC );
@@ -465,7 +465,7 @@ namespace SteamKit2
             }
 
             // Write Protobuf metadata
-            using ( var ms_metadata = new MemoryStream() )
+            using ( var ms_metadata = new SharedArrayMemoryStream() )
             {
                 Serializer.Serialize<ContentManifestMetadata>( ms_metadata, metadata );
                 bw.Write( DepotManifest.PROTOBUF_METADATA_MAGIC );

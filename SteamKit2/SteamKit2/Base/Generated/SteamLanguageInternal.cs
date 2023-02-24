@@ -224,7 +224,7 @@ namespace SteamKit2.Internal
 	[StructLayout( LayoutKind.Sequential )]
 	public class MsgHdr : ISteamSerializableHeader
 	{
-		public void SetEMsg( EMsg msg ) { this.Msg = msg; }
+        public void SetEMsg( EMsg msg ) { this.Msg = msg; }
 
 		// Static size: 4
 		public EMsg Msg { get; set; }
@@ -327,8 +327,8 @@ namespace SteamKit2.Internal
 
 	[StructLayout( LayoutKind.Sequential )]
 	public class MsgHdrProtoBuf : ISteamSerializableHeader
-	{
-		public void SetEMsg( EMsg msg ) { this.Msg = msg; }
+    {
+        public void SetEMsg( EMsg msg ) { this.Msg = msg; }
 
 		// Static size: 4
 		public EMsg Msg { get; set; }
@@ -346,19 +346,22 @@ namespace SteamKit2.Internal
 
 		public void Serialize(Stream stream)
 		{
-			MemoryStream msProto = new MemoryStream();
-			ProtoBuf.Serializer.Serialize<SteamKit2.Internal.CMsgProtoBufHeader>(msProto, Proto);
-			HeaderLength = (int)msProto.Length;
-			BinaryWriter bw = new BinaryWriter( stream );
+            BinaryWriter bw = new BinaryWriter( stream );
+            bw.Write( ( int )MsgUtil.MakeMsg( Msg, true ) );
 
-			bw.Write( (int)MsgUtil.MakeMsg( Msg, true ) );
-			bw.Write( HeaderLength );
-			bw.Write( msProto.ToArray() );
+            var headerLenPosition = stream.Position;
+            stream.Position += 4;
 
-			msProto.Dispose();
-		}
+            ProtoBuf.Serializer.Serialize( stream, Proto );
+            HeaderLength = (int) (stream.Position - headerLenPosition - 4);
 
-		public void Deserialize( Stream stream )
+            stream.Position -= HeaderLength + 4;
+            bw.Write( HeaderLength );
+
+            stream.Position += HeaderLength;
+        }
+
+        public void Deserialize( Stream stream )
 		{
 			BinaryReader br = new BinaryReader( stream );
 
@@ -390,7 +393,7 @@ namespace SteamKit2.Internal
 
 		public void Serialize(Stream stream)
 		{
-			MemoryStream msProto = new MemoryStream();
+			MemoryStream msProto = new SharedArrayMemoryStream();
 			ProtoBuf.Serializer.Serialize<SteamKit2.GC.Internal.CMsgProtoBufHeader>(msProto, Proto);
 			HeaderLength = (int)msProto.Length;
 			BinaryWriter bw = new BinaryWriter( stream );
