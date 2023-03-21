@@ -1027,6 +1027,16 @@ namespace SteamKit2.GC.Dota.Internal
         public void Resetwill_reincarnate() => __pbn__will_reincarnate = null;
         private bool? __pbn__will_reincarnate;
 
+        [global::ProtoBuf.ProtoMember(79)]
+        public bool uses_charges
+        {
+            get => __pbn__uses_charges.GetValueOrDefault();
+            set => __pbn__uses_charges = value;
+        }
+        public bool ShouldSerializeuses_charges() => __pbn__uses_charges != null;
+        public void Resetuses_charges() => __pbn__uses_charges = null;
+        private bool? __pbn__uses_charges;
+
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1089,14 +1099,14 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__audit_action;
 
         [global::ProtoBuf.ProtoMember(6)]
-        public uint audit_data
+        public ulong audit_data
         {
             get => __pbn__audit_data.GetValueOrDefault();
             set => __pbn__audit_data = value;
         }
         public bool ShouldSerializeaudit_data() => __pbn__audit_data != null;
         public void Resetaudit_data() => __pbn__audit_data = null;
-        private uint? __pbn__audit_data;
+        private ulong? __pbn__audit_data;
 
     }
 
@@ -1211,6 +1221,20 @@ namespace SteamKit2.GC.Dota.Internal
         EVENT_ID_INTERNATIONAL_2022 = 36,
         EVENT_ID_TEAM_2021_2022_TOUR3 = 37,
         EVENT_ID_TEAM_INTERNATIONAL_2022 = 38,
+        EVENT_ID_PERMANENT_GRANTS = 39,
+        EVENT_ID_MUERTA_RELEASE_SPRING2023 = 40,
+        EVENT_ID_TEAM_2023_TOUR1 = 41,
+        EVENT_ID_TEAM_2023_TOUR2 = 42,
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public enum ERankType
+    {
+        k_ERankType_Invalid = 0,
+        k_ERankType_Casual = 1,
+        k_ERankType_Ranked = 2,
+        k_ERankType_CasualLegacy = 3,
+        k_ERankType_RankedLegacy = 4,
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1358,13 +1382,6 @@ namespace SteamKit2.GC.Dota.Internal
     }
 
     [global::ProtoBuf.ProtoContract()]
-    public enum DOTAGameVersion
-    {
-        GAME_VERSION_CURRENT = 0,
-        GAME_VERSION_STABLE = 1,
-    }
-
-    [global::ProtoBuf.ProtoContract()]
     public enum DOTAJoinLobbyResult
     {
         DOTA_JOIN_RESULT_SUCCESS = 0,
@@ -1423,8 +1440,6 @@ namespace SteamKit2.GC.Dota.Internal
         k_EDOTAPlayerMMRType_Invalid = 0,
         k_EDOTAPlayerMMRType_GeneralHidden = 1,
         k_EDOTAPlayerMMRType_GeneralCompetitive = 3,
-        k_EDOTAPlayerMMRType_SoloCompetitive2019 = 4,
-        k_EDOTAPlayerMMRType_1v1Competitive_UNUSED = 5,
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1440,18 +1455,10 @@ namespace SteamKit2.GC.Dota.Internal
     {
         MATCH_TYPE_CASUAL = 0,
         MATCH_TYPE_COOP_BOTS = 1,
-        MATCH_TYPE_LEGACY_TEAM_RANKED = 2,
-        MATCH_TYPE_LEGACY_SOLO_QUEUE = 3,
         MATCH_TYPE_COMPETITIVE = 4,
         MATCH_TYPE_WEEKEND_TOURNEY = 5,
-        MATCH_TYPE_CASUAL_1V1 = 6,
         MATCH_TYPE_EVENT = 7,
-        MATCH_TYPE_SEASONAL_RANKED = 8,
-        MATCH_TYPE_LOWPRI_DEPRECATED = 9,
-        MATCH_TYPE_STEAM_GROUP = 10,
-        MATCH_TYPE_MUTATION = 11,
         MATCH_TYPE_COACHES_CHALLENGE = 12,
-        MATCH_TYPE_GAUNTLET = 13,
         MATCH_TYPE_NEW_PLAYER_POOL = 14,
     }
 
@@ -1572,6 +1579,11 @@ namespace SteamKit2.GC.Dota.Internal
         k_EBadgeType_TI8_Finals = 5,
         k_EBadgeType_TI8_AllEvent = 6,
         k_EBadgeType_TI10 = 7,
+        k_EBadgeType_TI11_PlayoffsDay1 = 8,
+        k_EBadgeType_TI11_PlayoffsDay2 = 9,
+        k_EBadgeType_TI11_PlayoffsDay3 = 10,
+        k_EBadgeType_TI11_PlayoffsDay4 = 11,
+        k_EBadgeType_TI11_FinalsWeekend = 12,
     }
 
     [global::ProtoBuf.ProtoContract()]

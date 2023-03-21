@@ -260,7 +260,7 @@ namespace SteamKit2.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "0")]
         public ulong rtmp_token
         {
-            get => __pbn__rtmp_token ?? 0;
+            get => __pbn__rtmp_token ?? 0ul;
             set => __pbn__rtmp_token = value;
         }
         public bool ShouldSerializertmp_token() => __pbn__rtmp_token != null;
@@ -1289,10 +1289,10 @@ namespace SteamKit2.Internal
         private uint? __pbn__instance_id;
 
         [global::ProtoBuf.ProtoMember(4)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint language
         {
-            get => __pbn__language ?? 0;
+            get => __pbn__language ?? 0u;
             set => __pbn__language = value;
         }
         public bool ShouldSerializelanguage() => __pbn__language != null;
@@ -1996,6 +1996,17 @@ namespace SteamKit2.Internal
         public void Resetis_partner_chat_only() => __pbn__is_partner_chat_only = null;
         private bool? __pbn__is_partner_chat_only;
 
+        [global::ProtoBuf.ProtoMember(12)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string wordban_list
+        {
+            get => __pbn__wordban_list ?? "";
+            set => __pbn__wordban_list = value;
+        }
+        public bool ShouldSerializewordban_list() => __pbn__wordban_list != null;
+        public void Resetwordban_list() => __pbn__wordban_list = null;
+        private string __pbn__wordban_list;
+
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -2165,6 +2176,17 @@ namespace SteamKit2.Internal
         public bool ShouldSerializeis_partner_chat_only() => __pbn__is_partner_chat_only != null;
         public void Resetis_partner_chat_only() => __pbn__is_partner_chat_only = null;
         private bool? __pbn__is_partner_chat_only;
+
+        [global::ProtoBuf.ProtoMember(13)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string wordban_list
+        {
+            get => __pbn__wordban_list ?? "";
+            set => __pbn__wordban_list = value;
+        }
+        public bool ShouldSerializewordban_list() => __pbn__wordban_list != null;
+        public void Resetwordban_list() => __pbn__wordban_list = null;
+        private string __pbn__wordban_list;
 
     }
 
@@ -2575,10 +2597,10 @@ namespace SteamKit2.Internal
             => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
         [global::ProtoBuf.ProtoMember(1)]
-        [global::System.ComponentModel.DefaultValue(100)]
+        [global::System.ComponentModel.DefaultValue(100u)]
         public uint row_limit
         {
-            get => __pbn__row_limit ?? 100;
+            get => __pbn__row_limit ?? 100u;
             set => __pbn__row_limit = value;
         }
         public bool ShouldSerializerow_limit() => __pbn__row_limit != null;
@@ -2586,10 +2608,10 @@ namespace SteamKit2.Internal
         private uint? __pbn__row_limit;
 
         [global::ProtoBuf.ProtoMember(2)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint start_time
         {
-            get => __pbn__start_time ?? 0;
+            get => __pbn__start_time ?? 0u;
             set => __pbn__start_time = value;
         }
         public bool ShouldSerializestart_time() => __pbn__start_time != null;
