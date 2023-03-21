@@ -50,7 +50,7 @@ namespace SteamKit2.GC.Dota.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "18446744073709551615")]
         public ulong job_id_source
         {
-            get => __pbn__job_id_source ?? 18446744073709551615;
+            get => __pbn__job_id_source ?? 18446744073709551615ul;
             set => __pbn__job_id_source = value;
         }
         public bool ShouldSerializejob_id_source() => __pbn__job_id_source != null;
@@ -61,7 +61,7 @@ namespace SteamKit2.GC.Dota.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "18446744073709551615")]
         public ulong job_id_target
         {
-            get => __pbn__job_id_target ?? 18446744073709551615;
+            get => __pbn__job_id_target ?? 18446744073709551615ul;
             set => __pbn__job_id_target = value;
         }
         public bool ShouldSerializejob_id_target() => __pbn__job_id_target != null;
@@ -113,9 +113,10 @@ namespace SteamKit2.GC.Dota.Internal
         private GCProtoBufMsgSrc? __pbn__gc_msg_src;
 
         [global::ProtoBuf.ProtoMember(201)]
+        [global::System.ComponentModel.DefaultValue(-1)]
         public int gc_dir_index_source
         {
-            get => __pbn__gc_dir_index_source.GetValueOrDefault();
+            get => __pbn__gc_dir_index_source ?? -1;
             set => __pbn__gc_dir_index_source = value;
         }
         public bool ShouldSerializegc_dir_index_source() => __pbn__gc_dir_index_source != null;
@@ -161,10 +162,10 @@ namespace SteamKit2.GC.Dota.Internal
             => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
         [global::ProtoBuf.ProtoMember(1)]
-        [global::System.ComponentModel.DefaultValue(2)]
+        [global::System.ComponentModel.DefaultValue(2u)]
         public uint eresult_deprecated
         {
-            get => __pbn__eresult_deprecated ?? 2;
+            get => __pbn__eresult_deprecated ?? 2u;
             set => __pbn__eresult_deprecated = value;
         }
         public bool ShouldSerializeeresult_deprecated() => __pbn__eresult_deprecated != null;

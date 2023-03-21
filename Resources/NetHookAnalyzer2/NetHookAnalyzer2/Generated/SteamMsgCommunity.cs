@@ -184,6 +184,29 @@ namespace NetHookAnalyzer2.Protobufs
         public void Resetapp_type() => __pbn__app_type = null;
         private uint? __pbn__app_type;
 
+        [global::ProtoBuf.ProtoMember(15)]
+        public bool has_adult_content_sex
+        {
+            get => __pbn__has_adult_content_sex.GetValueOrDefault();
+            set => __pbn__has_adult_content_sex = value;
+        }
+        public bool ShouldSerializehas_adult_content_sex() => __pbn__has_adult_content_sex != null;
+        public void Resethas_adult_content_sex() => __pbn__has_adult_content_sex = null;
+        private bool? __pbn__has_adult_content_sex;
+
+        [global::ProtoBuf.ProtoMember(16)]
+        public bool has_adult_content_violence
+        {
+            get => __pbn__has_adult_content_violence.GetValueOrDefault();
+            set => __pbn__has_adult_content_violence = value;
+        }
+        public bool ShouldSerializehas_adult_content_violence() => __pbn__has_adult_content_violence != null;
+        public void Resethas_adult_content_violence() => __pbn__has_adult_content_violence = null;
+        private bool? __pbn__has_adult_content_violence;
+
+        [global::ProtoBuf.ProtoMember(17)]
+        public global::System.Collections.Generic.List<uint> content_descriptorids { get; } = new global::System.Collections.Generic.List<uint>();
+
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1422,10 +1445,10 @@ namespace NetHookAnalyzer2.Protobufs
         public global::System.Collections.Generic.List<CAppPriority> app_list { get; } = new global::System.Collections.Generic.List<CAppPriority>();
 
         [global::ProtoBuf.ProtoMember(9)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint count_after
         {
-            get => __pbn__count_after ?? 0;
+            get => __pbn__count_after ?? 0u;
             set => __pbn__count_after = value;
         }
         public bool ShouldSerializecount_after() => __pbn__count_after != null;
@@ -1433,10 +1456,10 @@ namespace NetHookAnalyzer2.Protobufs
         private uint? __pbn__count_after;
 
         [global::ProtoBuf.ProtoMember(10)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint count_before
         {
-            get => __pbn__count_before ?? 0;
+            get => __pbn__count_before ?? 0u;
             set => __pbn__count_before = value;
         }
         public bool ShouldSerializecount_before() => __pbn__count_before != null;
@@ -1699,10 +1722,10 @@ namespace NetHookAnalyzer2.Protobufs
         private bool? __pbn__possible_takeover;
 
         [global::ProtoBuf.ProtoMember(6)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint rtime32_last_modified
         {
-            get => __pbn__rtime32_last_modified ?? 0;
+            get => __pbn__rtime32_last_modified ?? 0u;
             set => __pbn__rtime32_last_modified = value;
         }
         public bool ShouldSerializertime32_last_modified() => __pbn__rtime32_last_modified != null;

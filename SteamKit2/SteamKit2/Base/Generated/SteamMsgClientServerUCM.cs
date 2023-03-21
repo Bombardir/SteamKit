@@ -195,7 +195,7 @@ namespace SteamKit2.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "18446744073709551615")]
         public ulong screenshotid
         {
-            get => __pbn__screenshotid ?? 18446744073709551615;
+            get => __pbn__screenshotid ?? 18446744073709551615ul;
             set => __pbn__screenshotid = value;
         }
         public bool ShouldSerializescreenshotid() => __pbn__screenshotid != null;
@@ -215,7 +215,7 @@ namespace SteamKit2.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "18446744073709551615")]
         public ulong screenshotid
         {
-            get => __pbn__screenshotid ?? 18446744073709551615;
+            get => __pbn__screenshotid ?? 18446744073709551615ul;
             set => __pbn__screenshotid = value;
         }
         public bool ShouldSerializescreenshotid() => __pbn__screenshotid != null;
@@ -425,7 +425,7 @@ namespace SteamKit2.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "18446744073709551615")]
         public ulong published_file_id
         {
-            get => __pbn__published_file_id ?? 18446744073709551615;
+            get => __pbn__published_file_id ?? 18446744073709551615ul;
             set => __pbn__published_file_id = value;
         }
         public bool ShouldSerializepublished_file_id() => __pbn__published_file_id != null;
@@ -705,6 +705,12 @@ namespace SteamKit2.Internal
         public void Resetremove_all_kvtags() => __pbn__remove_all_kvtags = null;
         private bool? __pbn__remove_all_kvtags;
 
+        [global::ProtoBuf.ProtoMember(29)]
+        public global::System.Collections.Generic.List<int> content_descriptors_to_add { get; } = new global::System.Collections.Generic.List<int>();
+
+        [global::ProtoBuf.ProtoMember(30)]
+        public global::System.Collections.Generic.List<int> content_descriptors_to_remove { get; } = new global::System.Collections.Generic.List<int>();
+
         [global::ProtoBuf.ProtoContract()]
         public partial class KeyValueTag : global::ProtoBuf.IExtensible
         {
@@ -919,10 +925,10 @@ namespace SteamKit2.Internal
         private uint? __pbn__start_time;
 
         [global::ProtoBuf.ProtoMember(4)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint desired_revision
         {
-            get => __pbn__desired_revision ?? 0;
+            get => __pbn__desired_revision ?? 0u;
             set => __pbn__desired_revision = value;
         }
         public bool ShouldSerializedesired_revision() => __pbn__desired_revision != null;
@@ -980,10 +986,10 @@ namespace SteamKit2.Internal
             private ulong? __pbn__published_file_id;
 
             [global::ProtoBuf.ProtoMember(2, DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
-            [global::System.ComponentModel.DefaultValue(0)]
+            [global::System.ComponentModel.DefaultValue(0u)]
             public uint rtime32_subscribed
             {
-                get => __pbn__rtime32_subscribed ?? 0;
+                get => __pbn__rtime32_subscribed ?? 0u;
                 set => __pbn__rtime32_subscribed = value;
             }
             public bool ShouldSerializertime32_subscribed() => __pbn__rtime32_subscribed != null;
@@ -1381,10 +1387,10 @@ namespace SteamKit2.Internal
             private ulong? __pbn__published_file_id;
 
             [global::ProtoBuf.ProtoMember(2, DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
-            [global::System.ComponentModel.DefaultValue(0)]
+            [global::System.ComponentModel.DefaultValue(0u)]
             public uint rtime_time_stamp
             {
-                get => __pbn__rtime_time_stamp ?? 0;
+                get => __pbn__rtime_time_stamp ?? 0u;
                 set => __pbn__rtime_time_stamp = value;
             }
             public bool ShouldSerializertime_time_stamp() => __pbn__rtime_time_stamp != null;

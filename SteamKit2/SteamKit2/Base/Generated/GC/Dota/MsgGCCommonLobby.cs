@@ -111,71 +111,23 @@ namespace SteamKit2.GC.Dota.Internal
         public global::System.Collections.Generic.List<AccountPoints> account_points { get; } = new global::System.Collections.Generic.List<AccountPoints>();
 
         [global::ProtoBuf.ProtoContract()]
-        public partial class ChatWheelMessageRange : global::ProtoBuf.IExtensible
+        public partial class PeriodicResourceData : global::ProtoBuf.IExtensible
         {
             private global::ProtoBuf.IExtension __pbn__extensionData;
             global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
                 => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
             [global::ProtoBuf.ProtoMember(1)]
-            public uint message_id_start
+            public uint periodic_resource_id
             {
-                get => __pbn__message_id_start.GetValueOrDefault();
-                set => __pbn__message_id_start = value;
+                get => __pbn__periodic_resource_id.GetValueOrDefault();
+                set => __pbn__periodic_resource_id = value;
             }
-            public bool ShouldSerializemessage_id_start() => __pbn__message_id_start != null;
-            public void Resetmessage_id_start() => __pbn__message_id_start = null;
-            private uint? __pbn__message_id_start;
+            public bool ShouldSerializeperiodic_resource_id() => __pbn__periodic_resource_id != null;
+            public void Resetperiodic_resource_id() => __pbn__periodic_resource_id = null;
+            private uint? __pbn__periodic_resource_id;
 
             [global::ProtoBuf.ProtoMember(2)]
-            public uint message_id_end
-            {
-                get => __pbn__message_id_end.GetValueOrDefault();
-                set => __pbn__message_id_end = value;
-            }
-            public bool ShouldSerializemessage_id_end() => __pbn__message_id_end != null;
-            public void Resetmessage_id_end() => __pbn__message_id_end = null;
-            private uint? __pbn__message_id_end;
-
-        }
-
-        [global::ProtoBuf.ProtoContract()]
-        public partial class PingWheelMessageRange : global::ProtoBuf.IExtensible
-        {
-            private global::ProtoBuf.IExtension __pbn__extensionData;
-            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
-
-            [global::ProtoBuf.ProtoMember(1)]
-            public uint message_id_start
-            {
-                get => __pbn__message_id_start.GetValueOrDefault();
-                set => __pbn__message_id_start = value;
-            }
-            public bool ShouldSerializemessage_id_start() => __pbn__message_id_start != null;
-            public void Resetmessage_id_start() => __pbn__message_id_start = null;
-            private uint? __pbn__message_id_start;
-
-            [global::ProtoBuf.ProtoMember(2)]
-            public uint message_id_end
-            {
-                get => __pbn__message_id_end.GetValueOrDefault();
-                set => __pbn__message_id_end = value;
-            }
-            public bool ShouldSerializemessage_id_end() => __pbn__message_id_end != null;
-            public void Resetmessage_id_end() => __pbn__message_id_end = null;
-            private uint? __pbn__message_id_end;
-
-        }
-
-        [global::ProtoBuf.ProtoContract()]
-        public partial class PeriodicResourceValues : global::ProtoBuf.IExtensible
-        {
-            private global::ProtoBuf.IExtension __pbn__extensionData;
-            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
-
-            [global::ProtoBuf.ProtoMember(1)]
             public uint remaining
             {
                 get => __pbn__remaining.GetValueOrDefault();
@@ -185,7 +137,7 @@ namespace SteamKit2.GC.Dota.Internal
             public void Resetremaining() => __pbn__remaining = null;
             private uint? __pbn__remaining;
 
-            [global::ProtoBuf.ProtoMember(2)]
+            [global::ProtoBuf.ProtoMember(3)]
             public uint max
             {
                 get => __pbn__max.GetValueOrDefault();
@@ -283,27 +235,6 @@ namespace SteamKit2.GC.Dota.Internal
             public void Resetactive_effects_mask() => __pbn__active_effects_mask = null;
             private ulong? __pbn__active_effects_mask;
 
-            [global::ProtoBuf.ProtoMember(13)]
-            public global::System.Collections.Generic.List<CMsgLobbyEventPoints.ChatWheelMessageRange> unlocked_chat_wheel_message_ranges { get; } = new global::System.Collections.Generic.List<CMsgLobbyEventPoints.ChatWheelMessageRange>();
-
-            [global::ProtoBuf.ProtoMember(16)]
-            public CMsgLobbyPlayerPlusSubscriptionData plus_subscription_data { get; set; }
-
-            [global::ProtoBuf.ProtoMember(17)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues wager_tokens { get; set; }
-
-            [global::ProtoBuf.ProtoMember(18)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues rank_wager_tokens { get; set; }
-
-            [global::ProtoBuf.ProtoMember(19)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues tip_tokens { get; set; }
-
-            [global::ProtoBuf.ProtoMember(21)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues periodic_point_adjustments { get; set; }
-
-            [global::ProtoBuf.ProtoMember(22)]
-            public global::System.Collections.Generic.List<CMsgLobbyEventPoints.PingWheelMessageRange> unlocked_ping_wheel_message_ranges { get; } = new global::System.Collections.Generic.List<CMsgLobbyEventPoints.PingWheelMessageRange>();
-
             [global::ProtoBuf.ProtoMember(23)]
             public uint wager_streak
             {
@@ -313,9 +244,6 @@ namespace SteamKit2.GC.Dota.Internal
             public bool ShouldSerializewager_streak() => __pbn__wager_streak != null;
             public void Resetwager_streak() => __pbn__wager_streak = null;
             private uint? __pbn__wager_streak;
-
-            [global::ProtoBuf.ProtoMember(24)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues bounties { get; set; }
 
             [global::ProtoBuf.ProtoMember(25)]
             public global::System.Collections.Generic.List<CMsgLobbyEventPoints.NetworkedEventAction> event_game_custom_actions { get; } = new global::System.Collections.Generic.List<CMsgLobbyEventPoints.NetworkedEventAction>();
@@ -350,11 +278,11 @@ namespace SteamKit2.GC.Dota.Internal
             public void Resetteleport_fx_level() => __pbn__teleport_fx_level = null;
             private uint? __pbn__teleport_fx_level;
 
-            [global::ProtoBuf.ProtoMember(29)]
-            public CMsgLobbyEventPoints.PeriodicResourceValues arcana_event_periodic_resource { get; set; }
-
             [global::ProtoBuf.ProtoMember(30)]
             public global::System.Collections.Generic.List<CMsgLobbyEventPoints.NetworkedEventAction> networked_event_actions { get; } = new global::System.Collections.Generic.List<CMsgLobbyEventPoints.NetworkedEventAction>();
+
+            [global::ProtoBuf.ProtoMember(31)]
+            public global::System.Collections.Generic.List<CMsgLobbyEventPoints.PeriodicResourceData> periodic_resources { get; } = new global::System.Collections.Generic.List<CMsgLobbyEventPoints.PeriodicResourceData>();
 
         }
 
@@ -623,10 +551,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__leaver_actions;
 
         [global::ProtoBuf.ProtoMember(17)]
-        [global::System.ComponentModel.DefaultValue(6)]
+        [global::System.ComponentModel.DefaultValue(6u)]
         public uint channel
         {
-            get => __pbn__channel ?? 6;
+            get => __pbn__channel ?? 6u;
             set => __pbn__channel = value;
         }
         public bool ShouldSerializechannel() => __pbn__channel != null;
@@ -740,16 +668,6 @@ namespace SteamKit2.GC.Dota.Internal
         public bool ShouldSerializeis_plus_subscriber() => __pbn__is_plus_subscriber != null;
         public void Resetis_plus_subscriber() => __pbn__is_plus_subscriber = null;
         private bool? __pbn__is_plus_subscriber;
-
-        [global::ProtoBuf.ProtoMember(37)]
-        public bool rank_tier_updated
-        {
-            get => __pbn__rank_tier_updated.GetValueOrDefault();
-            set => __pbn__rank_tier_updated = value;
-        }
-        public bool ShouldSerializerank_tier_updated() => __pbn__rank_tier_updated != null;
-        public void Resetrank_tier_updated() => __pbn__rank_tier_updated = null;
-        private bool? __pbn__rank_tier_updated;
 
         [global::ProtoBuf.ProtoMember(38)]
         public uint lane_selection_flags
@@ -1429,7 +1347,7 @@ namespace SteamKit2.GC.Dota.Internal
         [global::System.ComponentModel.DefaultValue(typeof(ulong), "0")]
         public ulong server_id
         {
-            get => __pbn__server_id ?? 0;
+            get => __pbn__server_id ?? 0ul;
             set => __pbn__server_id = value;
         }
         public bool ShouldSerializeserver_id() => __pbn__server_id != null;
@@ -1557,10 +1475,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__tournament_game_id;
 
         [global::ProtoBuf.ProtoMember(21)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint server_region
         {
-            get => __pbn__server_region ?? 0;
+            get => __pbn__server_region ?? 0u;
             set => __pbn__server_region = value;
         }
         public bool ShouldSerializeserver_region() => __pbn__server_region != null;
@@ -1641,17 +1559,6 @@ namespace SteamKit2.GC.Dota.Internal
         public void Resetbot_difficulty_radiant() => __pbn__bot_difficulty_radiant = null;
         private DOTABotDifficulty? __pbn__bot_difficulty_radiant;
 
-        [global::ProtoBuf.ProtoMember(37)]
-        [global::System.ComponentModel.DefaultValue(DOTAGameVersion.GAME_VERSION_CURRENT)]
-        public DOTAGameVersion game_version
-        {
-            get => __pbn__game_version ?? DOTAGameVersion.GAME_VERSION_CURRENT;
-            set => __pbn__game_version = value;
-        }
-        public bool ShouldSerializegame_version() => __pbn__game_version != null;
-        public void Resetgame_version() => __pbn__game_version = null;
-        private DOTAGameVersion? __pbn__game_version;
-
         [global::ProtoBuf.ProtoMember(38)]
         public global::System.Collections.Generic.List<CLobbyTimedRewardDetails> timed_reward_details { get; } = new global::System.Collections.Generic.List<CLobbyTimedRewardDetails>();
 
@@ -1677,10 +1584,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__leagueid;
 
         [global::ProtoBuf.ProtoMember(43)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint penalty_level_radiant
         {
-            get => __pbn__penalty_level_radiant ?? 0;
+            get => __pbn__penalty_level_radiant ?? 0u;
             set => __pbn__penalty_level_radiant = value;
         }
         public bool ShouldSerializepenalty_level_radiant() => __pbn__penalty_level_radiant != null;
@@ -1688,10 +1595,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__penalty_level_radiant;
 
         [global::ProtoBuf.ProtoMember(44)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint penalty_level_dire
         {
-            get => __pbn__penalty_level_dire ?? 0;
+            get => __pbn__penalty_level_dire ?? 0u;
             set => __pbn__penalty_level_dire = value;
         }
         public bool ShouldSerializepenalty_level_dire() => __pbn__penalty_level_dire != null;
@@ -1976,16 +1883,6 @@ namespace SteamKit2.GC.Dota.Internal
         public void Resetprevious_match_override() => __pbn__previous_match_override = null;
         private ulong? __pbn__previous_match_override;
 
-        [global::ProtoBuf.ProtoMember(83)]
-        public bool custom_game_uses_account_records
-        {
-            get => __pbn__custom_game_uses_account_records.GetValueOrDefault();
-            set => __pbn__custom_game_uses_account_records = value;
-        }
-        public bool ShouldSerializecustom_game_uses_account_records() => __pbn__custom_game_uses_account_records != null;
-        public void Resetcustom_game_uses_account_records() => __pbn__custom_game_uses_account_records = null;
-        private bool? __pbn__custom_game_uses_account_records;
-
         [global::ProtoBuf.ProtoMember(87)]
         public uint game_start_time
         {
@@ -2006,16 +1903,6 @@ namespace SteamKit2.GC.Dota.Internal
         public bool ShouldSerializepause_setting() => __pbn__pause_setting != null;
         public void Resetpause_setting() => __pbn__pause_setting = null;
         private LobbyDotaPauseSetting? __pbn__pause_setting;
-
-        [global::ProtoBuf.ProtoMember(89)]
-        public uint lobby_mvp_account_id
-        {
-            get => __pbn__lobby_mvp_account_id.GetValueOrDefault();
-            set => __pbn__lobby_mvp_account_id = value;
-        }
-        public bool ShouldSerializelobby_mvp_account_id() => __pbn__lobby_mvp_account_id != null;
-        public void Resetlobby_mvp_account_id() => __pbn__lobby_mvp_account_id = null;
-        private uint? __pbn__lobby_mvp_account_id;
 
         [global::ProtoBuf.ProtoMember(90)]
         public uint weekend_tourney_division_id
@@ -2295,6 +2182,9 @@ namespace SteamKit2.GC.Dota.Internal
         public void Resetevent_game_definition() => __pbn__event_game_definition = null;
         private string __pbn__event_game_definition;
 
+        [global::ProtoBuf.ProtoMember(130)]
+        public global::System.Collections.Generic.List<CExtraMsg> extra_startup_messages { get; } = new global::System.Collections.Generic.List<CExtraMsg>();
+
         [global::ProtoBuf.ProtoContract()]
         public partial class CExtraMsg : global::ProtoBuf.IExtensible
         {
@@ -2343,15 +2233,11 @@ namespace SteamKit2.GC.Dota.Internal
             CASUAL_MATCH = 0,
             PRACTICE = 1,
             COOP_BOT_MATCH = 4,
-            LEGACY_TEAM_MATCH = 5,
-            LEGACY_SOLO_QUEUE_MATCH = 6,
             COMPETITIVE_MATCH = 7,
-            CASUAL_1V1_MATCH = 8,
             WEEKEND_TOURNEY = 9,
             LOCAL_BOT_MATCH = 10,
             SPECTATOR = 11,
             EVENT_MATCH = 12,
-            GAUNTLET = 13,
             NEW_PLAYER_POOL = 14,
             FEATURED_GAMEMODE = 15,
         }
@@ -2391,6 +2277,105 @@ namespace SteamKit2.GC.Dota.Internal
 
         [global::ProtoBuf.ProtoMember(1)]
         public global::System.Collections.Generic.List<CSODOTAServerStaticLobbyMember> all_members { get; } = new global::System.Collections.Generic.List<CSODOTAServerStaticLobbyMember>();
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CMsgAdditionalLobbyStartupAccountData : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public uint account_id
+        {
+            get => __pbn__account_id.GetValueOrDefault();
+            set => __pbn__account_id = value;
+        }
+        public bool ShouldSerializeaccount_id() => __pbn__account_id != null;
+        public void Resetaccount_id() => __pbn__account_id = null;
+        private uint? __pbn__account_id;
+
+        [global::ProtoBuf.ProtoMember(2)]
+        public CMsgLobbyPlayerPlusSubscriptionData plus_data { get; set; }
+
+        [global::ProtoBuf.ProtoMember(3)]
+        public global::System.Collections.Generic.List<ChatWheelMessageRange> unlocked_chat_wheel_message_ranges { get; } = new global::System.Collections.Generic.List<ChatWheelMessageRange>();
+
+        [global::ProtoBuf.ProtoMember(4)]
+        public global::System.Collections.Generic.List<PingWheelMessageRange> unlocked_ping_wheel_message_ranges { get; } = new global::System.Collections.Generic.List<PingWheelMessageRange>();
+
+        [global::ProtoBuf.ProtoContract()]
+        public partial class ChatWheelMessageRange : global::ProtoBuf.IExtensible
+        {
+            private global::ProtoBuf.IExtension __pbn__extensionData;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+            [global::ProtoBuf.ProtoMember(1)]
+            [global::System.ComponentModel.DefaultValue(4294967295u)]
+            public uint message_id_start
+            {
+                get => __pbn__message_id_start ?? 4294967295u;
+                set => __pbn__message_id_start = value;
+            }
+            public bool ShouldSerializemessage_id_start() => __pbn__message_id_start != null;
+            public void Resetmessage_id_start() => __pbn__message_id_start = null;
+            private uint? __pbn__message_id_start;
+
+            [global::ProtoBuf.ProtoMember(2)]
+            [global::System.ComponentModel.DefaultValue(4294967295u)]
+            public uint message_id_end
+            {
+                get => __pbn__message_id_end ?? 4294967295u;
+                set => __pbn__message_id_end = value;
+            }
+            public bool ShouldSerializemessage_id_end() => __pbn__message_id_end != null;
+            public void Resetmessage_id_end() => __pbn__message_id_end = null;
+            private uint? __pbn__message_id_end;
+
+        }
+
+        [global::ProtoBuf.ProtoContract()]
+        public partial class PingWheelMessageRange : global::ProtoBuf.IExtensible
+        {
+            private global::ProtoBuf.IExtension __pbn__extensionData;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+            [global::ProtoBuf.ProtoMember(1)]
+            [global::System.ComponentModel.DefaultValue(4294967295u)]
+            public uint message_id_start
+            {
+                get => __pbn__message_id_start ?? 4294967295u;
+                set => __pbn__message_id_start = value;
+            }
+            public bool ShouldSerializemessage_id_start() => __pbn__message_id_start != null;
+            public void Resetmessage_id_start() => __pbn__message_id_start = null;
+            private uint? __pbn__message_id_start;
+
+            [global::ProtoBuf.ProtoMember(2)]
+            [global::System.ComponentModel.DefaultValue(4294967295u)]
+            public uint message_id_end
+            {
+                get => __pbn__message_id_end ?? 4294967295u;
+                set => __pbn__message_id_end = value;
+            }
+            public bool ShouldSerializemessage_id_end() => __pbn__message_id_end != null;
+            public void Resetmessage_id_end() => __pbn__message_id_end = null;
+            private uint? __pbn__message_id_end;
+
+        }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CMsgLobbyInitializationComplete : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
     }
 
@@ -2586,6 +2571,9 @@ namespace SteamKit2.GC.Dota.Internal
         public bool ShouldSerializeteleport_fx_level() => __pbn__teleport_fx_level != null;
         public void Resetteleport_fx_level() => __pbn__teleport_fx_level = null;
         private uint? __pbn__teleport_fx_level;
+
+        [global::ProtoBuf.ProtoMember(9)]
+        public CMsgAdditionalLobbyStartupAccountData additional_data { get; set; }
 
     }
 

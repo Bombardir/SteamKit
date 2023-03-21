@@ -500,10 +500,10 @@ namespace SteamKit2.GC.Dota.Internal
             => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
         [global::ProtoBuf.ProtoMember(1)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint additional_backpack_slots
         {
-            get => __pbn__additional_backpack_slots ?? 0;
+            get => __pbn__additional_backpack_slots ?? 0u;
             set => __pbn__additional_backpack_slots = value;
         }
         public bool ShouldSerializeadditional_backpack_slots() => __pbn__additional_backpack_slots != null;
@@ -680,9 +680,10 @@ namespace SteamKit2.GC.Dota.Internal
             => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
 
         [global::ProtoBuf.ProtoMember(1)]
+        [global::System.ComponentModel.DefaultValue(65535u)]
         public uint def_index
         {
-            get => __pbn__def_index.GetValueOrDefault();
+            get => __pbn__def_index ?? 65535u;
             set => __pbn__def_index = value;
         }
         public bool ShouldSerializedef_index() => __pbn__def_index != null;
@@ -788,10 +789,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__def_index;
 
         [global::ProtoBuf.ProtoMember(5)]
-        [global::System.ComponentModel.DefaultValue(1)]
+        [global::System.ComponentModel.DefaultValue(1u)]
         public uint quantity
         {
-            get => __pbn__quantity ?? 1;
+            get => __pbn__quantity ?? 1u;
             set => __pbn__quantity = value;
         }
         public bool ShouldSerializequantity() => __pbn__quantity != null;
@@ -799,10 +800,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__quantity;
 
         [global::ProtoBuf.ProtoMember(6)]
-        [global::System.ComponentModel.DefaultValue(1)]
+        [global::System.ComponentModel.DefaultValue(1u)]
         public uint level
         {
-            get => __pbn__level ?? 1;
+            get => __pbn__level ?? 1u;
             set => __pbn__level = value;
         }
         public bool ShouldSerializelevel() => __pbn__level != null;
@@ -810,10 +811,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__level;
 
         [global::ProtoBuf.ProtoMember(7)]
-        [global::System.ComponentModel.DefaultValue(4)]
+        [global::System.ComponentModel.DefaultValue(4u)]
         public uint quality
         {
-            get => __pbn__quality ?? 4;
+            get => __pbn__quality ?? 4u;
             set => __pbn__quality = value;
         }
         public bool ShouldSerializequality() => __pbn__quality != null;
@@ -821,10 +822,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__quality;
 
         [global::ProtoBuf.ProtoMember(8)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint flags
         {
-            get => __pbn__flags ?? 0;
+            get => __pbn__flags ?? 0u;
             set => __pbn__flags = value;
         }
         public bool ShouldSerializeflags() => __pbn__flags != null;
@@ -832,10 +833,10 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__flags;
 
         [global::ProtoBuf.ProtoMember(9)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint origin
         {
-            get => __pbn__origin ?? 0;
+            get => __pbn__origin ?? 0u;
             set => __pbn__origin = value;
         }
         public bool ShouldSerializeorigin() => __pbn__origin != null;
@@ -849,10 +850,10 @@ namespace SteamKit2.GC.Dota.Internal
         public CSOEconItem interior_item { get; set; }
 
         [global::ProtoBuf.ProtoMember(15)]
-        [global::System.ComponentModel.DefaultValue(0)]
+        [global::System.ComponentModel.DefaultValue(0u)]
         public uint style
         {
-            get => __pbn__style ?? 0;
+            get => __pbn__style ?? 0u;
             set => __pbn__style = value;
         }
         public bool ShouldSerializestyle() => __pbn__style != null;
@@ -860,10 +861,9 @@ namespace SteamKit2.GC.Dota.Internal
         private uint? __pbn__style;
 
         [global::ProtoBuf.ProtoMember(16)]
-        [global::System.ComponentModel.DefaultValue(typeof(ulong), "0")]
         public ulong original_id
         {
-            get => __pbn__original_id ?? 0;
+            get => __pbn__original_id.GetValueOrDefault();
             set => __pbn__original_id = value;
         }
         public bool ShouldSerializeoriginal_id() => __pbn__original_id != null;
@@ -1278,10 +1278,10 @@ namespace SteamKit2.GC.Dota.Internal
         private ulong? __pbn__item_item_id;
 
         [global::ProtoBuf.ProtoMember(3)]
-        [global::System.ComponentModel.DefaultValue(65535)]
+        [global::System.ComponentModel.DefaultValue(65535u)]
         public uint item_socket_id
         {
-            get => __pbn__item_socket_id ?? 65535;
+            get => __pbn__item_socket_id ?? 65535u;
             set => __pbn__item_socket_id = value;
         }
         public bool ShouldSerializeitem_socket_id() => __pbn__item_socket_id != null;
@@ -1429,9 +1429,10 @@ namespace SteamKit2.GC.Dota.Internal
         private ulong? __pbn__gem_item_id;
 
         [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue(65535u)]
         public uint socket_index
         {
-            get => __pbn__socket_index.GetValueOrDefault();
+            get => __pbn__socket_index ?? 65535u;
             set => __pbn__socket_index = value;
         }
         public bool ShouldSerializesocket_index() => __pbn__socket_index != null;
@@ -1526,9 +1527,10 @@ namespace SteamKit2.GC.Dota.Internal
         private ulong? __pbn__item_item_id;
 
         [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue(65535u)]
         public uint socket_index
         {
-            get => __pbn__socket_index.GetValueOrDefault();
+            get => __pbn__socket_index ?? 65535u;
             set => __pbn__socket_index = value;
         }
         public bool ShouldSerializesocket_index() => __pbn__socket_index != null;
@@ -1693,9 +1695,10 @@ namespace SteamKit2.GC.Dota.Internal
         private bool? __pbn__success;
 
         [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue(-1)]
         public int source_gc
         {
-            get => __pbn__source_gc.GetValueOrDefault();
+            get => __pbn__source_gc ?? -1;
             set => __pbn__source_gc = value;
         }
         public bool ShouldSerializesource_gc() => __pbn__source_gc != null;
@@ -1907,6 +1910,67 @@ namespace SteamKit2.GC.Dota.Internal
     }
 
     [global::ProtoBuf.ProtoContract()]
+    public partial class CMsgClientToGCAggregateMetrics : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public global::System.Collections.Generic.List<SingleMetric> metrics { get; } = new global::System.Collections.Generic.List<SingleMetric>();
+
+        [global::ProtoBuf.ProtoContract()]
+        public partial class SingleMetric : global::ProtoBuf.IExtensible
+        {
+            private global::ProtoBuf.IExtension __pbn__extensionData;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+            [global::ProtoBuf.ProtoMember(1)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string metric_name
+            {
+                get => __pbn__metric_name ?? "";
+                set => __pbn__metric_name = value;
+            }
+            public bool ShouldSerializemetric_name() => __pbn__metric_name != null;
+            public void Resetmetric_name() => __pbn__metric_name = null;
+            private string __pbn__metric_name;
+
+            [global::ProtoBuf.ProtoMember(2)]
+            public uint metric_count
+            {
+                get => __pbn__metric_count.GetValueOrDefault();
+                set => __pbn__metric_count = value;
+            }
+            public bool ShouldSerializemetric_count() => __pbn__metric_count != null;
+            public void Resetmetric_count() => __pbn__metric_count = null;
+            private uint? __pbn__metric_count;
+
+        }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CMsgGCToClientAggregateMetricsBackoff : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public float upload_rate_modifier
+        {
+            get => __pbn__upload_rate_modifier.GetValueOrDefault();
+            set => __pbn__upload_rate_modifier = value;
+        }
+        public bool ShouldSerializeupload_rate_modifier() => __pbn__upload_rate_modifier != null;
+        public void Resetupload_rate_modifier() => __pbn__upload_rate_modifier = null;
+        private float? __pbn__upload_rate_modifier;
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
     public enum EGCBaseMsg
     {
         k_EMsgGCReplicateConVars = 4002,
@@ -1931,6 +1995,8 @@ namespace SteamKit2.GC.Dota.Internal
         k_EMsgGCToClientApplyRemoteConVars = 4520,
         k_EMsgGCToServerApplyRemoteConVars = 4521,
         k_EMsgClientToGCIntegrityStatus = 4522,
+        k_EMsgClientToGCAggregateMetrics = 4523,
+        k_EMsgGCToClientAggregateMetricsBackoff = 4524,
     }
 
     [global::ProtoBuf.ProtoContract()]
