@@ -6,7 +6,7 @@ namespace SteamKit2.Util;
 
 internal class GlobalScheduledFunction
 {
-    public const int FunctionCycleTime = 250;
+    public const int FunctionCycleTime = 50;
 
     private readonly ConcurrentDictionary<ScheduledFunction, DateTime> _functionExecutionTimes;
     private readonly Task _scheduleTask;
