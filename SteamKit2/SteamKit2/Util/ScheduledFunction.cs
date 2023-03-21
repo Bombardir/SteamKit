@@ -1,13 +1,29 @@
 ﻿using System;
 using System.Threading;
+using SteamKit2.Util;
 
 namespace SteamKit2
 {
     public class ScheduledFunction
     {
-        public TimeSpan Delay { get; set; }
+        private static GlobalScheduledFunction GlobalScheduledFunction = new();
+
+        private long _delayTicks;
+
+        public TimeSpan Delay
+        {
+            get
+            {
+                var ticks = Interlocked.Read( ref _delayTicks );
+                return TimeSpan.FromTicks( ticks );
+            }
+            set
+            {
+                Interlocked.Exchange( ref _delayTicks, value.Ticks );
+            }
+        }
+
         readonly Action _func;
-        readonly Timer _timer;
 
         public ScheduledFunction( Action func )
             : this( func, TimeSpan.FromMilliseconds( -1 ) )
@@ -18,7 +34,6 @@ namespace SteamKit2
         {
             _func = func ?? throw new ArgumentException("Function can not be null", nameof(func) );
             Delay = delay;
-            _timer = new Timer( Tick, null, TimeSpan.FromMilliseconds( -1 ), delay );
         }
 
         ~ScheduledFunction()
@@ -28,15 +43,15 @@ namespace SteamKit2
 
         public void Start()
         {
-            _timer.Change( TimeSpan.Zero, Delay );
+            GlobalScheduledFunction.Start( this );
         }
 
         public void Stop()
         {
-            _timer.Change( TimeSpan.FromMilliseconds( -1 ), Delay );
+            GlobalScheduledFunction.Stop( this );
         }
 
-        private void Tick( object state )
+        public void InvokeSafe()
         {
             try
             {
