@@ -154,6 +154,24 @@ namespace SteamKit2.Internal
             }
         }
 
+        public TimeSpan? CustomHeartBeat
+        {
+            get
+            {
+                lock ( syncLock )
+                    return _customHeartBeat;
+            }
+            set
+            {
+                lock ( syncLock )
+                {
+                    _customHeartBeat = value;
+                    if ( value.HasValue )
+                        heartBeatFunc.Delay = value.Value;
+                }
+            }
+        }
+
         /// <summary>
         /// Gets or sets the connection timeout used when connecting to the Steam server.
         /// </summary>
@@ -193,6 +211,7 @@ namespace SteamKit2.Internal
         private SteamID? _steamId;
         private int? _sessionId;
         private bool _expectDisconnection;
+        private TimeSpan? _customHeartBeat;
 
         ScheduledFunction heartBeatFunc;
 
@@ -567,24 +586,25 @@ namespace SteamKit2.Internal
                 if ( connection == null )
                     return;
 
+                heartBeatFunc.Stop();
+
                 _isConnected = false;
 
                 if ( !e.UserInitiated && !_expectDisconnection )
                 {
                     DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint while disconnecting - cannot update server list" );
-                    Servers.TryMark( connection.CurrentEndPoint!, connection.ProtocolTypes, ServerQuality.Bad );
+                    if ( connection.CurrentEndPoint != null)
+                        Servers.TryMark( connection.CurrentEndPoint!, connection.ProtocolTypes, ServerQuality.Bad );
                 }
 
-                SessionID = null;
-                SteamID = null;
+                _sessionId = null;
+                _steamId = null;
 
                 connection.NetMsgReceived -= NetMsgReceived;
                 connection.Connected -= Connected;
                 connection.Disconnected -= Disconnected;
 
                 connection = null;
-
-                heartBeatFunc.Stop();
 
                 OnClientDisconnected( userInitiated: e.UserInitiated || _expectDisconnection );
             }
@@ -703,7 +723,7 @@ namespace SteamKit2.Internal
                 {
                     // restart heartbeat
                     heartBeatFunc.Stop();
-                    heartBeatFunc.Delay = TimeSpan.FromSeconds( hbDelay );
+                    heartBeatFunc.Delay = CustomHeartBeat ?? TimeSpan.FromSeconds( hbDelay );
                     heartBeatFunc.Start();
                 }
             }

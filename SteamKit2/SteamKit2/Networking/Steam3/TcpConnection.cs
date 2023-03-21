@@ -69,7 +69,8 @@ namespace SteamKit2
 
             try
             {
-                CurrentEndPoint = socket!.RemoteEndPoint;
+                if (socket.RemoteEndPoint != null)
+                    CurrentEndPoint = socket!.RemoteEndPoint;
                 Connected?.Invoke( this, EventArgs.Empty );
             }
             catch ( Exception ex )
