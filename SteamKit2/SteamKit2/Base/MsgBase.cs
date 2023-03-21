@@ -87,7 +87,7 @@ namespace SteamKit2
         /// </summary>
         public MsgBase()
         {
-            Payload = new SharedArrayMemoryStream();
+            Payload = new MemoryStream();
             reader = new BinaryReader( Payload );
             writer = new BinaryWriter( Payload );
         }
