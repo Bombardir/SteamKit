@@ -62,7 +62,7 @@ namespace SteamKit2.Networking.Steam3
         public GlobalTcpConnectionSocket( ILogContext log )
         {
             _log = log;
-            _receiveBuffer = System.GC.AllocateArray<byte>( 0x10000, pinned: true );
+            _receiveBuffer = new byte[0x10000];
             _pollGroup = new SocketPollGroup<SocketHandler>(2500);
             _listenThread = new Thread( ListenThreadSafe );
             _listenThread.Start();

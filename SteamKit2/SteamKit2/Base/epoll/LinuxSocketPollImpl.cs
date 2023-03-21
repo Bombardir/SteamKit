@@ -12,7 +12,7 @@ internal class LinuxSocketPollImpl: ISocketPollImplementation
     public LinuxSocketPollImpl(int maxSocketCount)
     {
         _epHandle = EPoll.Linux.epoll_create1( EPoll.epoll_flags.NONE );
-        _events = System.GC.AllocateArray<EPoll.epoll_event>( maxSocketCount, pinned: true );
+        _events = new EPoll.epoll_event[maxSocketCount];
     }
 
     public void Dispose()
@@ -52,7 +52,7 @@ internal class LinuxSocketPollImpl: ISocketPollImplementation
         if ( maxCount > _events.Length )
         {
             var newLength = Math.Max( maxCount, _events.Length + ( _events.Length >> 2 ) );
-            _events = System.GC.AllocateArray<EPoll.epoll_event>( newLength, pinned: true );
+            _events = new EPoll.epoll_event[newLength];
         }
 
         return EPoll.Linux.epoll_wait( _epHandle, _events, maxCount, timeoutMs );
