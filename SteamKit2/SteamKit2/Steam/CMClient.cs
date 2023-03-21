@@ -231,10 +231,24 @@ namespace SteamKit2.Internal
 
             ID = identifier;
 
-            heartBeatFunc = new ScheduledFunction( () =>
+            heartBeatFunc = new ScheduledFunction( SendHeartBeat );
+        }
+
+        static ClientMsgProtobuf<CMsgClientHeartBeat> heartbeatMsg = new( EMsg.ClientHeartBeat );
+
+        public void ForceHeartBeat()
+        {
+            SendHeartBeat();
+            lock ( syncLock )
             {
-                Send( new ClientMsgProtobuf<CMsgClientHeartBeat>( EMsg.ClientHeartBeat ) );
-            } );
+                if (_isConnected)
+                    heartBeatFunc.Start();
+            }
+        }
+
+        private void SendHeartBeat()
+        {
+            Send( heartbeatMsg );
         }
 
         public bool IsConnecting()
@@ -723,7 +737,7 @@ namespace SteamKit2.Internal
                 {
                     // restart heartbeat
                     heartBeatFunc.Stop();
-                    heartBeatFunc.Delay = CustomHeartBeat ?? TimeSpan.FromSeconds( hbDelay );
+                    heartBeatFunc.Delay = CustomHeartBeat ?? TimeSpan.FromSeconds( hbDelay ) - TimeSpan.FromMilliseconds( 50 );
                     heartBeatFunc.Start();
                 }
             }
