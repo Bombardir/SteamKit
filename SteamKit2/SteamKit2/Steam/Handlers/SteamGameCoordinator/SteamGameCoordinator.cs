@@ -12,7 +12,7 @@ namespace SteamKit2
     {
         Dictionary<EMsg, Action<IPacketMsg>> dispatchMap;
 
-        internal SteamGameCoordinator()
+        public SteamGameCoordinator()
         {
             dispatchMap = new Dictionary<EMsg, Action<IPacketMsg>>
             {

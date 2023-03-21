@@ -54,7 +54,6 @@ namespace SteamKit2.Discovery
 
             servers = new Collection<ServerInfo>();
             listLock = new object();
-            BadConnectionMemoryTimeSpan = TimeSpan.FromMinutes( 5 );
         }
 
         readonly SteamConfiguration configuration;
@@ -123,34 +122,6 @@ namespace SteamKit2.Discovery
         }
 
         /// <summary>
-        /// Determines how long a server's bad connection state is remembered for.
-        /// </summary>
-        public TimeSpan BadConnectionMemoryTimeSpan
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Resets the scores of all servers which has a last bad connection more than <see cref="BadConnectionMemoryTimeSpan"/> ago.
-        /// </summary>
-        public void ResetOldScores()
-        {
-            var cutoff = DateTime.UtcNow - BadConnectionMemoryTimeSpan;
-
-            lock ( listLock )
-            {
-                foreach ( var serverInfo in servers )
-                {
-                    if ( serverInfo.LastBadConnectionTimeUtc.HasValue && serverInfo.LastBadConnectionTimeUtc.Value < cutoff )
-                    {
-                        serverInfo.LastBadConnectionTimeUtc = null;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Replace the list with a new list of servers provided to us by the Steam servers.
         /// </summary>
         /// <param name="endpointList">The <see cref="ServerRecord"/>s to use for this <see cref="SmartCMServerList"/>.</param>
@@ -163,13 +134,17 @@ namespace SteamKit2.Discovery
 
             lock ( listLock )
             {
-                var distinctEndPoints = endpointList.Distinct().ToArray();
+                var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
+                var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.CMServerListDatacenterCount ).ToHashSet();
 
                 servers.Clear();
 
-                for ( var i = 0; i < distinctEndPoints.Length; i++ )
+                foreach (var endPoint in distinctEndPoints)
                 {
-                    AddCore( distinctEndPoints[ i ] );
+                    if (!dataCenterHosts.Contains( endPoint.GetHost() ))
+                        break;
+
+                    AddCore( endPoint );
                 }
 
                 configuration.ServerListProvider.UpdateServerListAsync( distinctEndPoints ).GetAwaiter().GetResult();
@@ -182,23 +157,6 @@ namespace SteamKit2.Discovery
             {
                 var info = new ServerInfo( endPoint, protocolType );
                 servers.Add( info );
-            }
-        }
-
-        /// <summary>
-        /// Explicitly resets the known state of all servers.
-        /// </summary>
-        public void ResetBadServers()
-        {
-            lock ( listLock )
-            {
-                foreach ( var server in servers )
-                {
-                    if ( server.LastBadConnectionTimeUtc.HasValue )
-                    {
-                        server.LastBadConnectionTimeUtc = null;
-                    }
-                }
             }
         }
 
@@ -265,11 +223,6 @@ namespace SteamKit2.Discovery
         {
             lock ( listLock )
             {
-                // ResetOldScores takes a lock internally, however
-                // locks are re-entrant on the same thread, so this
-                // isn't a problem.
-                ResetOldScores();
-
                 var query = 
                     from server in servers
                     where server.Protocol.HasFlagsFast( supportedProtocolTypes )

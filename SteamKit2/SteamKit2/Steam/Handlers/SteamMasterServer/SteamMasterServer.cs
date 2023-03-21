@@ -46,7 +46,7 @@ namespace SteamKit2
             public uint? MaxServers { get; set; }
         }
 
-        internal SteamMasterServer()
+        public SteamMasterServer()
         {
         }
 

@@ -347,7 +347,8 @@ namespace SteamKit2.Internal
         {
             lock ( connectionLock )
             {
-                heartBeatFunc.Stop();
+                lock ( syncLock )
+                    heartBeatFunc.Stop();
 
                 if ( connectionCancellation != null )
                 {
@@ -650,6 +651,7 @@ namespace SteamKit2.Internal
                     using var compressedStream = new MemoryStream( payload );
                     using var gzipStream = new GZipStream( compressedStream, CompressionMode.Decompress );
                     using var decompressedStream = new SharedArrayMemoryStream();
+                    gzipStream.CopyTo( decompressedStream );
                     payload = decompressedStream.ToArray();
                 }
                 catch ( Exception ex )
@@ -695,12 +697,15 @@ namespace SteamKit2.Internal
                 PublicIP = logonResp.Body.public_ip.GetIPAddress();
                 IPCountryCode = logonResp.Body.ip_country_code;
 
-                int hbDelay = logonResp.Body.legacy_out_of_game_heartbeat_seconds;
+                int hbDelay = logonResp.Body.heartbeat_seconds;
 
-                // restart heartbeat
-                heartBeatFunc.Stop();
-                heartBeatFunc.Delay = TimeSpan.FromSeconds( hbDelay );
-                heartBeatFunc.Start();
+                lock ( syncLock )
+                {
+                    // restart heartbeat
+                    heartBeatFunc.Stop();
+                    heartBeatFunc.Delay = TimeSpan.FromSeconds( hbDelay );
+                    heartBeatFunc.Start();
+                }
             }
             else if ( logonResult == EResult.TryAnotherCM || logonResult == EResult.ServiceUnavailable )
             {
@@ -720,7 +725,8 @@ namespace SteamKit2.Internal
             PublicIP = null;
             IPCountryCode = null;
 
-            heartBeatFunc.Stop();
+            lock ( syncLock )
+                heartBeatFunc.Stop();
 
             if ( packetMsg.IsProto )
             {

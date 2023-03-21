@@ -79,7 +79,7 @@ namespace SteamKit2.GC
         /// <param name="eMsg">The network message type this gc message represents.</param>
         /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
         public ClientGCMsgProtobuf( uint eMsg, int payloadReserve = 64 )
-            : base( payloadReserve )
+            : base()
         {
             Body = new TBody();
 
@@ -220,7 +220,7 @@ namespace SteamKit2.GC
         /// </summary>
         /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
         public ClientGCMsg( int payloadReserve = 64 )
-            : base( payloadReserve )
+            : base()
         {
             Body = new TBody();
 

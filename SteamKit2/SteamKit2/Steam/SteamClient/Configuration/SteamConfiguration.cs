@@ -117,6 +117,8 @@ namespace SteamKit2
 
         public EndPoint LocalEndPoint => state.LocalEndPoint;
 
+        public Int32 CMServerListDatacenterCount { get; set; } = 20;
+
         /// <summary>
         /// The server list used for this configuration.
         /// If this configuration is used by multiple <see cref="SteamClient"/> instances, they all share the server list.

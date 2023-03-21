@@ -25,8 +25,8 @@ namespace SteamKit2
             {
                 public IPAddress Ip { get; }
                 public uint QueryPort { get; }
-                public uint AuthPlayers { get; }
                 public uint MaxPlayers { get; }
+                public uint? AuthPlayers { get; }
                 public string? Name { get; }
                 public string? Version { get; }
                 public string? Map { get; }
@@ -34,7 +34,7 @@ namespace SteamKit2
                 public string? GameDesc { get; }
                 public string? Tags { get; set; }
 
-                internal Server( IPAddress ip, uint queryPort, uint authPlayers, uint maxPlayers, string? name, string? version, string? map, 
+                public Server( IPAddress ip, uint queryPort, uint? authPlayers, uint maxPlayers, string? name, string? version, string? map, 
                     string? gameDir, string? gameDesc, string? tags )
                 {
                     Ip = ip;
@@ -128,7 +128,7 @@ namespace SteamKit2
 
                     var ip = serverResponse.server_ip.GetIPAddress();
                     var queryPort = serverResponse.query_port;
-                    var authPlayers = serverResponse.auth_players;
+                    uint? authPlayers = serverResponse.ShouldSerializeauth_players() ? serverResponse.auth_players : null;
                     var maxPlayers = serverResponse.max_players;
 
                     serverList[index] = new Server( ip, queryPort, authPlayers, maxPlayers, name, version, map, gamedir, gamedesc, tags );

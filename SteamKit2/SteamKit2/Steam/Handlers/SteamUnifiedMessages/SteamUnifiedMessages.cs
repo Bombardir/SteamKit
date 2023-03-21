@@ -140,16 +140,8 @@ namespace SteamKit2
             }
         }
 
-
-        Dictionary<EMsg, Action<IPacketMsg>> dispatchMap;
-
-        internal SteamUnifiedMessages()
+        public SteamUnifiedMessages()
         {
-            dispatchMap = new Dictionary<EMsg, Action<IPacketMsg>>
-            {
-                { EMsg.ServiceMethodResponse, HandleServiceMethodResponse },
-                { EMsg.ServiceMethod, HandleServiceMethod },
-            };
         }
 
         /// <summary>
@@ -248,13 +240,15 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof( packetMsg ) );
             }
 
-            if ( !dispatchMap.TryGetValue( packetMsg.MsgType, out var handlerFunc ) )
+            switch ( packetMsg.MsgType )
             {
-                // ignore messages that we don't have a handler function for
-                return;
+                case EMsg.ServiceMethodResponse:
+                    HandleServiceMethodResponse( packetMsg );
+                    break;
+                case EMsg.ServiceMethod:
+                    HandleServiceMethod( packetMsg );
+                    break;
             }
-
-            handlerFunc( packetMsg );
         }
 
 

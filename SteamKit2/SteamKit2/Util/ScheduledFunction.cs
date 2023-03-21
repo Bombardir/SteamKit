@@ -1,21 +1,13 @@
-﻿/*
- * This file is subject to the terms and conditions defined in
- * file 'license.txt', which is part of this source code package.
- */
-
-using System;
-using SteamKit2.Util;
+﻿using System;
+using System.Threading;
 
 namespace SteamKit2
 {
-    class ScheduledFunction
+    public class ScheduledFunction
     {
-        private static GlobalScheduledFunction GlobalScheduling = new();
-
         public TimeSpan Delay { get; set; }
-
-        Action func;
-        bool bStarted;
+        readonly Action _func;
+        readonly Timer _timer;
 
         public ScheduledFunction( Action func )
             : this( func, TimeSpan.FromMilliseconds( -1 ) )
@@ -24,8 +16,9 @@ namespace SteamKit2
 
         public ScheduledFunction( Action func, TimeSpan delay )
         {
-            this.func = func;
-            this.Delay = delay;
+            _func = func ?? throw new ArgumentException("Function can not be null", nameof(func) );
+            Delay = delay;
+            _timer = new Timer( Tick, null, TimeSpan.FromMilliseconds( -1 ), delay );
         }
 
         ~ScheduledFunction()
@@ -35,27 +28,19 @@ namespace SteamKit2
 
         public void Start()
         {
-            if ( bStarted )
-                return;
-
-            GlobalScheduling.Start( this );
-            bStarted = true;
+            _timer.Change( TimeSpan.Zero, Delay );
         }
 
         public void Stop()
         {
-            if ( !bStarted )
-                return;
-
-            GlobalScheduling.Stop( this );
-            bStarted = false;
+            _timer.Change( TimeSpan.FromMilliseconds( -1 ), Delay );
         }
 
-        public void InvokeSafe()
+        private void Tick( object state )
         {
             try
             {
-                func?.Invoke();
+                _func.Invoke();
             }
             catch ( Exception ex )
             {

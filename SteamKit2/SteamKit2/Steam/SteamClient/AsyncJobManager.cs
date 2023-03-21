@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace SteamKit2
 {
     class AsyncJobManager
     {
-        internal ConcurrentDictionary<JobID, AsyncJob> asyncJobs;
+        internal Dictionary<JobID, AsyncJob> asyncJobs;
         internal ScheduledFunction jobTimeoutFunc;
 
         public AsyncJobManager()
         {
-            asyncJobs = new ConcurrentDictionary<JobID, AsyncJob>(2, 8);
+            asyncJobs = new Dictionary<JobID, AsyncJob>(8);
             jobTimeoutFunc = new ScheduledFunction( CancelTimedoutJobs, TimeSpan.FromSeconds( 1 ) );
         }
 
@@ -21,7 +21,8 @@ namespace SteamKit2
         /// <param name="asyncJob">The asynchronous job to track.</param>
         public void StartJob( AsyncJob asyncJob )
         {
-            asyncJobs.TryAdd( asyncJob, asyncJob );
+            lock ( asyncJobs )
+                asyncJobs[ asyncJob ] = asyncJob;
         }
 
         /// <summary>
@@ -46,7 +47,9 @@ namespace SteamKit2
             if ( jobFinished )
             {
                 // if the job is finished, we can stop tracking it
-                asyncJobs.TryRemove( jobId, out _ );
+
+                lock ( asyncJobs )
+                    asyncJobs.Remove( jobId );
             }
         }
 
@@ -88,12 +91,15 @@ namespace SteamKit2
         /// </summary>
         public void CancelPendingJobs()
         {
-            foreach ( AsyncJob asyncJob in asyncJobs.Values )
+            lock ( asyncJobs )
             {
-                TryFailAsyncJob(asyncJob, dueToRemoteFailure: false);
-            }
+                foreach ( AsyncJob asyncJob in asyncJobs.Values )
+                {
+                    TryFailAsyncJob( asyncJob, dueToRemoteFailure: false );
+                }
 
-            asyncJobs.Clear();
+                asyncJobs.Clear();
+            }
         }
 
         private static void TryFailAsyncJob(AsyncJob asyncJob, bool dueToRemoteFailure)
@@ -131,14 +137,15 @@ namespace SteamKit2
         /// </summary>
         void CancelTimedoutJobs()
         {
-            // ConcurrentDictionary.Values performs a full copy, so this iteration is safe
-            // see: http://referencesource.microsoft.com/#mscorlib/system/Collections/Concurrent/ConcurrentDictionary.cs,fe55c11912af21d2
-            foreach ( AsyncJob job in asyncJobs.Values )
+            lock ( asyncJobs )
             {
-                if ( job.IsTimedout )
+                foreach ( AsyncJob job in asyncJobs.Values )
                 {
-                    TryFailAsyncJob( job, dueToRemoteFailure: false );
-                    asyncJobs.TryRemove( job, out _);
+                    if ( job.IsTimedout )
+                    {
+                        TryFailAsyncJob( job, dueToRemoteFailure: false );
+                        asyncJobs.Remove( job );
+                    }
                 }
             }
         }
@@ -157,11 +164,13 @@ namespace SteamKit2
 
             if ( andRemove )
             {
-                foundJob = asyncJobs.TryRemove( jobId, out asyncJob );
+                lock ( asyncJobs )
+                    foundJob = asyncJobs.Remove( jobId, out asyncJob );
             }
             else
             {
-                foundJob = asyncJobs.TryGetValue( jobId, out asyncJob );
+                lock ( asyncJobs )
+                    foundJob = asyncJobs.TryGetValue( jobId, out asyncJob );
             }
 
             if ( !foundJob )

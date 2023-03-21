@@ -105,7 +105,7 @@ namespace SteamKit2
         /// <summary>
         /// Gets or sets the period of time before this job will be considered timed out and will be canceled. By default this is 10 seconds.
         /// </summary>
-        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds( 10 );
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes( 1 );
 
         internal bool IsTimedout
         {
@@ -195,7 +195,7 @@ namespace SteamKit2
 
             while ( !TryGetResult(out result, out exception) )
             {
-                await Task.Delay( GlobalScheduledFunction.FunctionCycleTime );
+                await Task.Delay( 100 );
             }
 
             if ( exception != null )
@@ -223,12 +223,10 @@ namespace SteamKit2
         /// <returns>Always <c>true</c>.</returns>
         internal override bool AddResult( CallbackMsg callback )
         {
-            if ( callback == null )
-            {
-                throw new ArgumentNullException( nameof( callback ) );
-            }
+            if ( callback is not T expectedCallbackType )
+                return false;
 
-            var originalResult = Interlocked.CompareExchange( ref Result, (T)callback, null );
+            var originalResult = Interlocked.CompareExchange( ref Result, expectedCallbackType, null );
             if ( originalResult  != null)
                 throw new Exception( "Result is already set" );
 

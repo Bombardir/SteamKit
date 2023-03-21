@@ -66,7 +66,7 @@ namespace SteamKit2
         public SteamClient( SteamConfiguration configuration, string identifier )
             : base( configuration, identifier )
         {
-            callbackQueue = new Queue<ICallbackMsg>(8);
+            callbackQueue = new Queue<ICallbackMsg>(16);
 
             this.handlers = new List<ClientMsgHandler>(4);
 
@@ -80,7 +80,7 @@ namespace SteamKit2
             //this.AddHandler( new SteamApps() );
             //this.AddHandler( new SteamGameCoordinator() );
             //this.AddHandler( new SteamUserStats() );
-            this.AddHandler( new SteamMasterServer() );
+            //this.AddHandler( new SteamMasterServer() );
             //this.AddHandler( new SteamCloud() );
             //this.AddHandler( new SteamWorkshop() );
             //this.AddHandler( new SteamTrading() );
@@ -255,7 +255,7 @@ namespace SteamKit2
             {
                 if ( callbackQueue.Count == 0 )
                 {
-                    if ( !Monitor.Wait( callbackLock, timeout ) )
+                    if ( timeout == TimeSpan.Zero || !Monitor.Wait( callbackLock, timeout ) )
                     {
                         return Enumerable.Empty<ICallbackMsg>();
                     }
