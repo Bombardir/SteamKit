@@ -19,12 +19,13 @@ namespace SteamKit2
     /// </summary>
     public sealed partial class SteamClient : CMClient
     {
+        private const int QueueTrimLen = 64;
+
         readonly List<ClientMsgHandler> handlers;
 
         long currentJobId = 0;
         DateTime processStartTime;
 
-        readonly object callbackLock = new object();
         readonly Queue<ICallbackMsg> callbackQueue;
 
         internal AsyncJobManager jobManager;
@@ -170,7 +171,7 @@ namespace SteamKit2
         /// <returns>The next callback in the queue, or null if no callback is waiting.</returns>
         public ICallbackMsg? GetCallback( bool freeLast )
         {
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count > 0 )
                     return ( freeLast ? callbackQueue.Dequeue() : callbackQueue.Peek() );
@@ -196,11 +197,11 @@ namespace SteamKit2
         /// <returns>A callback object from the queue if a callback has been posted, or null if the timeout has elapsed.</returns>
         public ICallbackMsg? WaitForCallback( TimeSpan timeout )
         {
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count == 0 )
                 {
-                    if ( !Monitor.Wait( callbackLock, timeout ) )
+                    if ( !Monitor.Wait( callbackQueue, timeout ) )
                         return null;
                 }
 
@@ -214,10 +215,10 @@ namespace SteamKit2
         /// <returns>The callback object from the queue.</returns>
         public ICallbackMsg WaitForCallback( bool freeLast )
         {
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count == 0 )
-                    Monitor.Wait( callbackLock );
+                    Monitor.Wait( callbackQueue );
 
                 return ( freeLast ? callbackQueue.Dequeue() : callbackQueue.Peek() );
             }
@@ -230,11 +231,11 @@ namespace SteamKit2
         /// <returns>A callback object from the queue if a callback has been posted, or null if the timeout has elapsed.</returns>
         public ICallbackMsg? WaitForCallback( bool freeLast, TimeSpan timeout )
         {
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count == 0 )
                 {
-                    if ( !Monitor.Wait( callbackLock, timeout ) )
+                    if ( !Monitor.Wait( callbackQueue, timeout ) )
                         return null;
                 }
 
@@ -251,11 +252,11 @@ namespace SteamKit2
         {
             IEnumerable<ICallbackMsg> callbacks;
 
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count == 0 )
                 {
-                    if ( timeout == TimeSpan.Zero || !Monitor.Wait( callbackLock, timeout ) )
+                    if ( timeout == TimeSpan.Zero || !Monitor.Wait( callbackQueue, timeout ) )
                     {
                         return Enumerable.Empty<ICallbackMsg>();
                     }
@@ -265,6 +266,8 @@ namespace SteamKit2
                 if ( freeLast )
                 {
                     callbackQueue.Clear();
+                    if ( callbackQueue.EnsureCapacity( 0 ) >= QueueTrimLen )
+                        callbackQueue.TrimExcess();
                 }
             }
 
@@ -275,7 +278,7 @@ namespace SteamKit2
         /// </summary>
         public void FreeLastCallback()
         {
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 if ( callbackQueue.Count == 0 )
                     return;
@@ -293,10 +296,10 @@ namespace SteamKit2
             if ( msg == null )
                 return;
 
-            lock ( callbackLock )
+            lock ( callbackQueue )
             {
                 callbackQueue.Enqueue( msg );
-                Monitor.Pulse( callbackLock );
+                Monitor.Pulse( callbackQueue );
             }
 
             jobManager.TryCompleteJob( msg.JobID, msg );
