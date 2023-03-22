@@ -36,7 +36,7 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof(client) );
             }
 
-            registeredCallbacks = new List<CallbackBase>();
+            registeredCallbacks = new List<CallbackBase>(10);
 
             this.client = client;
         }
