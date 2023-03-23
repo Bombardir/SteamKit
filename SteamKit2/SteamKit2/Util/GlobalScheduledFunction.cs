@@ -37,8 +37,9 @@ internal class GlobalScheduledFunction
             foreach ( (ScheduledFunction func, DateTime lastExecutionTime) in _functionExecutionTimes )
             {
                 var timeSinceLastExecution = currentTime - lastExecutionTime;
+                var delay = func.Delay;
 
-                if ( timeSinceLastExecution < func.Delay )
+                if ( delay <= TimeSpan.Zero || timeSinceLastExecution < delay )
                     continue;
 
                 if (_functionExecutionTimes.TryUpdate( func, currentTime, lastExecutionTime ))
