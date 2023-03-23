@@ -737,7 +737,7 @@ namespace SteamKit2.Internal
                 {
                     // restart heartbeat
                     heartBeatFunc.Stop();
-                    heartBeatFunc.Delay = CustomHeartBeat ?? TimeSpan.FromSeconds( hbDelay ) - TimeSpan.FromMilliseconds( 50 );
+                    heartBeatFunc.Delay = _customHeartBeat ?? TimeSpan.FromSeconds( hbDelay );
                     heartBeatFunc.Start();
                 }
             }
