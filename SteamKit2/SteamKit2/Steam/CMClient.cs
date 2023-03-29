@@ -295,7 +295,7 @@ namespace SteamKit2.Internal
                     recordTask = Task.FromResult( ( ServerRecord? )cmServer );
                 }
 
-                connectionSetupTask = Task.Run(() => recordTask).ContinueWith(async t =>
+                connectionSetupTask = Task.Run(async () =>
                 {
                     if ( token.IsCancellationRequested )
                     {
@@ -304,14 +304,18 @@ namespace SteamKit2.Internal
                         return;
                     }
 
-                    if ( t.IsFaulted || t.IsCanceled )
+                    ServerRecord? record;
+
+                    try
                     {
-                        LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", t.Exception );
+                        record = await recordTask;
+                    }
+                    catch ( Exception e )
+                    {
+                        LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", e );
                         OnClientDisconnected( userInitiated: false );
                         return;
                     }
-
-                    var record = t.Result;
 
                     if ( record is null )
                     {
@@ -338,17 +342,15 @@ namespace SteamKit2.Internal
                     {
                         await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
                     }
+                    catch (Exception ex)
+                    {
+                        LogDebug( nameof( CMClient ), "Unhandled exception when attempting to connect to Steam: {0}", ex );
+                        OnClientDisconnected( userInitiated: false );
+                        return;
+                    }
                     finally
                     {
                         GlobalConnectQuota.Release();
-                    }
-                }).ContinueWith( async t =>
-                {
-                    if ( t.IsFaulted || t.IsCanceled && !token.IsCancellationRequested )
-                    {
-                        LogDebug( nameof( CMClient ), "Unhandled exception when attempting to connect to Steam: {0}", t.Exception );
-                        OnClientDisconnected( userInitiated: false );
-                        return;
                     }
 
                     if ( IsConnected )
@@ -362,12 +364,9 @@ namespace SteamKit2.Internal
                             return;
 
                         LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-
                         connection.Disconnect( userInitiated: false );
                     }
-                } )
-                .ContinueWith( t =>
-                {
+
                     _ = Interlocked.Exchange( ref connectionSetupTask, null );
                 } );
             }
@@ -392,7 +391,14 @@ namespace SteamKit2.Internal
 
                 var connectionSetupTaskToWait = Interlocked.Exchange( ref connectionSetupTask, null );
                 // though it's ugly, we want to wait for the completion of this task and keep hold of the lock
-                connectionSetupTaskToWait?.Wait();
+                try
+                {
+                    connectionSetupTaskToWait?.Wait();
+                }
+                catch ( Exception e )
+                {
+                    LogDebug( nameof( CMClient ), "Connection setup threw exception during wait in disconnect: {0}", e );
+                }
 
                 // Connection implementations are required to issue the Disconnected callback before Disconnect() returns
                 lock ( syncLock )
