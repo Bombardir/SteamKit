@@ -49,21 +49,23 @@ namespace SteamKit2
         {
             var socketToDisconnect = Interlocked.Exchange( ref socket, null );
 
-            if ( socketToDisconnect != null )
+            if ( socketToDisconnect == null ) 
+                return;
+
+            try
+            {
                 _disconnectTask = _globalTcpConnection.StopSocketAsync( socketToDisconnect );
+            }
+            catch (Exception ex)
+            {
+                log.LogDebug( nameof( TcpConnection ), "Exception while disconnecting connection to {0}: {1}", CurrentEndPoint, ex );
+            }
 
             Disconnected?.Invoke( this, new DisconnectedEventArgs( userRequestedDisconnect ) );
         }
 
-        private void ConnectCompleted(bool success)
+        private void ConnectCompleted()
         {
-            if (!success)
-            {
-                log.LogDebug( nameof( TcpConnection ), "Failed connecting to {0}", CurrentEndPoint );
-                Disconnect( userRequestedDisconnect: false );
-                return;
-            }
-
             log.LogDebug( nameof( TcpConnection ), "Connected to {0}", CurrentEndPoint );
             DebugLog.Assert( socket != null, nameof( TcpConnection ), "Socket should be non-null after connecting." );
 
@@ -101,17 +103,10 @@ namespace SteamKit2
         {
             DebugLog.Assert( CurrentEndPoint != null, nameof( TcpConnection ), "CurrentEndPoint should be non-null when connecting." );
 
-            try
-            {
-                using var timeoutTokenSource = new CancellationTokenSource( timeout );
-                socket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
-            }
-            catch ( Exception ex )
-            {
-                log.LogDebug( nameof( TcpConnection ), "Exception while connecting to {0}: {1}", CurrentEndPoint, ex );
-            }
+            using var timeoutTokenSource = new CancellationTokenSource( timeout );
+            socket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
 
-            ConnectCompleted( socket?.Connected ?? false);
+            ConnectCompleted();
         }
 
         /// <summary>

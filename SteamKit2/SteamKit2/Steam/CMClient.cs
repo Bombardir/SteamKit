@@ -251,12 +251,6 @@ namespace SteamKit2.Internal
             Send( heartbeatMsg );
         }
 
-        public bool IsConnecting()
-        {
-            lock ( syncLock )
-                return !_isConnected && connection != null;
-        }
-         
         /// <summary>
         /// Connects this client to a Steam3 server.
         /// This begins the process of connecting and encrypting the data channel between the client and the server.
@@ -344,7 +338,7 @@ namespace SteamKit2.Internal
                     }
                     catch (Exception ex)
                     {
-                        LogDebug( nameof( CMClient ), "Unhandled exception when attempting to connect to Steam: {0}", ex );
+                        LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
                         OnClientDisconnected( userInitiated: false );
                         return;
                     }
