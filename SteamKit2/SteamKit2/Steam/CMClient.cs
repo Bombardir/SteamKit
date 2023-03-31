@@ -23,7 +23,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectQuota = new( 32, 32 );
+        private static SemaphoreSlim GlobalConnectQuota = new( 48, 48 );
 
         /// <summary>
         /// The configuration for this client.
