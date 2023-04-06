@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using ProtoBuf;
+using SteamKit2.Authentication;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -29,6 +30,13 @@ namespace SteamKit2
         readonly Queue<ICallbackMsg> callbackQueue;
 
         internal AsyncJobManager jobManager;
+
+        SteamAuthentication? _authentication = null;
+
+        /// <summary>
+        /// Handler used for authenticating on Steam.
+        /// </summary>
+        public SteamAuthentication Authentication => _authentication ??= new SteamAuthentication( this );
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamClient"/> class with the default configuration.

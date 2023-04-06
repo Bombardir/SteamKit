@@ -1,30 +1,11 @@
 ﻿using System;
-
+using System.Text.Json;
 using SteamKit2;
-
-//
-// Sample 1: Logon
-//
-// the first act of business before being able to use steamkit2's features is to
-// logon to the steam network
-//
-// interaction with steamkit is done through client message handlers and the results
-// come back through a callback queue controlled by a steamclient instance 
-//
-// your code must create a CallbackMgr, and instances of Callback<T>. Callback<T> maps a specific
-// callback type to a function, whilst CallbackMgr routes the callback objects to the functions that
-// you have specified. a Callback<T> is bound to a specific callback manager.
-//
-//
-// WARNING!
-// This the old login flow, we keep this sample around because it still currently works
-// for simple cases where you do not need to remember password.
-// See Sample1a_Authentication for the new flow.
-//
+using SteamKit2.Authentication;
 
 if ( args.Length < 2 )
 {
-    Console.WriteLine( "Sample1: No username and password specified!" );
+    Console.Error.WriteLine( "Sample1a: No username and password specified!" );
     return;
 }
 
@@ -63,15 +44,33 @@ while ( isRunning )
     manager.RunWaitCallbacks( TimeSpan.FromSeconds( 1 ) );
 }
 
-void OnConnected( SteamClient.ConnectedCallback callback )
+async void OnConnected( SteamClient.ConnectedCallback callback )
 {
     Console.WriteLine( "Connected to Steam! Logging in '{0}'...", user );
 
-    steamUser.LogOn( new SteamUser.LogOnDetails
+    // Begin authenticating via credentials
+    var authSession = await steamClient.Authentication.BeginAuthSessionViaCredentialsAsync( new AuthSessionDetails
     {
         Username = user,
         Password = pass,
+        IsPersistentSession = false,
+        Authenticator = new UserConsoleAuthenticator(),
     } );
+
+    // Starting polling Steam for authentication response
+    var pollResponse = await authSession.PollingWaitForResultAsync();
+
+    // Logon to Steam with the access token we have received
+    // Note that we are using RefreshToken for logging on here
+    steamUser.LogOn( new SteamUser.LogOnDetails
+    {
+        Username = pollResponse.AccountName,
+        AccessToken = pollResponse.RefreshToken,
+    } );
+
+    // This is not required, but it is possible to parse the JWT access token to see the scope and expiration date.
+    ParseJsonWebToken( pollResponse.AccessToken, nameof( pollResponse.AccessToken ) );
+    ParseJsonWebToken( pollResponse.RefreshToken, nameof( pollResponse.RefreshToken ) );
 }
 
 void OnDisconnected( SteamClient.DisconnectedCallback callback )
@@ -85,18 +84,6 @@ void OnLoggedOn( SteamUser.LoggedOnCallback callback )
 {
     if ( callback.Result != EResult.OK )
     {
-        if ( callback.Result == EResult.AccountLogonDenied )
-        {
-            // if we recieve AccountLogonDenied or one of it's flavors (AccountLogonDeniedNoMailSent, etc)
-            // then the account we're logging into is SteamGuard protected
-            // see sample 5 for how SteamGuard can be handled
-
-            Console.WriteLine( "Unable to logon to Steam: This account is SteamGuard protected." );
-
-            isRunning = false;
-            return;
-        }
-
         Console.WriteLine( "Unable to logon to Steam: {0} / {1}", callback.Result, callback.ExtendedResult );
 
         isRunning = false;
@@ -114,4 +101,34 @@ void OnLoggedOn( SteamUser.LoggedOnCallback callback )
 void OnLoggedOff( SteamUser.LoggedOffCallback callback )
 {
     Console.WriteLine( "Logged off of Steam: {0}", callback.Result );
+}
+
+
+
+// This is simply showing how to parse JWT, this is not required to login to Steam
+void ParseJsonWebToken( string token, string name )
+{
+    // You can use a JWT library to do the parsing for you
+    var tokenComponents = token.Split( '.' );
+
+    // Fix up base64url to normal base64
+    var base64 = tokenComponents[ 1 ].Replace( '-', '+' ).Replace( '_', '/' );
+
+    if ( base64.Length % 4 != 0 )
+    {
+        base64 += new string( '=', 4 - base64.Length % 4 );
+    }
+
+    var payloadBytes = Convert.FromBase64String( base64 );
+
+    // Payload can be parsed as JSON, and then fields such expiration date, scope, etc can be accessed
+    var payload = JsonDocument.Parse( payloadBytes );
+
+    // For brevity we will simply output formatted json to console
+    var formatted = JsonSerializer.Serialize( payload, new JsonSerializerOptions
+    {
+        WriteIndented = true,
+    } );
+    Console.WriteLine( $"{name}: {formatted}" );
+    Console.WriteLine();
 }
