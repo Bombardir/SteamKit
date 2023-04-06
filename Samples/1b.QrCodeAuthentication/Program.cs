@@ -1,36 +1,7 @@
 ﻿using System;
-
+using QRCoder;
 using SteamKit2;
-
-//
-// Sample 1: Logon
-//
-// the first act of business before being able to use steamkit2's features is to
-// logon to the steam network
-//
-// interaction with steamkit is done through client message handlers and the results
-// come back through a callback queue controlled by a steamclient instance 
-//
-// your code must create a CallbackMgr, and instances of Callback<T>. Callback<T> maps a specific
-// callback type to a function, whilst CallbackMgr routes the callback objects to the functions that
-// you have specified. a Callback<T> is bound to a specific callback manager.
-//
-//
-// WARNING!
-// This the old login flow, we keep this sample around because it still currently works
-// for simple cases where you do not need to remember password.
-// See Sample1a_Authentication for the new flow.
-//
-
-if ( args.Length < 2 )
-{
-    Console.WriteLine( "Sample1: No username and password specified!" );
-    return;
-}
-
-// save our logon details
-var user = args[ 0 ];
-var pass = args[ 1 ];
+using SteamKit2.Authentication;
 
 // create our steamclient instance
 var steamClient = new SteamClient();
@@ -63,14 +34,34 @@ while ( isRunning )
     manager.RunWaitCallbacks( TimeSpan.FromSeconds( 1 ) );
 }
 
-void OnConnected( SteamClient.ConnectedCallback callback )
+async void OnConnected( SteamClient.ConnectedCallback callback )
 {
-    Console.WriteLine( "Connected to Steam! Logging in '{0}'...", user );
+    // Start an authentication session by requesting a link
+    var authSession = await steamClient.Authentication.BeginAuthSessionViaQRAsync( new AuthSessionDetails() );
 
+    // Steam will periodically refresh the challenge url, this callback allows you to draw a new qr code
+    authSession.ChallengeURLChanged = () =>
+    {
+        Console.WriteLine();
+        Console.WriteLine( "Steam has refreshed the challenge url" );
+
+        DrawQRCode( authSession );
+    };
+
+    // Draw current qr right away
+    DrawQRCode( authSession );
+
+    // Starting polling Steam for authentication response
+    // This response is later used to logon to Steam after connecting
+    var pollResponse = await authSession.PollingWaitForResultAsync();
+
+    Console.WriteLine( $"Logging in as '{pollResponse.AccountName}'..." );
+
+    // Logon to Steam with the access token we have received
     steamUser.LogOn( new SteamUser.LogOnDetails
     {
-        Username = user,
-        Password = pass,
+        Username = pollResponse.AccountName,
+        AccessToken = pollResponse.RefreshToken,
     } );
 }
 
@@ -85,18 +76,6 @@ void OnLoggedOn( SteamUser.LoggedOnCallback callback )
 {
     if ( callback.Result != EResult.OK )
     {
-        if ( callback.Result == EResult.AccountLogonDenied )
-        {
-            // if we recieve AccountLogonDenied or one of it's flavors (AccountLogonDeniedNoMailSent, etc)
-            // then the account we're logging into is SteamGuard protected
-            // see sample 5 for how SteamGuard can be handled
-
-            Console.WriteLine( "Unable to logon to Steam: This account is SteamGuard protected." );
-
-            isRunning = false;
-            return;
-        }
-
         Console.WriteLine( "Unable to logon to Steam: {0} / {1}", callback.Result, callback.ExtendedResult );
 
         isRunning = false;
@@ -114,4 +93,19 @@ void OnLoggedOn( SteamUser.LoggedOnCallback callback )
 void OnLoggedOff( SteamUser.LoggedOffCallback callback )
 {
     Console.WriteLine( "Logged off of Steam: {0}", callback.Result );
+}
+
+void DrawQRCode( QrAuthSession authSession )
+{
+    Console.WriteLine( $"Challenge URL: {authSession.ChallengeURL}" );
+    Console.WriteLine();
+
+    // Encode the link as a QR code
+    var qrGenerator = new QRCodeGenerator();
+    var qrCodeData = qrGenerator.CreateQrCode( authSession.ChallengeURL, QRCodeGenerator.ECCLevel.L );
+    var qrCode = new AsciiQRCode( qrCodeData );
+    var qrCodeAsAsciiArt = qrCode.GetGraphic( 1, drawQuietZones: false );
+
+    Console.WriteLine( "Use the Steam Mobile App to sign in via QR code:" );
+    Console.WriteLine( qrCodeAsAsciiArt );
 }
