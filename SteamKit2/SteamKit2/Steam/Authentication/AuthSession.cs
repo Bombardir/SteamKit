@@ -210,7 +210,7 @@ namespace SteamKit2.Authentication
                 request_id = RequestID,
             };
 
-            var message = await Authentication.AuthenticationService.SendMessage( api => api.PollAuthSessionStatus( request ) );
+            var message = await Authentication.AuthenticationService.SendMessage( api => api.PollAuthSessionStatus( request ) ).WaitResultAsync();
 
             // eresult can be Expired, FileNotFound, Fail
             if ( message.Result != EResult.OK )

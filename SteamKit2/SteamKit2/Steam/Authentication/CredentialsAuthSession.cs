@@ -41,7 +41,7 @@ namespace SteamKit2.Authentication
                 code_type = codeType,
             };
 
-            var message = await Authentication.AuthenticationService.SendMessage( api => api.UpdateAuthSessionWithSteamGuardCode( request ) );
+            var message = await Authentication.AuthenticationService.SendMessage( api => api.UpdateAuthSessionWithSteamGuardCode( request ) ).WaitResultAsync();
             var response = message.GetDeserializedResponse<CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response>();
 
             // Observed results can be InvalidLoginAuthCode, TwoFactorCodeMismatch, Expired, DuplicateRequest.

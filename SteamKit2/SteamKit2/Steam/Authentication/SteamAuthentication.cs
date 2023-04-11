@@ -47,7 +47,7 @@ namespace SteamKit2.Authentication
                 account_name = accountName
             };
 
-            var message = await AuthenticationService.SendMessage( api => api.GetPasswordRSAPublicKey( request ) );
+            var message = await AuthenticationService.SendMessage( api => api.GetPasswordRSAPublicKey( request ) ).WaitResultAsync();
 
             if ( message.Result != EResult.OK )
             {
@@ -81,7 +81,7 @@ namespace SteamKit2.Authentication
                 }
             };
 
-            var message = await AuthenticationService.SendMessage( api => api.BeginAuthSessionViaQR( request ) );
+            var message = await AuthenticationService.SendMessage( api => api.BeginAuthSessionViaQR( request ) ).WaitResultAsync();
 
             if ( message.Result != EResult.OK )
             {
@@ -147,7 +147,7 @@ namespace SteamKit2.Authentication
                 }
             };
 
-            var message = await AuthenticationService.SendMessage( api => api.BeginAuthSessionViaCredentials( request ) );
+            var message = await AuthenticationService.SendMessage( api => api.BeginAuthSessionViaCredentials( request ) ).WaitResultAsync();
 
             // eresult can be InvalidPassword, ServiceUnavailable, InvalidParam, RateLimitExceeded
             if ( message.Result != EResult.OK )
