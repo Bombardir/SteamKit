@@ -135,7 +135,7 @@ namespace SteamKit2.Discovery
             lock ( listLock )
             {
                 var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
-                var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.CMServerListDatacenterCount ).ToHashSet();
+                var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.MaxCMServerListDatacenterCount ).ToHashSet();
 
                 servers.Clear();
 

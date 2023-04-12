@@ -117,7 +117,7 @@ namespace SteamKit2
 
         public EndPoint LocalEndPoint => state.LocalEndPoint;
 
-        public Int32 CMServerListDatacenterCount { get; set; } = 20;
+        public Int32 MaxCMServerListDatacenterCount { get; set; } = 20;
 
         /// <summary>
         /// The server list used for this configuration.
