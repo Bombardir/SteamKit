@@ -32,15 +32,22 @@ namespace SteamKit2.Discovery
         [DebuggerDisplay("ServerInfo ({EndPoint}, {Protocol}, Bad: {LastBadConnectionDateTimeUtc.HasValue})")]
         class ServerInfo
         {
-            public ServerInfo( ServerRecord record, ProtocolTypes protocolType )
+            public ServerInfo( ServerRecord record )
             {
                 Record = record;
-                Protocol = protocolType;
+            }
+
+            public DateTime GetBadConnectionTime( DateTime currentTime )
+            {
+                if ((currentTime - LastBadConnectionTimeUtc).TotalMinutes >= 1)
+                    return default;
+
+                return LastBadConnectionTimeUtc;
             }
 
             public ServerRecord Record { get; }
-            public ProtocolTypes Protocol { get; }
-            public DateTime? LastBadConnectionTimeUtc { get; set; }
+            public DateTime LastBadConnectionTimeUtc { get; set; }
+            public DateTime LastConnectionTimeUtc { get; set; }
         }
 
         /// <summary>
@@ -51,21 +58,18 @@ namespace SteamKit2.Discovery
         public SmartCMServerList( SteamConfiguration configuration )
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-
             servers = new Collection<ServerInfo>();
-            listLock = new object();
         }
 
         readonly SteamConfiguration configuration;
 
         Task? listTask;
 
-        object listLock;
         Collection<ServerInfo> servers;
 
         private void StartFetchingServers()
         {
-            lock ( listLock )
+            lock ( servers )
             {
                 // if the server list has been populated, no need to perform any additional work
                 if ( servers.Count > 0 )
@@ -132,12 +136,10 @@ namespace SteamKit2.Discovery
                 throw new ArgumentNullException( nameof(endpointList) );
             }
 
-            lock ( listLock )
+            lock ( servers )
             {
                 var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
                 var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.MaxCMServerListDatacenterCount ).ToHashSet();
-
-                servers.Clear();
 
                 foreach (var endPoint in distinctEndPoints)
                 {
@@ -151,42 +153,30 @@ namespace SteamKit2.Discovery
             }
         }
 
-        void AddCore( ServerRecord endPoint )
+        private void AddCore( ServerRecord endPoint )
         {
-            foreach ( var protocolType in endPoint.ProtocolTypes.GetFlags() )
-            {
-                var info = new ServerInfo( endPoint, protocolType );
-                servers.Add( info );
-            }
+            if (servers.Any(s => s.Record == endPoint))
+                return;
+
+            servers.Add( new ServerInfo( endPoint ) );
         }
 
-        internal bool TryMark( EndPoint endPoint, ProtocolTypes protocolTypes, ServerQuality quality )
+        internal bool TryMark( EndPoint endPoint, ServerQuality quality )
         {
-            lock ( listLock )
+            if ( quality == ServerQuality.Good )
+                return true;
+
+            lock ( servers )
             {
-                ServerInfo[] serverInfos;
-                
-                if ( quality == ServerQuality.Good )
-                {
-                    serverInfos = servers.Where( x => x.Record.EndPoint.Equals( endPoint ) && x.Protocol.HasFlagsFast( protocolTypes ) ).ToArray();
-                }
-                else
-                {
-                    // If we're marking this server for any failure, mark all endpoints for the host at the same time
-                    var host = NetHelpers.ExtractEndpointHost( endPoint ).host;
-                    serverInfos = servers.Where( x => x.Record.GetHost().Equals( host )).ToArray();
-                }
+                var host = NetHelpers.ExtractEndpointHost( endPoint ).host;
+                ServerInfo[] serverInfos = servers.Where( x => x.Record.GetHost().Equals( host ) ).ToArray();
 
                 if ( serverInfos.Length == 0 )
-                {
                     return false;
-                }
-
-                foreach ( var serverInfo in serverInfos )
-                {
-                    MarkServerCore( serverInfo, quality );
-                }
                 
+                foreach ( var serverInfo in serverInfos )
+                    MarkServerCore( serverInfo, quality );
+
                 return true;
             }
         }
@@ -195,18 +185,9 @@ namespace SteamKit2.Discovery
         {
             switch ( quality )
             {
-                case ServerQuality.Good:
-                {
-                    if ( serverInfo.LastBadConnectionTimeUtc.HasValue )
-                    {
-                        serverInfo.LastBadConnectionTimeUtc = null;
-                    }
-                    break;
-                }
-
                 case ServerQuality.Bad:
                 {
-                        serverInfo.LastBadConnectionTimeUtc = DateTime.UtcNow;
+                    serverInfo.LastBadConnectionTimeUtc = DateTime.UtcNow;
                     break;
                 }
 
@@ -221,24 +202,25 @@ namespace SteamKit2.Discovery
         /// <returns>IPEndPoint candidate</returns>
         private ServerRecord? GetNextServerCandidateInternal( ProtocolTypes supportedProtocolTypes )
         {
-            lock ( listLock )
+            lock ( servers )
             {
+                var currentTime = DateTime.UtcNow;
+
                 var query = 
                     from server in servers
-                    where server.Protocol.HasFlagsFast( supportedProtocolTypes )
-                    let lastBadConnectionTime = server.LastBadConnectionTimeUtc.GetValueOrDefault()
-                    orderby lastBadConnectionTime, Random.Shared.Next()
-                    select new { server.Record.EndPoint, server.Protocol };
+                    where server.Record.ProtocolTypes.HasFlagsFast( supportedProtocolTypes )
+                    orderby server.GetBadConnectionTime( currentTime ), server.LastConnectionTimeUtc
+                    select server;
 
                 var result = query.FirstOrDefault();
                 
                 if ( result == null )
-                {
                     return null;
-                }
 
-                DebugWrite( $"Next server candidate: {result.EndPoint} ({result.Protocol})" );
-                return new ServerRecord( result.EndPoint, result.Protocol );
+                result.LastConnectionTimeUtc = currentTime;
+
+                DebugWrite( $"Next server candidate: {result.Record.EndPoint} ({supportedProtocolTypes})" );
+                return result.Record;
             }
         }
 
@@ -283,7 +265,7 @@ namespace SteamKit2.Discovery
                 return Array.Empty<ServerRecord>();
             }
 
-            lock ( listLock )
+            lock ( servers )
             {
                 endPoints = servers.Select(s => s.Record).Distinct().ToArray();
             }
