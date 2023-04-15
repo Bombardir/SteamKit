@@ -12,7 +12,7 @@ namespace SteamKit2.Networking.Steam3
 {
     public class GlobalTcpConnectionSocket
     {
-        public const Int32 NetCycleTimeMs = 150;
+        public const Int32 NetCycleTimeMs = 50;
 
         private readonly ILogContext _log;
 
@@ -78,6 +78,7 @@ namespace SteamKit2.Networking.Steam3
                 socket.Blocking = false;
                 socket.ReceiveTimeout = timeout;
                 socket.SendTimeout = timeout;
+                socket.NoDelay = true;
 
                 await socket.ConnectAsync( targetEndPoint, token );
 
@@ -135,7 +136,6 @@ namespace SteamKit2.Networking.Steam3
                 try
                 {
                     ListenThreadCycle();
-                    Thread.Sleep( 50 );
                 }
                 catch ( Exception e )
                 {
@@ -147,13 +147,16 @@ namespace SteamKit2.Networking.Steam3
         private void ListenThreadCycle()
         {
             if ( _pollGroup.IsEmpty() )
+            {
+                Thread.Sleep( 100 );
                 return;
-            
+            }
+
             int polledCount;
 
             try
             {
-                polledCount = _pollGroup.Poll(NetCycleTimeMs);
+                polledCount = _pollGroup.Poll( NetCycleTimeMs );
             }
             catch ( Exception ex )
             {
