@@ -182,6 +182,20 @@ namespace SteamKit2.Internal
         /// </summary>
         public IDebugNetworkListener? DebugNetworkListener { get; set; }
 
+        public ServerRecord Server
+        {
+            get
+            {
+                lock ( syncLock )
+                    return _serverRecord;
+            }
+            set
+            {
+                lock ( syncLock )
+                    _serverRecord = value;
+            }
+        }
+
         internal bool ExpectDisconnection
         {
             get
@@ -208,6 +222,7 @@ namespace SteamKit2.Internal
         private int? _sessionId;
         private bool _expectDisconnection;
         private TimeSpan? _customHeartBeat;
+        private ServerRecord _serverRecord;
 
         ScheduledFunction heartBeatFunc;
 
@@ -276,79 +291,86 @@ namespace SteamKit2.Internal
 
                 connectionSetupTask = Task.Run(async () =>
                 {
-                    if ( token.IsCancellationRequested )
-                    {
-                        LogDebug( nameof( CMClient ), "Connection cancelled before a server could be chosen." );
-                        OnClientDisconnected( userInitiated: true );
-                        return;
-                    }
-                    ServerRecord? record;
-
                     try
                     {
-                        if ( cmServer == null )
+                        if ( token.IsCancellationRequested )
                         {
-                            record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
+                            LogDebug( nameof( CMClient ), "Connection cancelled before a server could be chosen." );
+                            OnClientDisconnected( userInitiated: true );
+                            return;
                         }
-                        else
+                        ServerRecord? record;
+
+                        try
                         {
-                            record = cmServer;
+                            if ( cmServer == null )
+                            {
+                                record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
+                            }
+                            else
+                            {
+                                record = cmServer;
+                            }
+
+                        }
+                        catch ( Exception e )
+                        {
+                            LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", e );
+                            OnClientDisconnected( userInitiated: false );
+                            return;
                         }
 
-                    }
-                    catch ( Exception e )
-                    {
-                        LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", e );
-                        OnClientDisconnected( userInitiated: false );
-                        return;
-                    }
+                        if ( record is null )
+                        {
+                            LogDebug( nameof( CMClient ), "Server record task returned no result." );
+                            OnClientDisconnected( userInitiated: false );
+                            return;
+                        }
 
-                    if ( record is null )
-                    {
-                        LogDebug( nameof( CMClient ), "Server record task returned no result." );
-                        OnClientDisconnected( userInitiated: false );
-                        return;
-                    }
+                        IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
 
-                    IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+                        lock ( syncLock )
+                        {
+                            DebugLog.Assert( connection == null, nameof( CMClient ),
+                                "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                            connection = newConnection;
+                        }
 
-                    lock ( syncLock )
-                    {
-                        DebugLog.Assert( connection == null, nameof( CMClient ),
-                            "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
-                        connection = newConnection;
-                    }
+                        newConnection.NetMsgReceived += NetMsgReceived;
+                        newConnection.Connected += Connected;
+                        newConnection.Disconnected += Disconnected;
 
-                    newConnection.NetMsgReceived += NetMsgReceived;
-                    newConnection.Connected += Connected;
-                    newConnection.Disconnected += Disconnected;
+                        try
+                        {
+                            await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                        }
+                        catch ( Exception ex )
+                        {
+                            LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
+                            OnClientDisconnected( userInitiated: false );
+                            return;
+                        }
 
-                    try
-                    {
-                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
-                    }
-                    catch ( Exception ex )
-                    {
-                        LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
-                        OnClientDisconnected( userInitiated: false );
-                        return;
-                    }
+                        Server = record;
 
-                    if ( IsConnected )
-                        return;
-
-                    await Task.Delay( ConnectionTimeout, token );
-
-                    lock ( syncLock )
-                    {
-                        if (connection == null || _isConnected)
+                        if ( IsConnected )
                             return;
 
-                        LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-                        connection.Disconnect( userInitiated: false );
-                    }
+                        await Task.Delay( TimeSpan.FromMinutes( 1 ), token );
 
-                    _ = Interlocked.Exchange( ref connectionSetupTask, null );
+                        lock ( syncLock )
+                        {
+                            if ( connection == null || _isConnected )
+                                return;
+
+                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
+                            connection.Disconnect( userInitiated: false );
+                        }
+                    }
+                    finally
+                    {
+                        _ = Interlocked.Exchange( ref connectionSetupTask, null );
+                    }
                 } );
             }
         }
