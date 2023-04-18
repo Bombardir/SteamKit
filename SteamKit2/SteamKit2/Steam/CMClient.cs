@@ -3,8 +3,6 @@
  * file 'license.txt', which is part of this source code package.
  */
 
-
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -23,8 +21,6 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectQuota = new( 48, 48 );
-
         /// <summary>
         /// The configuration for this client.
         /// </summary>
@@ -278,17 +274,6 @@ namespace SteamKit2.Internal
 
                 ExpectDisconnection = false;
 
-                Task<ServerRecord?> recordTask;
-
-                if ( cmServer == null )
-                {
-                    recordTask = Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
-                }
-                else
-                {
-                    recordTask = Task.FromResult( ( ServerRecord? )cmServer );
-                }
-
                 connectionSetupTask = Task.Run(async () =>
                 {
                     if ( token.IsCancellationRequested )
@@ -297,12 +282,19 @@ namespace SteamKit2.Internal
                         OnClientDisconnected( userInitiated: true );
                         return;
                     }
-
                     ServerRecord? record;
 
                     try
                     {
-                        record = await recordTask;
+                        if ( cmServer == null )
+                        {
+                            record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
+                        }
+                        else
+                        {
+                            record = cmServer;
+                        }
+
                     }
                     catch ( Exception e )
                     {
@@ -322,7 +314,8 @@ namespace SteamKit2.Internal
 
                     lock ( syncLock )
                     {
-                        DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                        DebugLog.Assert( connection == null, nameof( CMClient ),
+                            "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
                         connection = newConnection;
                     }
 
@@ -330,21 +323,15 @@ namespace SteamKit2.Internal
                     newConnection.Connected += Connected;
                     newConnection.Disconnected += Disconnected;
 
-                    await GlobalConnectQuota.WaitAsync(token);
-
                     try
                     {
                         await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
                     }
-                    catch (Exception ex)
+                    catch ( Exception ex )
                     {
                         LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
                         OnClientDisconnected( userInitiated: false );
                         return;
-                    }
-                    finally
-                    {
-                        GlobalConnectQuota.Release();
                     }
 
                     if ( IsConnected )
@@ -587,7 +574,7 @@ namespace SteamKit2.Internal
 
                 DebugLog.Assert( connection != null, nameof(CMClient), "No connection object after connecting." );
                 DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
-                Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Good );
+                Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Good );
                 _isConnected = true;
                 OnClientConnected();
             }
@@ -608,7 +595,7 @@ namespace SteamKit2.Internal
                 {
                     DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint while disconnecting - cannot update server list" );
                     if ( connection.CurrentEndPoint != null)
-                        Servers.TryMark( connection.CurrentEndPoint!, connection.ProtocolTypes, ServerQuality.Bad );
+                        Servers.TryMark( connection.CurrentEndPoint!, ServerQuality.Bad );
                 }
 
                 _sessionId = null;
@@ -746,15 +733,13 @@ namespace SteamKit2.Internal
                 lock ( syncLock )
                 {
                     if ( connection?.CurrentEndPoint != null )
-                        Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
+                        Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Bad );
                 }
             }
         }
         void HandleLoggedOff( IPacketMsg packetMsg )
         {
-            SessionID = null;
             SteamID = null;
-
             CellID = null;
             PublicIP = null;
             IPCountryCode = null;
@@ -773,7 +758,7 @@ namespace SteamKit2.Internal
                     {
                         DebugLog.Assert( connection != null, nameof(CMClient), "No connection object during ClientLoggedOff." );
                         DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint during ClientLoggedOff - cannot update server list status" );
-                        Servers.TryMark( connection.CurrentEndPoint, connection.ProtocolTypes, ServerQuality.Bad );
+                        Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Bad );
                     }
                 }
             }
