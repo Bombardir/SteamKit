@@ -21,8 +21,6 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectQuota = new SemaphoreSlim( 1000, 1000 );
-
         /// <summary>
         /// The configuration for this client.
         /// </summary>
@@ -284,68 +282,56 @@ namespace SteamKit2.Internal
                         OnClientDisconnected( userInitiated: true );
                         return;
                     }
-
-                    await GlobalConnectQuota.WaitAsync(token);
+                    ServerRecord? record;
 
                     try
                     {
-                        ServerRecord? record;
-
-                        try
+                        if ( cmServer == null )
                         {
-                            if ( cmServer == null )
-                            {
-                                record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
-                            }
-                            else
-                            {
-                                record = cmServer;
-                            }
-
+                            record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
                         }
-                        catch ( Exception e )
+                        else
                         {
-                            LogDebug( nameof(CMClient), "Server record task threw exception: {0}", e );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
-                        }
-
-                        if ( record is null )
-                        {
-                            LogDebug( nameof(CMClient), "Server record task returned no result." );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
-                        }
-
-                        IConnection newConnection =
-                            CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
-
-                        lock ( syncLock )
-                        {
-                            DebugLog.Assert( connection == null, nameof(CMClient),
-                                "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
-                            connection = newConnection;
-                        }
-
-                        newConnection.NetMsgReceived += NetMsgReceived;
-                        newConnection.Connected += Connected;
-                        newConnection.Disconnected += Disconnected;
-
-                        try
-                        {
-                            await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
-                        }
-                        catch ( Exception ex )
-                        {
-                            LogDebug( nameof(CMClient), "Exception when attempting to connect to Steam: {0}", ex );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
+                            record = cmServer;
                         }
 
                     }
-                    finally
+                    catch ( Exception e )
                     {
-                        GlobalConnectQuota.Release();
+                        LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", e );
+                        OnClientDisconnected( userInitiated: false );
+                        return;
+                    }
+
+                    if ( record is null )
+                    {
+                        LogDebug( nameof( CMClient ), "Server record task returned no result." );
+                        OnClientDisconnected( userInitiated: false );
+                        return;
+                    }
+
+                    IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+
+                    lock ( syncLock )
+                    {
+                        DebugLog.Assert( connection == null, nameof( CMClient ),
+                            "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                        connection = newConnection;
+                    }
+
+                    newConnection.NetMsgReceived += NetMsgReceived;
+                    newConnection.Connected += Connected;
+                    newConnection.Disconnected += Disconnected;
+
+                    try
+                    {
+                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                    }
+                    catch ( Exception ex )
+                    {
+                        LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
+                        OnClientDisconnected( userInitiated: false );
+                        return;
                     }
 
                     if ( IsConnected )
