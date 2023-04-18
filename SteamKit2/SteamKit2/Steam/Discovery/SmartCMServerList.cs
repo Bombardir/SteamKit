@@ -206,14 +206,23 @@ namespace SteamKit2.Discovery
             {
                 var currentTime = DateTime.UtcNow;
 
-                var query = 
-                    from server in servers
-                    where server.Record.ProtocolTypes.HasFlagsFast( supportedProtocolTypes )
-                    orderby server.GetBadConnectionTime( currentTime ), server.LastConnectionTimeUtc
-                    select server;
+                ServerInfo? result = null;
+                DateTime lowestBadConnectionTime = DateTime.MaxValue;
+                DateTime lowestConnectionTime = DateTime.MaxValue;
 
-                var result = query.FirstOrDefault();
-                
+                foreach ( ServerInfo server in servers )
+                {
+                    var serverBadConnectionTime = server.GetBadConnectionTime( currentTime );
+
+                    if ( serverBadConnectionTime < lowestBadConnectionTime || 
+                         serverBadConnectionTime == lowestBadConnectionTime && server.LastConnectionTimeUtc < lowestConnectionTime)
+                    {
+                        result = server;
+                        lowestBadConnectionTime = serverBadConnectionTime;
+                        lowestConnectionTime = server.LastConnectionTimeUtc;
+                    }
+                }
+
                 if ( result == null )
                     return null;
 
