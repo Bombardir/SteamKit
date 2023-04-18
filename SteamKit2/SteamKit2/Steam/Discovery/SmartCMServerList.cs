@@ -37,12 +37,9 @@ namespace SteamKit2.Discovery
                 Record = record;
             }
 
-            public DateTime GetBadConnectionTime( DateTime currentTime )
+            public Boolean IsBadConnection( DateTime currentTime )
             {
-                if ((currentTime - LastBadConnectionTimeUtc).TotalMinutes >= 1)
-                    return default;
-
-                return LastBadConnectionTimeUtc;
+                return ( currentTime - LastBadConnectionTimeUtc ).TotalMinutes <= 1;
             }
 
             public ServerRecord Record { get; }
@@ -207,19 +204,18 @@ namespace SteamKit2.Discovery
                 var currentTime = DateTime.UtcNow;
 
                 ServerInfo? result = null;
-                DateTime lowestBadConnectionTime = DateTime.MaxValue;
-                DateTime lowestConnectionTime = DateTime.MaxValue;
+                Boolean isResultBadConnection = true;
 
                 foreach ( ServerInfo server in servers )
                 {
-                    var serverBadConnectionTime = server.GetBadConnectionTime( currentTime );
+                    var isServerBadConnection = server.IsBadConnection( currentTime );
 
-                    if ( serverBadConnectionTime < lowestBadConnectionTime || 
-                         serverBadConnectionTime == lowestBadConnectionTime && server.LastConnectionTimeUtc < lowestConnectionTime)
+                    if ( result == null || 
+                         isResultBadConnection && !isServerBadConnection ||
+                         isResultBadConnection == isServerBadConnection && server.LastConnectionTimeUtc < result.LastConnectionTimeUtc)
                     {
                         result = server;
-                        lowestBadConnectionTime = serverBadConnectionTime;
-                        lowestConnectionTime = server.LastConnectionTimeUtc;
+                        isResultBadConnection = isServerBadConnection;
                     }
                 }
 
