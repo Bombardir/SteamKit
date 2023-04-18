@@ -3,11 +3,9 @@
  * file 'license.txt', which is part of this source code package.
  */
 
-
-
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Threading;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -19,11 +17,20 @@ namespace SteamKit2
     /// </summary>
     public sealed class CallbackManager : ICallbackMgrInternals
     {
-        SteamClient client;
+        private readonly struct CallbackQueueEntry
+        {
+            public CallbackManager Manager { get; }
+            public ICallbackMsg Callback { get; }
 
+            public CallbackQueueEntry( CallbackManager manager, ICallbackMsg callback )
+            {
+                Manager = manager;
+                Callback = callback;
+            }
+        }
+
+        private static List<CallbackQueueEntry> GlobalCallbackQueue = new List<CallbackQueueEntry>(100);
         List<CallbackBase> registeredCallbacks;
-
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CallbackManager"/> class.
@@ -37,58 +44,45 @@ namespace SteamKit2
             }
 
             registeredCallbacks = new List<CallbackBase>(10);
-
-            this.client = client;
+            client.OnCallback += OnClientCallback;
         }
 
-
-        /// <summary>
-        /// Runs a single queued callback.
-        /// If no callback is queued, this method will instantly return.
-        /// </summary>
-        public void RunCallbacks()
+        public static void RunWaitAllCallbacks( TimeSpan timeout )
         {
-            var call = client.GetCallback( true );
+            CallbackQueueEntry[] callbacksToRun;
 
-            if ( call == null )
-                return;
-
-            Handle( call );
-        }
-        /// <summary>
-        /// Blocks the current thread to run a single queued callback.
-        /// If no callback is queued, the method will block for the given timeout.
-        /// </summary>
-        /// <param name="timeout">The length of time to block.</param>
-        public void RunWaitCallbacks( TimeSpan timeout )
-        {
-            var call = client.WaitForCallback( true, timeout );
-
-            if ( call == null )
-                return;
-
-            Handle( call );
-        }
-        /// <summary>
-        /// Blocks the current thread to run all queued callbacks.
-        /// If no callback is queued, the method will block for the given timeout.
-        /// </summary>
-        /// <param name="timeout">The length of time to block.</param>
-        public void RunWaitAllCallbacks( TimeSpan timeout )
-        {
-            var calls = client.GetAllCallbacks( true, timeout );
-            foreach ( var call in calls )
+            lock ( GlobalCallbackQueue )
             {
-                Handle( call );
+                if ( GlobalCallbackQueue.Count == 0 )
+                {
+                    if ( !Monitor.Wait( GlobalCallbackQueue, timeout ) )
+                        return;
+                }
+                
+                callbacksToRun = GlobalCallbackQueue.ToArray();
+                GlobalCallbackQueue.Clear();
+            }
+
+            foreach ( var callback in callbacksToRun )
+            {
+                try
+                {
+                    callback.Manager.Handle( callback.Callback );
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.WriteLine( "error", "Failed to handle callback: {0}", ex );
+                }
             }
         }
-        /// <summary>
-        /// Blocks the current thread to run a single queued callback.
-        /// If no callback is queued, the method will block until one is posted.
-        /// </summary>
-        public void RunWaitCallbacks()
+
+        private void OnClientCallback( ICallbackMsg msg )
         {
-            RunWaitCallbacks( TimeSpan.FromMilliseconds( -1 ) );
+            lock ( GlobalCallbackQueue )
+            {
+                GlobalCallbackQueue.Add( new CallbackQueueEntry( this, msg ) );
+                Monitor.Pulse( GlobalCallbackQueue );
+            }
         }
 
         /// <summary>
