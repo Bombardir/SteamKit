@@ -53,12 +53,9 @@ namespace SteamKit2
 
             lock ( GlobalCallbackQueue )
             {
-                if ( GlobalCallbackQueue.Count == 0 )
-                {
-                    if ( !Monitor.Wait( GlobalCallbackQueue, timeout ) )
-                        return;
-                }
-                
+                if ( GlobalCallbackQueue.Count == 0 && !Monitor.Wait( GlobalCallbackQueue, timeout ) )
+                    return;
+
                 callbacksToRun = GlobalCallbackQueue.ToArray();
                 GlobalCallbackQueue.Clear();
             }
