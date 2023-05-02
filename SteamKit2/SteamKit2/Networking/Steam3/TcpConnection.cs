@@ -69,17 +69,10 @@ namespace SteamKit2
             log.LogDebug( nameof( TcpConnection ), "Connected to {0}", CurrentEndPoint );
             DebugLog.Assert( socket != null, nameof( TcpConnection ), "Socket should be non-null after connecting." );
 
-            try
-            {
-                if (socket.RemoteEndPoint != null)
-                    CurrentEndPoint = socket!.RemoteEndPoint;
-                Connected?.Invoke( this, EventArgs.Empty );
-            }
-            catch ( Exception ex )
-            {
-                log.LogDebug( nameof( TcpConnection ), "Exception while setting up connection to {0}: {1}", CurrentEndPoint, ex );
-                Disconnect( userRequestedDisconnect: false );
-            }
+            if ( socket.RemoteEndPoint != null )
+                CurrentEndPoint = socket!.RemoteEndPoint;
+
+            Connected?.Invoke( this, EventArgs.Empty );
         }
 
         public void OnSocketError()
@@ -104,7 +97,10 @@ namespace SteamKit2
             DebugLog.Assert( CurrentEndPoint != null, nameof( TcpConnection ), "CurrentEndPoint should be non-null when connecting." );
 
             using var timeoutTokenSource = new CancellationTokenSource( timeout );
-            socket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
+
+            var newSocket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
+
+            Interlocked.Exchange( ref socket, newSocket );
 
             ConnectCompleted();
         }
