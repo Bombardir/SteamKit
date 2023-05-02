@@ -125,11 +125,13 @@ namespace SteamKit2
                 throw new ArgumentNullException( nameof(jobId) );
             }
 
-            jobStart = DateTime.UtcNow;
+            ResetTimeout();
             JobID = jobId;
 
             
         }
+
+        public void ResetTimeout() => jobStart = DateTime.UtcNow;
 
         /// <summary>
         /// Constructors are required to register this AsyncJob with the JobManager once initialized.
