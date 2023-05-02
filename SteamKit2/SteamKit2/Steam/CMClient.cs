@@ -252,7 +252,7 @@ namespace SteamKit2.Internal
             SendHeartBeat();
             lock ( syncLock )
             {
-                if (_isConnected)
+                if ( _isConnected )
                     heartBeatFunc.Start();
             }
         }
@@ -289,50 +289,21 @@ namespace SteamKit2.Internal
 
                 ExpectDisconnection = false;
 
-                connectionSetupTask = Task.Run(async () =>
+                connectionSetupTask = Task.Run( async () =>
                 {
+                    bool wasConnectionInitialized = false;
+
                     try
                     {
-                        if ( token.IsCancellationRequested )
-                        {
-                            LogDebug( nameof( CMClient ), "Connection cancelled before a server could be chosen." );
-                            OnClientDisconnected( userInitiated: true );
-                            return;
-                        }
-                        ServerRecord? record;
-
-                        try
-                        {
-                            if ( cmServer == null )
-                            {
-                                record = await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes );
-                            }
-                            else
-                            {
-                                record = cmServer;
-                            }
-
-                        }
-                        catch ( Exception e )
-                        {
-                            LogDebug( nameof( CMClient ), "Server record task threw exception: {0}", e );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
-                        }
-
-                        if ( record is null )
-                        {
-                            LogDebug( nameof( CMClient ), "Server record task returned no result." );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
-                        }
+                        ServerRecord record = cmServer
+                                              ?? await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes )
+                                              ?? throw new Exception( "Server record task returned no result." );
 
                         IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
 
                         lock ( syncLock )
                         {
-                            DebugLog.Assert( connection == null, nameof( CMClient ),
-                                "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                            DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
                             connection = newConnection;
                         }
 
@@ -340,16 +311,9 @@ namespace SteamKit2.Internal
                         newConnection.Connected += Connected;
                         newConnection.Disconnected += Disconnected;
 
-                        try
-                        {
-                            await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
-                        }
-                        catch ( Exception ex )
-                        {
-                            LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
-                            OnClientDisconnected( userInitiated: false );
-                            return;
-                        }
+                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+
+                        wasConnectionInitialized = true;
 
                         Server = record;
 
@@ -358,13 +322,22 @@ namespace SteamKit2.Internal
 
                         await Task.Delay( TimeSpan.FromMinutes( 1 ), token );
 
+                        if ( !IsConnected )
+                            throw new Exception( "Connection timeout while waiting for connection connected event." );
+
+                    }
+                    catch ( Exception ex )
+                    {
+                        LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
+
                         lock ( syncLock )
                         {
-                            if ( connection == null || _isConnected )
-                                return;
+                            if (connection != null && wasConnectionInitialized )
+                                connection.Disconnect( userInitiated: token.IsCancellationRequested );
+                            else
+                                OnClientDisconnected( userInitiated: token.IsCancellationRequested );
 
-                            LogDebug( nameof( CMClient ), "Connection timeout while waiting for connection connected event." );
-                            connection.Disconnect( userInitiated: false );
+                            connection = null;
                         }
                     }
                     finally
@@ -580,9 +553,9 @@ namespace SteamKit2.Internal
         {
             lock ( syncLock )
             {
-                if (!_isConnected)
+                if ( !_isConnected )
                     return;
-                
+
                 OnClientMsgReceived( GetPacketMsg( e.Data, this ) );
             }
         }
@@ -591,11 +564,11 @@ namespace SteamKit2.Internal
         {
             lock ( syncLock )
             {
-                if (connection == null)
+                if ( connection == null )
                     return;
 
-                DebugLog.Assert( connection != null, nameof(CMClient), "No connection object after connecting." );
-                DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint after connecting - cannot update server list" );
+                DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object after connecting." );
+                DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint after connecting - cannot update server list" );
                 Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Good );
                 _isConnected = true;
                 OnClientConnected();
@@ -615,8 +588,8 @@ namespace SteamKit2.Internal
 
                 if ( !e.UserInitiated && !_expectDisconnection )
                 {
-                    DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint while disconnecting - cannot update server list" );
-                    if ( connection.CurrentEndPoint != null)
+                    DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint while disconnecting - cannot update server list" );
+                    if ( connection.CurrentEndPoint != null )
                         Servers.TryMark( connection.CurrentEndPoint!, ServerQuality.Bad );
                 }
 
@@ -778,8 +751,8 @@ namespace SteamKit2.Internal
                 {
                     lock ( syncLock )
                     {
-                        DebugLog.Assert( connection != null, nameof(CMClient), "No connection object during ClientLoggedOff." );
-                        DebugLog.Assert( connection.CurrentEndPoint != null, nameof(CMClient), "No connection endpoint during ClientLoggedOff - cannot update server list status" );
+                        DebugLog.Assert( connection != null, nameof( CMClient ), "No connection object during ClientLoggedOff." );
+                        DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint during ClientLoggedOff - cannot update server list status" );
                         Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Bad );
                     }
                 }
