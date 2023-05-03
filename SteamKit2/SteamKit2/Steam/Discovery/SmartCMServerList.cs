@@ -36,14 +36,7 @@ namespace SteamKit2.Discovery
             {
                 Record = record;
             }
-
-            public Boolean IsBadConnection( DateTime currentTime )
-            {
-                return ( currentTime - LastBadConnectionTimeUtc ).TotalMinutes <= 1;
-            }
-
             public ServerRecord Record { get; }
-            public DateTime LastBadConnectionTimeUtc { get; set; }
             public DateTime LastConnectionTimeUtc { get; set; }
         }
 
@@ -160,37 +153,7 @@ namespace SteamKit2.Discovery
 
         internal bool TryMark( EndPoint endPoint, ServerQuality quality )
         {
-            if ( quality == ServerQuality.Good )
-                return true;
-
-            lock ( servers )
-            {
-                var host = NetHelpers.ExtractEndpointHost( endPoint ).host;
-                ServerInfo[] serverInfos = servers.Where( x => x.Record.GetHost().Equals( host ) ).ToArray();
-
-                if ( serverInfos.Length == 0 )
-                    return false;
-                
-                foreach ( var serverInfo in serverInfos )
-                    MarkServerCore( serverInfo, quality );
-
-                return true;
-            }
-        }
-
-        void MarkServerCore( ServerInfo serverInfo, ServerQuality quality )
-        {
-            switch ( quality )
-            {
-                case ServerQuality.Bad:
-                {
-                    serverInfo.LastBadConnectionTimeUtc = DateTime.UtcNow;
-                    break;
-                }
-
-                default:
-                    throw new ArgumentOutOfRangeException( "quality" );
-            }
+            return true;
         }
 
         /// <summary>
@@ -202,21 +165,12 @@ namespace SteamKit2.Discovery
             lock ( servers )
             {
                 var currentTime = DateTime.UtcNow;
-
                 ServerInfo? result = null;
-                Boolean isResultBadConnection = true;
 
                 foreach ( ServerInfo server in servers )
                 {
-                    var isServerBadConnection = server.IsBadConnection( currentTime );
-
-                    if ( result == null || 
-                         isResultBadConnection && !isServerBadConnection ||
-                         isResultBadConnection == isServerBadConnection && server.LastConnectionTimeUtc < result.LastConnectionTimeUtc)
-                    {
+                    if ( result == null || server.LastConnectionTimeUtc < result.LastConnectionTimeUtc)
                         result = server;
-                        isResultBadConnection = isServerBadConnection;
-                    }
                 }
 
                 if ( result == null )
