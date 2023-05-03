@@ -79,12 +79,9 @@ namespace SteamKit2.Networking.Steam3
                 socket.ReceiveTimeout = timeout;
                 socket.SendTimeout = timeout;
                 socket.NoDelay = false; // Default: false
+                socket.Ttl = 64; // Default: 32
 
                 await socket.ConnectAsync( targetEndPoint, token );
-
-                socket.ReceiveTimeout = 1000 * 60 * 15; // Default: 0 - infinitive
-                socket.SendTimeout = 1000 * 60 * 15; // Default: -1 - infinitive
-                socket.Ttl = 64; // Default: 32
 
                 var socketHandler = new SocketHandler( socket, connection);
                 _pollGroup.Add( socket, socketHandler, PollEvents.ReadAndError );
@@ -232,7 +229,7 @@ namespace SteamKit2.Networking.Steam3
                 var isBuffetSent = SendSocketBufferData( socketHandler );
 
                 if (!isBuffetSent)
-                    break;
+                    return;
             }
 
             lock ( socketHandler.SendQueue )
