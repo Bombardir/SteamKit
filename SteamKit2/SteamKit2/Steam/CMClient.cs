@@ -21,6 +21,9 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
+        private const Int32 MsDelayBetweenActiveConnections = 1;
+        private static Int32 ActiveConnectingClients = 0;
+
         /// <summary>
         /// The configuration for this client.
         /// </summary>
@@ -311,7 +314,18 @@ namespace SteamKit2.Internal
                         newConnection.Connected += Connected;
                         newConnection.Disconnected += Disconnected;
 
-                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                        try
+                        {
+                            var activeConnectingClients = Interlocked.Increment( ref ActiveConnectingClients ) - 1;
+                            if ( activeConnectingClients > 0 )
+                                await Task.Delay( activeConnectingClients * MsDelayBetweenActiveConnections, token );
+
+                            await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                        }
+                        finally
+                        {
+                            Interlocked.Decrement( ref ActiveConnectingClients );
+                        }
 
                         wasConnectionInitialized = true;
 
