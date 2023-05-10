@@ -88,8 +88,9 @@ namespace SteamKit2.Networking.Steam3
 
                 return socket;
             }
-            catch
+            catch (Exception ex )
             {
+                _log.LogDebug( nameof( GlobalTcpConnectionSocket ), "Start socket failed with exception: {0}", ex);
                 socket.Dispose();
                 throw;
             }
