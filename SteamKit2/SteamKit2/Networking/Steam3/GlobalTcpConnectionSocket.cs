@@ -96,26 +96,11 @@ namespace SteamKit2.Networking.Steam3
             }
         }
 
-        public Task StopSocketAsync( Socket socket )
+        public void StopSocketAsync( Socket socket )
         {
             var socketHandler = _pollGroup.Remove( socket );
             socketHandler?.SendQueue.Clear();
-            var disconnectTask = Task.CompletedTask;
-
-            if ( socket.Connected )
-            {
-                try
-                {
-                    socket.Shutdown( SocketShutdown.Both );
-                    disconnectTask = socket.DisconnectAsync( false ).AsTask();
-                }
-                catch ( Exception e )
-                {
-                    // Empty
-                }
-            }
-            
-            return disconnectTask.ContinueWith( _ => socket.Dispose() );
+            socket.Dispose();
         }
 
         public void Send( Socket socket, byte[] data )

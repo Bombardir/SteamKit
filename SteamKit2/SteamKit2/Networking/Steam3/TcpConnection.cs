@@ -27,7 +27,6 @@ namespace SteamKit2
 
         private readonly EndPoint _localEndPoint;
         private volatile Socket? socket;
-        private volatile Task? _disconnectTask;
 
         public TcpConnection(EndPoint localEndPoint, ILogContext log)
         {
@@ -54,7 +53,7 @@ namespace SteamKit2
 
             try
             {
-                _disconnectTask = _globalTcpConnection.StopSocketAsync( socketToDisconnect );
+                _globalTcpConnection.StopSocketAsync( socketToDisconnect );
             }
             catch (Exception ex)
             {
@@ -112,17 +111,7 @@ namespace SteamKit2
         /// <param name="timeout">Timeout in milliseconds</param>
         public async Task Connect(EndPoint endPoint, int timeout)
         {
-            try
-            {
-                _disconnectTask?.Wait();
-            }
-            catch ( Exception ex )
-            {
-                log.LogDebug( nameof( TcpConnection ), "Socket {0} disconnect ended with exception: {1}", CurrentEndPoint, ex );
-            }
-
             CurrentEndPoint = endPoint;
-
             log.LogDebug( nameof( TcpConnection ), "Connecting to {0}...", CurrentEndPoint );
             await TryConnect( timeout );
         }
