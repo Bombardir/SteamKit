@@ -565,13 +565,10 @@ namespace SteamKit2.Internal
 
         void NetMsgReceived( object? sender, NetMsgEventArgs e )
         {
-            lock ( syncLock )
-            {
-                if ( !_isConnected )
-                    return;
+            if ( !IsConnected )
+                return;
 
-                OnClientMsgReceived( GetPacketMsg( e.Data, this ) );
-            }
+            OnClientMsgReceived( GetPacketMsg( e.Data, this ) );
         }
 
         void Connected( object? sender, EventArgs e )
