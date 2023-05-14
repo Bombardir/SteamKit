@@ -7,7 +7,6 @@ namespace SteamKit2.Base.epoll;
 internal class LinuxSocketPollImpl: ISocketPollImplementation
 {
     private readonly int _epHandle;
-    private object _lock = new object();
     private EPoll.epoll_event[] _events;
 
     public LinuxSocketPollImpl(int maxSocketCount)
@@ -18,41 +17,32 @@ internal class LinuxSocketPollImpl: ISocketPollImplementation
 
     public void Dispose()
     {
-        lock ( _lock )
-            _ = EPoll.Linux.epoll_close( _epHandle );
+        _ = EPoll.Linux.epoll_close( _epHandle );
     }
 
     public void Add( Socket socket, PollEvents events )
     {
         var ev = CreateEPollEvent( socket, events );
 
-        lock ( _lock )
-        {
-            var rc = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, ( int )socket.Handle, ref ev );
+        var rc = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_ADD, ( int )socket.Handle, ref ev );
 
-            if ( rc != 0 )
-                throw new Exception( $"epoll_ctl add failed with error code {Marshal.GetLastWin32Error()}" );
-        }
+        if ( rc != 0 )
+            throw new Exception( $"epoll_ctl add failed with error code {Marshal.GetLastWin32Error()}" );
     }
 
     public void Remove( Socket socket )
     {
         EPoll.epoll_event ev = default;
+        _ = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_DEL, ( int )socket.Handle, ref ev );
 
-        lock ( _lock )
-            _ = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_DEL, (int) socket.Handle, ref ev );
     }
 
     public void Modify( Socket socket, PollEvents events )
     {
         var ev = CreateEPollEvent(socket, events);
-
-        lock ( _lock )
-        {
-            int rc = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, ( int )socket.Handle, ref ev );
-            if ( rc != 0 )
-                throw new Exception( $"epoll_ctl modify failed with error code {Marshal.GetLastWin32Error()}" );
-        }
+        int rc = EPoll.Linux.epoll_ctl( _epHandle, EPoll.epoll_op.EPOLL_CTL_MOD, ( int )socket.Handle, ref ev );
+        if ( rc != 0 )
+            throw new Exception( $"epoll_ctl modify failed with error code {Marshal.GetLastWin32Error()}" );
     }
 
     public int Poll(int maxCount, int timeoutMs)
@@ -63,8 +53,7 @@ internal class LinuxSocketPollImpl: ISocketPollImplementation
             _events = new EPoll.epoll_event[newLength];
         }
 
-        lock ( _lock )
-            return EPoll.Linux.epoll_wait( _epHandle, _events, maxCount, timeoutMs );
+        return EPoll.Linux.epoll_wait( _epHandle, _events, maxCount, timeoutMs );
     }
 
     public PollResult GetPollResult( int i )
