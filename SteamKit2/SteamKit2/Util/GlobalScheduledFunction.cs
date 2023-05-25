@@ -28,6 +28,8 @@ internal class GlobalScheduledFunction
         _functionExecutionTimes.TryRemove( func, out _ );
     }
 
+    internal bool IsEnabled( ScheduledFunction scheduledFunction ) => _functionExecutionTimes.ContainsKey(scheduledFunction);
+
     private async Task FunctionCycle()
     {
         while ( true )

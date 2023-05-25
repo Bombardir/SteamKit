@@ -41,6 +41,11 @@ namespace SteamKit2
             Stop();
         }
 
+        public Boolean IsEnabled()
+        {
+            return GlobalScheduledFunction.IsEnabled( this );
+        }
+
         public void Start()
         {
             GlobalScheduledFunction.Start( this );
