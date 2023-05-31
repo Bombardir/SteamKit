@@ -21,7 +21,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private const Int32 MsDelayBetweenActiveConnections = 1;
+        private const Int32 MsDelayBetweenActiveConnections = 3;
         private static Int32 ActiveConnectingClients = 0;
 
         /// <summary>
