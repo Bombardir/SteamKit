@@ -34,6 +34,14 @@ namespace SteamKit2.Discovery
             return NetHelpers.ExtractEndpointHost( EndPoint ).host;
         }
 
+        public IPAddress FindIPAddress()
+        {
+            if ( EndPoint is not IPEndPoint iPEndPoint )
+                return null;
+
+            return iPEndPoint.Address;
+        }
+
         /// <summary>
         /// Gets the port number of the associated endpoint.
         /// </summary>

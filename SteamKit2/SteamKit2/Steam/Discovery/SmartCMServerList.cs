@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SteamKit2.Discovery
@@ -100,7 +101,7 @@ namespace SteamKit2.Discovery
             if ( endpointList.Count == 0 && configuration.AllowDirectoryFetch )
             {
                 DebugWrite( "Server list provider had no entries, will query SteamDirectory" );
-                endpointList = await SteamDirectory.LoadAsync( configuration ).ConfigureAwait( false );
+                endpointList = await SteamDirectory.LoadAsync( configuration, maxNumServers: int.MaxValue, CancellationToken.None ).ConfigureAwait( false );
             }
 
             if ( endpointList.Count == 0 && configuration.AllowDirectoryFetch )
@@ -126,11 +127,14 @@ namespace SteamKit2.Discovery
                 throw new ArgumentNullException( nameof(endpointList) );
             }
 
+            if ( configuration.CustomServerRecordComparerForOrder != null )
+                endpointList = endpointList.Order( configuration.CustomServerRecordComparerForOrder );
+
+            var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
+            var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.MaxCMServerListDatacenterCount ).ToHashSet();
+
             lock ( servers )
             {
-                var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
-                var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.MaxCMServerListDatacenterCount ).ToHashSet();
-
                 foreach (var endPoint in distinctEndPoints)
                 {
                     if (!dataCenterHosts.Contains( endPoint.GetHost() ))

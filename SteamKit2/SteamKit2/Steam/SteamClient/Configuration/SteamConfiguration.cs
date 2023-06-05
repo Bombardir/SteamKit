@@ -5,6 +5,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using SteamKit2.Discovery;
@@ -118,6 +119,8 @@ namespace SteamKit2
         public EndPoint LocalEndPoint => state.LocalEndPoint;
 
         public Int32 MaxCMServerListDatacenterCount { get; set; } = 20;
+
+        public IComparer<ServerRecord> CustomServerRecordComparerForOrder { get; set; }
 
         /// <summary>
         /// The server list used for this configuration.
