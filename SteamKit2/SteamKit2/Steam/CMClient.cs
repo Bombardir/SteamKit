@@ -213,6 +213,14 @@ namespace SteamKit2.Internal
             }
         }
 
+        public Boolean IsConnecting()
+        {
+            lock ( syncLock )
+            {
+                return !_isConnected && Interlocked.CompareExchange( ref connectionSetupTask, null, null ) != null;
+            }
+        }
+
         // connection lock around the setup and tear down of the connection task
         object connectionLock = new object();
         object syncLock = new object();
