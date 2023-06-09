@@ -61,10 +61,10 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
         public int Microseconds;
     }
 
-    [DllImport( "ws2_32.dll", SetLastError = false )]
-    static extern unsafe int select(int ignoredParameter, IntPtr* readfds, IntPtr* writefds, IntPtr* exceptfds, ref TimeValue timeout );
+    [DllImport( "ws2_32.dll", SetLastError = true )]
+    internal static extern int select([In] int ignoredParameter, [In, Out] IntPtr[] readfds, [In, Out] IntPtr[] writefds, [In, Out] IntPtr[] exceptfds, [In] ref TimeValue timeout );
 
-    private readonly Dictionary<Socket, PollEvents> _pollSockets;
+    private readonly Dictionary<nint, PollEvents> _pollSockets;
 
     private FdSet _readSockets;
     private FdSet _writeSockets;
@@ -72,7 +72,7 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
 
     public WindowsSocketPollImpl( int maxSocketCount )
     {
-        _pollSockets = new Dictionary<Socket, PollEvents>( maxSocketCount );
+        _pollSockets = new Dictionary<nint, PollEvents>( maxSocketCount );
         CreateNewFdSets( maxSocketCount );
     }
 
@@ -84,26 +84,26 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
     public void Add( Socket socket, PollEvents events )
     {
         lock ( _pollSockets )
-            _pollSockets.Add( socket, events );
+            _pollSockets.Add( socket.Handle, events );
     }
 
     public void Remove( Socket socket )
     {
         lock ( _pollSockets )
-            _pollSockets.Remove( socket );
+            _pollSockets.Remove( socket.Handle );
     }
 
     public void Modify( Socket socket, PollEvents events )
     {
         lock ( _pollSockets )
-            _pollSockets[ socket ] = events;
+            _pollSockets[ socket.Handle ] = events;
     }
 
     public int Poll( int maxCount, int timeoutMs )
     {
-        if ( _readSockets.Length < maxCount + 1 )
+        if ( _readSockets.Capacity < maxCount + 1 )
         {
-            int newLength = Math.Max( maxCount + 1, _readSockets.Length + ( _readSockets.Length >> 2 ) );
+            int newLength = Math.Max( maxCount + 1, _readSockets.Capacity + ( _readSockets.Capacity >> 2 ) );
             CreateNewFdSets(newLength);
         }
 
@@ -117,13 +117,13 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
                     break;
 
                 if ( ( events & PollEvents.Read ) != 0 )
-                    _readSockets.Add( socket.Handle );
+                    _readSockets.Add( socket );
 
                 if ( ( events & PollEvents.Write ) != 0 )
-                    _writeSockets.Add( socket.Handle );
+                    _writeSockets.Add( socket );
 
                 if ( ( events & PollEvents.Error ) != 0 )
-                    _errorSockets.Add( socket.Handle );
+                    _errorSockets.Add( socket );
 
                 maxCount--;
             }
@@ -134,12 +134,7 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
 
         unsafe
         {
-            fixed ( IntPtr* readPtr = _readSockets._fd_array )
-            fixed ( IntPtr* writePtr = _writeSockets._fd_array )
-            fixed ( IntPtr* errPtr = _errorSockets._fd_array )
-            {
-                socketCount = select( ignoredParameter: 0, readPtr, writePtr, errPtr, ref timeoutValue );
-            }
+            socketCount = select( ignoredParameter: 0, _readSockets._fd_array, _writeSockets._fd_array, _errorSockets._fd_array, ref timeoutValue );
         }
 
         if ( (SocketError) socketCount == SocketError.SocketError )
@@ -188,11 +183,11 @@ public class WindowsSocketPollImpl : ISocketPollImplementation
         _errorSockets.Clear();
     }
 
-    private void CreateNewFdSets( int newLength )
+    private void CreateNewFdSets( int newCapacity )
     {
-        _readSockets = FdSet.Create( newLength );
-        _writeSockets = FdSet.Create( newLength );
-        _errorSockets = FdSet.Create( newLength );
+        _readSockets = FdSet.Create( newCapacity );
+        _writeSockets = FdSet.Create( newCapacity );
+        _errorSockets = FdSet.Create( newCapacity );
     }
 
     private static TimeValue GetTimeoutValueFromMs( int timeoutMs )
