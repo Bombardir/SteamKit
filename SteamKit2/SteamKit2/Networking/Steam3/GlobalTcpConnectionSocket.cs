@@ -123,6 +123,7 @@ namespace SteamKit2.Networking.Steam3
                 try
                 {
                     ListenThreadCycle();
+                    Thread.Sleep(50);
                 }
                 catch ( Exception e )
                 {
@@ -135,7 +136,7 @@ namespace SteamKit2.Networking.Steam3
         {
             if ( _pollGroup.IsEmpty() )
             {
-                Thread.Sleep( 100 );
+                Thread.Sleep( 1000 );
                 return;
             }
 
@@ -273,6 +274,9 @@ namespace SteamKit2.Networking.Steam3
                 throw new SocketException( ( int )errorCode );
             }
 
+            if (receivedBytes == 0)
+                throw new Exception( "Failed to receive on socket - there is no data and connection was probably closed" );
+            
             using var receiveStream = new MemoryStream(_receiveBuffer, 0, receivedBytes, writable: false);
             using var netReader = new BinaryReader( receiveStream );
 
