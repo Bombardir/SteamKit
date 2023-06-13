@@ -123,7 +123,6 @@ namespace SteamKit2.Networking.Steam3
                 try
                 {
                     ListenThreadCycle();
-                    Thread.Sleep(50);
                 }
                 catch ( Exception e )
                 {
