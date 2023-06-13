@@ -21,7 +21,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private const Int32 MsDelayBetweenActiveConnections = 2;
+        private const Int32 MsDelayBetweenActiveConnections = 1;
         private static Int32 ActiveConnectingClients = 0;
 
         /// <summary>
@@ -342,7 +342,7 @@ namespace SteamKit2.Internal
                         if ( IsConnected )
                             return;
 
-                        await Task.Delay( TimeSpan.FromMinutes( 1 ), token );
+                        await Task.Delay( TimeSpan.FromSeconds( 30 ), token );
 
                         if ( !IsConnected )
                             throw new Exception( "Connection timeout while waiting for connection connected event." );
