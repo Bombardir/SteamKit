@@ -232,6 +232,7 @@ namespace SteamKit2.Internal
         private SteamID? _steamId;
         private int? _sessionId;
         private bool _expectDisconnection;
+        private bool _isUserInitiailizedDisconnect;
         private TimeSpan? _customHeartBeat;
         private ServerRecord _serverRecord;
 
@@ -298,7 +299,11 @@ namespace SteamKit2.Internal
                 connectionCancellation = new CancellationTokenSource();
                 var token = connectionCancellation.Token;
 
-                ExpectDisconnection = false;
+                lock (syncLock)
+                {
+                    _expectDisconnection = false;
+                    _isUserInitiailizedDisconnect = false;
+                }
 
                 connectionSetupTask = Task.Run( async () =>
                 {
@@ -342,7 +347,7 @@ namespace SteamKit2.Internal
                         if ( IsConnected )
                             return;
 
-                        await Task.Delay( TimeSpan.FromSeconds( 30 ), token );
+                        await Task.Delay( ConnectionTimeout, token );
 
                         if ( !IsConnected )
                             throw new Exception( "Connection timeout while waiting for connection connected event." );
@@ -354,10 +359,10 @@ namespace SteamKit2.Internal
 
                         lock ( syncLock )
                         {
-                            if (connection != null && wasConnectionInitialized )
-                                connection.Disconnect( userInitiated: token.IsCancellationRequested );
+                            if ( connection != null && wasConnectionInitialized )
+                                connection.Disconnect( userInitiated: _isUserInitiailizedDisconnect );
                             else
-                                OnClientDisconnected( userInitiated: token.IsCancellationRequested );
+                                OnClientDisconnected( userInitiated: _isUserInitiailizedDisconnect );
 
                             connection = null;
                         }
@@ -378,7 +383,10 @@ namespace SteamKit2.Internal
             lock ( connectionLock )
             {
                 lock ( syncLock )
+                {
                     heartBeatFunc.Stop();
+                    _isUserInitiailizedDisconnect = userInitiated;
+                }
 
                 if ( connectionCancellation != null )
                 {
