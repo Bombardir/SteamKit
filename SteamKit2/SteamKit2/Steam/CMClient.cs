@@ -21,8 +21,7 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private const Int32 MsDelayBetweenActiveConnections = 1;
-        private static Int32 ActiveConnectingClients = 0;
+        private static SemaphoreSlim GlobalConnectionQueue = new SemaphoreSlim(128, 128);
 
         /// <summary>
         /// The configuration for this client.
@@ -299,79 +298,79 @@ namespace SteamKit2.Internal
                 connectionCancellation = new CancellationTokenSource();
                 var token = connectionCancellation.Token;
 
-                lock (syncLock)
+                lock ( syncLock )
                 {
                     _expectDisconnection = false;
                     _isUserInitiailizedDisconnect = false;
                 }
 
-                connectionSetupTask = Task.Run( async () =>
+                connectionSetupTask = SetupConnectAsync(cmServer, token);
+            }
+        }
+
+        private async Task SetupConnectAsync( ServerRecord? cmServer, CancellationToken token )
+        {
+            bool wasConnectionInitialized = false;
+
+            try
+            {
+                ServerRecord record = cmServer
+                                      ?? await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes )
+                                      ?? throw new Exception( "Server record task returned no result." );
+
+                IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+
+                lock ( syncLock )
                 {
-                    bool wasConnectionInitialized = false;
+                    DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
+                    connection = newConnection;
+                }
 
-                    try
-                    {
-                        ServerRecord record = cmServer
-                                              ?? await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes )
-                                              ?? throw new Exception( "Server record task returned no result." );
+                newConnection.NetMsgReceived += NetMsgReceived;
+                newConnection.Connected += Connected;
+                newConnection.Disconnected += Disconnected;
 
-                        IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+                await GlobalConnectionQueue.WaitAsync( token );
 
-                        lock ( syncLock )
-                        {
-                            DebugLog.Assert( connection == null, nameof( CMClient ), "Connection was set during a connect, did you call CMClient.Connect() on multiple threads?" );
-                            connection = newConnection;
-                        }
+                try
+                {
+                    await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                }
+                finally
+                {
+                    GlobalConnectionQueue.Release();
+                }
 
-                        newConnection.NetMsgReceived += NetMsgReceived;
-                        newConnection.Connected += Connected;
-                        newConnection.Disconnected += Disconnected;
+                wasConnectionInitialized = true;
 
-                        try
-                        {
-                            var activeConnectingClients = Interlocked.Increment( ref ActiveConnectingClients ) - 1;
-                            if ( activeConnectingClients > 0 )
-                                await Task.Delay( activeConnectingClients * MsDelayBetweenActiveConnections, token );
+                Server = record;
 
-                            await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
-                        }
-                        finally
-                        {
-                            Interlocked.Decrement( ref ActiveConnectingClients );
-                        }
+                if ( IsConnected )
+                    return;
 
-                        wasConnectionInitialized = true;
+                await Task.Delay( ConnectionTimeout, token );
 
-                        Server = record;
+                if ( !IsConnected )
+                    throw new Exception( "Connection timeout while waiting for connection connected event." );
 
-                        if ( IsConnected )
-                            return;
+            }
+            catch ( Exception ex )
+            {
+                LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
 
-                        await Task.Delay( ConnectionTimeout, token );
+                lock ( syncLock )
+                {
+                    if ( connection != null && wasConnectionInitialized )
+                        connection.Disconnect( userInitiated: _isUserInitiailizedDisconnect );
+                    else
+                        OnClientDisconnected( userInitiated: _isUserInitiailizedDisconnect );
 
-                        if ( !IsConnected )
-                            throw new Exception( "Connection timeout while waiting for connection connected event." );
-
-                    }
-                    catch ( Exception ex )
-                    {
-                        LogDebug( nameof( CMClient ), "Exception when attempting to connect to Steam: {0}", ex );
-
-                        lock ( syncLock )
-                        {
-                            if ( connection != null && wasConnectionInitialized )
-                                connection.Disconnect( userInitiated: _isUserInitiailizedDisconnect );
-                            else
-                                OnClientDisconnected( userInitiated: _isUserInitiailizedDisconnect );
-
-                            connection = null;
-                        }
-                    }
-                    finally
-                    {
-                        _ = Interlocked.Exchange( ref connectionSetupTask, null );
-                    }
-                } );
+                    connection = null;
+                }
+            }
+            finally
+            {
+                _ = Interlocked.Exchange( ref connectionSetupTask, null );
             }
         }
 
