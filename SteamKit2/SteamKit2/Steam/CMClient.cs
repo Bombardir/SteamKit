@@ -21,9 +21,8 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectionQueue = new SemaphoreSlim(128, 128);
+        private static SemaphoreSlim GlobalConnectionQueue = new SemaphoreSlim(256, 256);
 
-        /// <summary>
         /// The configuration for this client.
         /// </summary>
         public SteamConfiguration Configuration { get; }
