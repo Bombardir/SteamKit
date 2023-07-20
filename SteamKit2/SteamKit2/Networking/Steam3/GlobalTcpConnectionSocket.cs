@@ -75,13 +75,12 @@ namespace SteamKit2.Networking.Steam3
             try
             {
                 socket.Bind( localEndPoint );
-                socket.Blocking = false; // Default: true
                 socket.ReceiveTimeout = timeout;
                 socket.SendTimeout = timeout;
-                socket.NoDelay = false; // Default: false
-                socket.Ttl = 64; // Default: 32
 
                 await socket.ConnectAsync( targetEndPoint, token );
+
+                socket.Blocking = false; // Default: true
 
                 var socketHandler = new SocketHandler( socket, connection);
                 _pollGroup.Add( socket, socketHandler, PollEvents.ReadAndError );
