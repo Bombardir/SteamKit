@@ -347,7 +347,7 @@ namespace SteamKit2.Internal
                 if ( IsConnected )
                     return;
 
-                await Task.Delay( ConnectionTimeout, token );
+                await Task.Delay( TimeSpan.FromSeconds(10), token );
 
                 if ( !IsConnected )
                     throw new Exception( "Connection timeout while waiting for connection connected event." );
