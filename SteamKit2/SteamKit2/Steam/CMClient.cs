@@ -21,7 +21,8 @@ namespace SteamKit2.Internal
     /// </summary>
     public abstract class CMClient : ILogContext
     {
-        private static SemaphoreSlim GlobalConnectionQueue = new SemaphoreSlim(256, 256);
+        private static SemaphoreSlim GlobalFullConnectionQueue = new SemaphoreSlim( 1024, 1024 );
+        private static SemaphoreSlim GlobalInitialConnectionQueue = new SemaphoreSlim(256, 256);
 
         /// The configuration for this client.
         /// </summary>
@@ -292,10 +293,15 @@ namespace SteamKit2.Internal
                 Disconnect( userInitiated: true );
                 DebugLog.Assert( connection == null, nameof( CMClient ), "Connection is not null" );
                 DebugLog.Assert( connectionSetupTask == null, nameof( CMClient ), "Connection setup task is not null" );
-                DebugLog.Assert( connectionCancellation == null, nameof( CMClient ), "Connection cancellation token is not null" );
 
-                connectionCancellation = new CancellationTokenSource();
-                var token = connectionCancellation.Token;
+                CancellationToken token;
+
+                lock (syncLock)
+                {
+                    DebugLog.Assert( connectionCancellation == null, nameof( CMClient ), "Connection cancellation token is not null" );
+                    connectionCancellation = new CancellationTokenSource();
+                    token = connectionCancellation.Token;
+                }
 
                 lock ( syncLock )
                 {
@@ -329,29 +335,47 @@ namespace SteamKit2.Internal
                 newConnection.Connected += Connected;
                 newConnection.Disconnected += Disconnected;
 
-                await GlobalConnectionQueue.WaitAsync( token );
+                await GlobalFullConnectionQueue.WaitAsync( token );
 
                 try
                 {
-                    await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                    await GlobalInitialConnectionQueue.WaitAsync( token );
+
+                    try
+                    {
+                        await newConnection.Connect( record.EndPoint, ( int )ConnectionTimeout.TotalMilliseconds );
+                    }
+                    finally
+                    {
+                        GlobalInitialConnectionQueue.Release();
+                    }
+
+                    wasConnectionInitialized = true;
+
+                    Server = record;
+
+                    if ( IsConnected )
+                        return;
+
+                    try
+                    {
+                        await Task.Delay( TimeSpan.FromSeconds( 10 ), token );
+                    }
+                    catch
+                    {
+
+                    }
+
+                    if ( !IsConnected )
+                    {
+                        token.ThrowIfCancellationRequested();
+                        throw new Exception( "Connection timeout while waiting for connection connected event." );
+                    }
                 }
                 finally
                 {
-                    GlobalConnectionQueue.Release();
+                    GlobalFullConnectionQueue.Release();
                 }
-
-                wasConnectionInitialized = true;
-
-                Server = record;
-
-                if ( IsConnected )
-                    return;
-
-                await Task.Delay( TimeSpan.FromSeconds(10), token );
-
-                if ( !IsConnected )
-                    throw new Exception( "Connection timeout while waiting for connection connected event." );
-
             }
             catch ( Exception ex )
             {
@@ -386,11 +410,14 @@ namespace SteamKit2.Internal
                     _isUserInitiailizedDisconnect = userInitiated;
                 }
 
-                if ( connectionCancellation != null )
+                lock ( syncLock )
                 {
-                    connectionCancellation.Cancel();
-                    connectionCancellation.Dispose();
-                    connectionCancellation = null;
+                    if ( connectionCancellation != null )
+                    {
+                        connectionCancellation.Cancel();
+                        connectionCancellation.Dispose();
+                        connectionCancellation = null;
+                    }
                 }
 
                 var connectionSetupTaskToWait = Interlocked.Exchange( ref connectionSetupTask, null );
@@ -597,6 +624,8 @@ namespace SteamKit2.Internal
                 Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Good );
                 _isConnected = true;
                 OnClientConnected();
+
+                connectionCancellation?.Cancel();
             }
         }
 
