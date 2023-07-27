@@ -133,6 +133,21 @@ namespace SteamKit2.Internal
                     _sessionId = value;
             }
         }
+
+        public ulong? InstanceId
+        {
+            get
+            {
+                lock ( syncLock )
+                    return _instanceId;
+            }
+            set
+            {
+                lock ( syncLock )
+                    _instanceId = value;
+            }
+        }
+
         /// <summary>
         /// Gets the SteamID of this client. This value is assigned after a logon attempt has succeeded.
         /// This value will be <c>null</c> if the client is logged off of Steam.
@@ -230,6 +245,7 @@ namespace SteamKit2.Internal
         private bool _isConnected;
         private SteamID? _steamId;
         private int? _sessionId;
+        private ulong? _instanceId;
         private bool _expectDisconnection;
         private bool _isUserInitiailizedDisconnect;
         private TimeSpan? _customHeartBeat;
@@ -454,18 +470,23 @@ namespace SteamKit2.Internal
 
             DebugLog.Assert( IsConnected, nameof( CMClient ), "Send() was called while not connected to Steam." );
 
-            var sessionID = this.SessionID;
 
-            if ( sessionID.HasValue )
+            if ( msg.MsgType != EMsg.ClientLogon && msg.MsgType != EMsg.ClientLogonGameServer )
+
             {
-                msg.SessionID = sessionID.Value;
-            }
+                var sessionID = this.SessionID;
 
-            var steamID = this.SteamID;
+                if ( sessionID.HasValue )
+                {
+                    msg.SessionID = sessionID.Value;
+                }
 
-            if ( steamID != null )
-            {
-                msg.SteamID = steamID;
+                var steamID = this.SteamID;
+
+                if ( steamID != null )
+                {
+                    msg.SteamID = steamID;
+                }
             }
 
             var serialized = msg.Serialize();
@@ -647,9 +668,6 @@ namespace SteamKit2.Internal
                         Servers.TryMark( connection.CurrentEndPoint!, ServerQuality.Bad );
                 }
 
-                _sessionId = null;
-                _steamId = null;
-
                 connection.NetMsgReceived -= NetMsgReceived;
                 connection.Connected -= Connected;
                 connection.Disconnected -= Disconnected;
@@ -760,17 +778,17 @@ namespace SteamKit2.Internal
 
             if ( logonResult == EResult.OK )
             {
-                SessionID = logonResp.ProtoHeader.client_sessionid;
-                SteamID = logonResp.ProtoHeader.steamid;
-
-                CellID = logonResp.Body.cell_id;
-                PublicIP = logonResp.Body.public_ip.GetIPAddress();
-                IPCountryCode = logonResp.Body.ip_country_code;
-
-                int hbDelay = logonResp.Body.heartbeat_seconds;
-
                 lock ( syncLock )
                 {
+                    SessionID = logonResp.ProtoHeader.client_sessionid;
+                    SteamID = logonResp.ProtoHeader.steamid;
+                    InstanceId = logonResp.Body.client_instance_id;
+                    CellID = logonResp.Body.cell_id;
+                    PublicIP = logonResp.Body.public_ip.GetIPAddress();
+                    IPCountryCode = logonResp.Body.ip_country_code;
+
+                    int hbDelay = logonResp.Body.heartbeat_seconds;
+
                     // restart heartbeat
                     heartBeatFunc.Stop();
                     heartBeatFunc.Delay = _customHeartBeat ?? TimeSpan.FromSeconds( hbDelay );
