@@ -112,7 +112,7 @@ jobs:
         configuration: [ Debug, Release ]
       fail-fast: false
 
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v3
@@ -122,15 +122,15 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
 
-    - name: Cache Native Dependencies
+    - name: Cache vcpkg
       id: cache-dependencies
       uses: actions/cache@v3
       with:
-        path: Resources/NetHook2/native-dependencies
-        key: native-dependencies-${{ hashFiles('Resources/NetHook2/InstallDependencies.ps1') }}
+        path: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\vcpkg
+        key: vcpkg-${{ hashFiles('Resources/NetHook2/NetHook2/vcpkg.json') }}
 
     - name: Configure Dependencies
-      run: Resources/NetHook2/SetupDependencies.cmd
+      run: pwsh -File Resources/NetHook2/SetupDependencies.ps1
 
     - name: Build NetHook2
       run: msbuild /p:Configuration=${{ matrix.configuration }} Resources/NetHook2/NetHook2.sln
