@@ -245,6 +245,7 @@ namespace SteamKit2.Internal
         private bool _isConnected;
         private SteamID? _steamId;
         private int? _sessionId;
+        private int _reconnectAttempt;
         private ulong? _instanceId;
         private bool _expectDisconnection;
         private bool _isUserInitiailizedDisconnect;
@@ -335,9 +336,23 @@ namespace SteamKit2.Internal
 
             try
             {
-                ServerRecord record = cmServer
-                                      ?? await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes )
-                                      ?? throw new Exception( "Server record task returned no result." );
+                ServerRecord record = null;
+
+                lock ( syncLock )
+                {
+                    if (_serverRecord != null && _reconnectAttempt < 3)
+                    {
+                        record = _serverRecord;
+                        _reconnectAttempt++;
+                    }
+                }
+
+                if (record == null)
+                {
+                    record = cmServer
+                        ?? await Servers.GetNextServerCandidateAsync( Configuration.ProtocolTypes )
+                        ?? throw new Exception( "Server record task returned no result." );
+                }
 
                 IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
 
@@ -368,7 +383,11 @@ namespace SteamKit2.Internal
 
                     wasConnectionInitialized = true;
 
-                    Server = record;
+                    lock (syncLock)
+                    {
+                        _serverRecord = record;
+                        _reconnectAttempt = 0;
+                    }
 
                     if ( IsConnected )
                         return;
