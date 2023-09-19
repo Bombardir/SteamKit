@@ -7,9 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using ProtoBuf;
 using SteamKit2.Authentication;
+using SteamKit2.CDN;
 using SteamKit2.Internal;
 
 namespace SteamKit2
@@ -297,6 +299,5 @@ namespace SteamKit2
         {
             jobManager.FailJob( packetMsg.TargetJobID );
         }
-
     }
 }

@@ -251,6 +251,7 @@ namespace SteamKit2.Internal
         private bool _isUserInitiailizedDisconnect;
         private TimeSpan? _customHeartBeat;
         private ServerRecord _serverRecord;
+        private IPEndPoint _localEndPoint;
 
         ScheduledFunction heartBeatFunc;
 
@@ -290,6 +291,12 @@ namespace SteamKit2.Internal
             Send( heartbeatMsg );
         }
 
+        public void SetLocalEndPoint( IPEndPoint localEndPoint )
+        {
+            lock ( syncLock )
+                _localEndPoint = localEndPoint;
+        }
+
         /// <summary>
         /// Connects this client to a Steam3 server.
         /// This begins the process of connecting and encrypting the data channel between the client and the server.
@@ -303,7 +310,7 @@ namespace SteamKit2.Internal
         /// The <see cref="IPEndPoint"/> of the CM server to connect to.
         /// If <c>null</c>, SteamKit will randomly select a CM server from its internal list.
         /// </param>
-        public void Connect( ServerRecord? cmServer = null )
+        public void Connect( ServerRecord? cmServer = null)
         {
             lock ( connectionLock )
             {
@@ -326,7 +333,7 @@ namespace SteamKit2.Internal
                     _isUserInitiailizedDisconnect = false;
                 }
 
-                connectionSetupTask = SetupConnectAsync(cmServer, token);
+                connectionSetupTask = SetupConnectAsync(cmServer, token );
             }
         }
 
@@ -340,7 +347,7 @@ namespace SteamKit2.Internal
 
                 lock ( syncLock )
                 {
-                    if (_serverRecord != null && _reconnectAttempt < 3)
+                    if (_serverRecord != null && _reconnectAttempt < 5)
                     {
                         record = _serverRecord;
                         _reconnectAttempt++;
@@ -354,7 +361,12 @@ namespace SteamKit2.Internal
                         ?? throw new Exception( "Server record task returned no result." );
                 }
 
-                IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes );
+                EndPoint localEndpoint;
+
+                lock ( syncLock )
+                    localEndpoint = _localEndPoint ?? Configuration.LocalEndPoint;
+
+                IConnection newConnection = CreateConnection( record.ProtocolTypes & Configuration.ProtocolTypes, localEndpoint );
 
                 lock ( syncLock )
                 {
@@ -626,7 +638,7 @@ namespace SteamKit2.Internal
         {
         }
 
-        IConnection CreateConnection( ProtocolTypes protocol )
+        IConnection CreateConnection( ProtocolTypes protocol, EndPoint localEndPoint )
         {
             if ( protocol.HasFlagsFast( ProtocolTypes.WebSocket ) )
             {
@@ -634,11 +646,11 @@ namespace SteamKit2.Internal
             }
             else if ( protocol.HasFlagsFast( ProtocolTypes.Tcp ) )
             {
-                return new EnvelopeEncryptedConnection( new TcpConnection( Configuration.LocalEndPoint, this ), Universe, this, DebugNetworkListener );
+                return new EnvelopeEncryptedConnection( new TcpConnection( localEndPoint, this ), Universe, this, DebugNetworkListener );
             }
             else if ( protocol.HasFlagsFast( ProtocolTypes.Udp ) )
             {
-                return new EnvelopeEncryptedConnection( new UdpConnection( Configuration.LocalEndPoint, this ), Universe, this, DebugNetworkListener );
+                return new EnvelopeEncryptedConnection( new UdpConnection( localEndPoint, this ), Universe, this, DebugNetworkListener );
             }
 
             throw new ArgumentOutOfRangeException( nameof( protocol ), protocol, "Protocol bitmask has no supported protocols set." );

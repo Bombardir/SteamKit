@@ -53,7 +53,8 @@ namespace SteamKit2
 
             try
             {
-                _globalTcpConnection.StopSocketAsync( socketToDisconnect );
+                _globalTcpConnection.RemoveSocket( socketToDisconnect );
+                socketToDisconnect.Close();
             }
             catch (Exception ex)
             {
@@ -97,10 +98,34 @@ namespace SteamKit2
 
             using var timeoutTokenSource = new CancellationTokenSource( timeout );
 
-            var newSocket = await _globalTcpConnection.StartSocketAsync( _localEndPoint, CurrentEndPoint, timeout, timeoutTokenSource.Token, this );
+            var newSocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
+
+            try
+            {
+                newSocket.Bind( _localEndPoint );
+                newSocket.ReceiveTimeout = timeout;
+                newSocket.SendTimeout = timeout;
+                newSocket.LingerState = new LingerOption( false, 0 );
+                newSocket.NoDelay = true;
+                newSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
+                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 4 );
+                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 3 );
+                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 5 );
+
+                await newSocket.ConnectAsync( CurrentEndPoint, timeoutTokenSource.Token );
+
+                newSocket.Blocking = false; // Default: true
+
+                _globalTcpConnection.AddSocket(newSocket, this );
+            }
+            catch ( Exception ex )
+            {
+                log.LogDebug( nameof( GlobalTcpConnectionSocket ), "Start socket failed with exception: {0}", ex );
+                newSocket.Dispose();
+                throw;
+            }
 
             Interlocked.Exchange( ref socket, newSocket );
-
             ConnectCompleted();
         }
 

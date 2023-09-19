@@ -68,38 +68,16 @@ namespace SteamKit2.Networking.Steam3
             _listenThread.Start();
         }
 
-        public async Task<Socket> StartSocketAsync( EndPoint localEndPoint, EndPoint targetEndPoint, int timeout, CancellationToken token, TcpConnection connection)
+        public void AddSocket( Socket socket, TcpConnection connection)
         {
-            var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-
-            try
-            {
-                socket.Bind( localEndPoint );
-                socket.ReceiveTimeout = timeout;
-                socket.SendTimeout = timeout;
-
-                await socket.ConnectAsync( targetEndPoint, token );
-
-                socket.Blocking = false; // Default: true
-
-                var socketHandler = new SocketHandler( socket, connection);
-                _pollGroup.Add( socket, socketHandler, PollEvents.ReadAndError );
-
-                return socket;
-            }
-            catch (Exception ex )
-            {
-                _log.LogDebug( nameof( GlobalTcpConnectionSocket ), "Start socket failed with exception: {0}", ex);
-                socket.Dispose();
-                throw;
-            }
+            var socketHandler = new SocketHandler( socket, connection );
+            _pollGroup.Add( socket, socketHandler, PollEvents.ReadAndError );
         }
 
-        public void StopSocketAsync( Socket socket )
+        public void RemoveSocket( Socket socket )
         {
             var socketHandler = _pollGroup.Remove( socket );
             socketHandler?.SendQueue.Clear();
-            socket.Dispose();
         }
 
         public void Send( Socket socket, byte[] data )
