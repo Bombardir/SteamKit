@@ -345,6 +345,7 @@ namespace SteamKit2.Internal
             {
                 ServerRecord record = null;
 
+                /*
                 lock ( syncLock )
                 {
                     if (_serverRecord != null && _reconnectAttempt < 5)
@@ -352,7 +353,7 @@ namespace SteamKit2.Internal
                         record = _serverRecord;
                         _reconnectAttempt++;
                     }
-                }
+                }*/
 
                 if (record == null)
                 {
