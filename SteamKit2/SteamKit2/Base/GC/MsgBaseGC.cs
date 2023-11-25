@@ -104,7 +104,7 @@ namespace SteamKit2.GC
         /// </summary>
         /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
         public GCMsgBase( int payloadReserve = 0 )
-            : base()
+            : base( payloadReserve )
         {
             Header = new THeader();
         }

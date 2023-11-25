@@ -109,7 +109,7 @@ namespace SteamKit2
         /// <value>
         /// The header.
         /// </value>
-        public MsgHdrProtoBuf Header;
+        internal MsgHdrProtoBuf Header;
         /// <summary>
         /// Gets the offset in payload to the body after the header.
         /// </summary>

@@ -46,7 +46,7 @@ namespace SteamKit2.GC
         public override JobID TargetJobID
         {
             get => ProtoHeader.job_id_target;
-            set => ProtoHeader.job_id_target = value ?? throw new ArgumentNullException( nameof(value) );
+            set => ProtoHeader.job_id_target = value ?? throw new ArgumentNullException( nameof( value ) );
         }
         /// <summary>
         /// Gets or sets the source job id for this gc message.
@@ -57,7 +57,7 @@ namespace SteamKit2.GC
         public override JobID SourceJobID
         {
             get => ProtoHeader.job_id_source;
-            set => ProtoHeader.job_id_source = value ?? throw new ArgumentNullException( nameof(value) );
+            set => ProtoHeader.job_id_source = value ?? throw new ArgumentNullException( nameof( value ) );
         }
 
 
@@ -79,7 +79,7 @@ namespace SteamKit2.GC
         /// <param name="eMsg">The network message type this gc message represents.</param>
         /// <param name="payloadReserve">The number of bytes to initialize the payload capacity to.</param>
         public ClientGCMsgProtobuf( uint eMsg, int payloadReserve = 64 )
-            : base()
+            : base( payloadReserve )
         {
             Body = new TBody();
 
@@ -109,7 +109,7 @@ namespace SteamKit2.GC
         /// </summary>
         /// <param name="msg">The packet message to build this gc message from.</param>
         public ClientGCMsgProtobuf( IPacketGCMsg msg )
-            : this( msg.GetMsgTypeWithNullCheck( nameof(msg) ) )
+            : this( msg.GetMsgTypeWithNullCheck( nameof( msg ) ) )
         {
             DebugLog.Assert( msg.IsProto, "ClientGCMsgProtobuf", "ClientGCMsgProtobuf used for non-proto message!" );
 
@@ -184,7 +184,7 @@ namespace SteamKit2.GC
         public override JobID TargetJobID
         {
             get => Header.TargetJobID;
-            set => Header.TargetJobID = value ?? throw new ArgumentNullException( nameof(value) );
+            set => Header.TargetJobID = value ?? throw new ArgumentNullException( nameof( value ) );
         }
         /// <summary>
         /// Gets or sets the source job id for this gc message.
@@ -195,7 +195,7 @@ namespace SteamKit2.GC
         public override JobID SourceJobID
         {
             get => Header.SourceJobID;
-            set => Header.SourceJobID = value ?? throw new ArgumentNullException( nameof(value) );
+            set => Header.SourceJobID = value ?? throw new ArgumentNullException( nameof( value ) );
         }
 
 
