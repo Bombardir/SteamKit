@@ -315,14 +315,8 @@ namespace SteamKit2
                 case EMsg.ClientLoggedOff:
                     HandleLoggedOff( packetMsg );
                     break;
-                case EMsg.ClientNewLoginKey:
-                    HandleLoginKey( packetMsg );
-                    break;
                 case EMsg.ClientSessionToken:
                     HandleSessionToken( packetMsg );
-                    break;
-                case EMsg.ClientUpdateMachineAuth:
-                    HandleUpdateMachineAuth( packetMsg );
                     break;
                 case EMsg.ClientAccountInfo:
                     HandleAccountInfo( packetMsg );
