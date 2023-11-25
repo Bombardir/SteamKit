@@ -122,10 +122,7 @@ namespace SteamKit2.Discovery
         /// <param name="endpointList">The <see cref="ServerRecord"/>s to use for this <see cref="SmartCMServerList"/>.</param>
         public void ReplaceList( IEnumerable<ServerRecord> endpointList )
         {
-            if ( endpointList == null )
-            {
-                throw new ArgumentNullException( nameof(endpointList) );
-            }
+            ArgumentNullException.ThrowIfNull( endpointList );
 
             if ( configuration.CustomServerRecordComparerForOrder != null )
                 endpointList = endpointList.Order( configuration.CustomServerRecordComparerForOrder );

@@ -6,7 +6,6 @@
 
 
 using System;
-using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -33,13 +32,11 @@ namespace SteamKit2
         {
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
 
-            AsnKeyParser keyParser = new AsnKeyParser( key );
-
             rsa = RSA.Create();
-            rsa.ImportParameters( keyParser.ParseRSAPublicKey() );
+            rsa.ImportSubjectPublicKeyInfo( key, out _ );
         }
 
         /// <summary>
@@ -51,7 +48,7 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
 
             return rsa.Encrypt( input, RSAEncryptionPadding.OaepSHA1 );
@@ -62,7 +59,7 @@ namespace SteamKit2
         /// </summary>
         public void Dispose()
         {
-            ( ( IDisposable )rsa ).Dispose();
+            rsa.Dispose();
         }
     }
 
@@ -78,7 +75,7 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
 
             using ( var sha = SHA1.Create() )
@@ -94,34 +91,33 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             if ( iv == null )
             {
-                throw new ArgumentNullException( nameof( iv ) );
+                throw new ArgumentNullException( nameof(iv) );
             }
 
-            using ( var aes = Aes.Create() )
-            {
-                aes.BlockSize = 128;
-                aes.KeySize = 128;
+            using var aes = Aes.Create();
+            aes.BlockSize = 128;
+            aes.KeySize = 128;
 
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateEncryptor( key, iv ) )
-                using ( var ms = new SharedArrayMemoryStream() )
+                using ( var ms = new MemoryStream() )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Write ) )
                 {
                     cs.Write( input, 0, input.Length );
                     cs.FlushFinalBlock();
-
+                    
                     return ms.ToArray();
                 }
             }
@@ -134,42 +130,40 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             if ( iv == null )
             {
-                throw new ArgumentNullException( nameof( iv ) );
+                throw new ArgumentNullException( nameof(iv) );
             }
 
-            using ( var aes = Aes.Create() )
+            using var aes = Aes.Create();
+            aes.BlockSize = 128;
+            aes.KeySize = 128;
+
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+
+            byte[] plainText = new byte[ input.Length ];
+            int outLen = 0;
+
+            using ( var aesTransform = aes.CreateDecryptor( key, iv ) )
+            using ( var ms = new MemoryStream( input ) )
+            using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Read ) )
             {
-                aes.BlockSize = 128;
-                aes.KeySize = 128;
-
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-
-                byte[] plainText = new byte[ input.Length ];
-                int outLen = 0;
-
-                using ( var aesTransform = aes.CreateDecryptor( key, iv ) )
-                using ( var ms = new MemoryStream( input ) )
-                using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Read ) )
-                {
-                    outLen = cs.ReadAll( plainText );
-                }
-
-                byte[] output = new byte[ outLen ];
-                Array.Copy( plainText, 0, output, 0, output.Length );
-
-                return output;
+                outLen = cs.ReadAll( plainText );
             }
+
+            byte[] output = new byte[ outLen ];
+            Array.Copy( plainText, 0, output, 0, output.Length );
+
+            return output;
         }
 
         /// <summary>
@@ -179,56 +173,56 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             if ( iv == null )
             {
-                throw new ArgumentNullException( nameof( iv ) );
+                throw new ArgumentNullException( nameof(iv) );
             }
 
             DebugLog.Assert( key.Length == 32, "CryptoHelper", "SymmetricEncrypt used with non 32 byte key!" );
 
-            using ( var aes = Aes.Create() )
-            {
-                aes.BlockSize = 128;
-                aes.KeySize = 256;
+            using var aes = Aes.Create();
+            aes.BlockSize = 128;
+            aes.KeySize = 256;
 
                 byte[] cryptedIv;
-
+                
                 // encrypt iv using ECB and provided key
                 aes.Mode = CipherMode.ECB;
                 aes.Padding = PaddingMode.None;
 
-                using ( var aesTransform = aes.CreateEncryptor( key, null ) )
-                {
-                    cryptedIv = aesTransform.TransformFinalBlock( iv, 0, iv.Length );
-                }
+            using ( var aesTransform = aes.CreateEncryptor( key, null ) )
+            {
+                cryptedIv = aesTransform.TransformFinalBlock( iv, 0, iv.Length );
+            }
 
-                // encrypt input plaintext with CBC using the generated (plaintext) IV and the provided key
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+            // encrypt input plaintext with CBC using the generated (plaintext) IV and the provided key
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateEncryptor( key, iv ) )
-                using ( var ms = new SharedArrayMemoryStream() )
+                using ( var ms = new MemoryStream() )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Write ) )
                 {
                     cs.Write( input, 0, input.Length );
                     cs.FlushFinalBlock();
 
+                    var cipherText = ms.ToArray();
+
                     // final output is 16 byte ecb crypted IV + cbc crypted plaintext
-                    var output = new byte[ cryptedIv.Length + ms.Length ];
+                    var output = new byte[ cryptedIv.Length + cipherText.Length ];
 
                     Array.Copy( cryptedIv, 0, output, 0, cryptedIv.Length );
-                    Array.Copy( ms.GetBuffer(), 0, output, cryptedIv.Length, ms.Length );
+                    Array.Copy( cipherText, 0, output, cryptedIv.Length, cipherText.Length );
 
-                    return output;
-                }
+                return output;
             }
         }
 
@@ -239,12 +233,12 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
 
             var iv = ArrayPool<byte>.Shared.Rent( 16 );
@@ -267,17 +261,17 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             if ( hmacSecret == null )
             {
-                throw new ArgumentNullException( nameof( hmacSecret ) );
+                throw new ArgumentNullException( nameof(hmacSecret) );
             }
 
             // IV is HMAC-SHA1(Random(3) + Plaintext) + Random(3). (Same random values for both)
@@ -312,14 +306,14 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             return SymmetricDecrypt( input, key, out _ );
         }
 
@@ -330,17 +324,17 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             if ( hmacSecret == null )
             {
-                throw new ArgumentNullException( nameof( hmacSecret ) );
+                throw new ArgumentNullException( nameof(hmacSecret) );
             }
 
             DebugLog.Assert( key.Length >= 16, "CryptoHelper", "SymmetricDecryptHMACIV used with a key smaller than 16 bytes." );
@@ -388,58 +382,55 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
 
             DebugLog.Assert( key.Length == 32, "CryptoHelper", "SymmetricDecrypt used with non 32 byte key!" );
 
-            using ( var aes = Aes.Create() )
-            {
-                aes.BlockSize = 128;
-                aes.KeySize = 256;
+            using var aes = Aes.Create();
+            aes.BlockSize = 128;
+            aes.KeySize = 256;
 
-                // first 16 bytes of input is the ECB encrypted IV\
-                const int cryptedIvLength = 16;
+                // first 16 bytes of input is the ECB encrypted IV
+                byte[] cryptedIv = new byte[ 16 ];
+                iv = new byte[ cryptedIv.Length ];
+                Array.Copy( input, 0, cryptedIv, 0, cryptedIv.Length );
 
                 // the rest is ciphertext
-                var cipherTextLen = input.Length - cryptedIvLength;
+                byte[] cipherText = new byte[ input.Length - cryptedIv.Length ];
+                Array.Copy( input, cryptedIv.Length, cipherText, 0, cipherText.Length );
 
-                // decrypt the IV using ECB
-                aes.Mode = CipherMode.ECB;
-                aes.Padding = PaddingMode.None;
+            // decrypt the IV using ECB
+            aes.Mode = CipherMode.ECB;
+            aes.Padding = PaddingMode.None;
 
                 using ( var aesTransform = aes.CreateDecryptor( key, null ) )
                 {
-                    iv = aesTransform.TransformFinalBlock( input, 0, cryptedIvLength );
+                    iv = aesTransform.TransformFinalBlock( cryptedIv, 0, cryptedIv.Length );
                 }
 
-                // decrypt the remaining ciphertext in cbc with the decrypted IV
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+            // decrypt the remaining ciphertext in cbc with the decrypted IV
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
                 using ( var aesTransform = aes.CreateDecryptor( key, iv ) )
-                using ( var ms = new MemoryStream( input, cryptedIvLength, cipherTextLen ) )
+                using ( var ms = new MemoryStream( cipherText ) )
                 using ( var cs = new CryptoStream( ms, aesTransform, CryptoStreamMode.Read ) )
                 {
                     // plaintext is never longer than ciphertext
-                    byte[] plaintext = ArrayPool<byte>.Shared.Rent( cipherTextLen );
+                    byte[] plaintext = new byte[ cipherText.Length ];
 
-                    try
-                    {
-                        int len = cs.ReadAll( plaintext );
-                        byte[] output = new byte[ len ];
-                        Array.Copy( plaintext, 0, output, 0, len );
-                        return output;
-                    }
-                    finally
-                    {
-                        ArrayPool<byte>.Shared.Return( plaintext );
-                    }
+                    int len = cs.ReadAll( plaintext );
+
+                    byte[] output = new byte[ len ];
+                    Array.Copy( plaintext, 0, output, 0, len );
+
+                    return output;
                 }
             }
         }
@@ -451,21 +442,21 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( password == null )
             {
-                throw new ArgumentNullException( nameof( password ) );
+                throw new ArgumentNullException( nameof(password) );
             }
 
             byte[] key, hash;
-            using ( var sha256 = SHA256.Create() )
+            using( var sha256 = SHA256.Create() )
             {
                 byte[] password_bytes = Encoding.UTF8.GetBytes( password );
                 key = sha256.ComputeHash( password_bytes );
             }
-            using ( HMACSHA1 hmac = new HMACSHA1( key ) )
+            using( HMACSHA1 hmac = new HMACSHA1(key) )
             {
                 hash = hmac.ComputeHash( input, 0, 32 );
             }
@@ -487,26 +478,24 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             if ( key == null )
             {
-                throw new ArgumentNullException( nameof( key ) );
+                throw new ArgumentNullException( nameof(key) );
             }
-
+            
             DebugLog.Assert( key.Length == 32, "CryptoHelper", "SymmetricDecryptECB used with non 32 byte key!" );
 
-            using ( var aes = Aes.Create() )
-            {
-                aes.BlockSize = 128;
-                aes.KeySize = 256;
-                aes.Mode = CipherMode.ECB;
-                aes.Padding = PaddingMode.PKCS7;
+            using var aes = Aes.Create();
+            aes.BlockSize = 128;
+            aes.KeySize = 256;
+            aes.Mode = CipherMode.ECB;
+            aes.Padding = PaddingMode.PKCS7;
 
-                using ( var aesTransform = aes.CreateDecryptor( key, null ) )
-                {
-                    byte[] output = aesTransform.TransformFinalBlock( input, 0, input.Length );
+            using var aesTransform = aes.CreateDecryptor( key, null );
+            byte[] output = aesTransform.TransformFinalBlock( input, 0, input.Length );
 
                     return output;
                 }
@@ -520,7 +509,7 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
 
             using ( var crc = new Crc32() )
@@ -539,9 +528,9 @@ namespace SteamKit2
         {
             if ( input == null )
             {
-                throw new ArgumentNullException( nameof( input ) );
+                throw new ArgumentNullException( nameof(input) );
             }
-
+            
             uint a = 0, b = 0;
             for ( int i = 0; i < input.Length; i++ )
             {
@@ -556,15 +545,14 @@ namespace SteamKit2
         /// </summary>
         public static byte[] GenerateRandomBlock( int size )
         {
-            var block = new byte[ size ];
-            GenerateRandomBlock( block, offset: 0, count: size );
-            return block;
-        }
+            using ( var rng = RandomNumberGenerator.Create() )
+            {
+                var block = new byte[ size ];
 
-        public static void GenerateRandomBlock( byte[] buffer, int offset, int count )
-        {
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes( buffer, offset, count );
+                rng.GetBytes( block );
+
+                return block;
+            }
         }
     }
 }

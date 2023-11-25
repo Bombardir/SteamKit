@@ -1,5 +1,5 @@
-﻿using Xunit;
-using SteamKit2;
+﻿using SteamKit2;
+using Xunit;
 using Xunit.Sdk;
 
 namespace Tests
@@ -27,6 +27,7 @@ namespace Tests
         }
     }
 
+    [CollectionDefinition( nameof( DebugLogFacts ), DisableParallelization = true )]
     public class DebugLogFacts
     {
         [Fact, DebugLogSetupTeardown]
@@ -60,7 +61,7 @@ namespace Tests
 
             DebugLog.AddListener( ( category, msg ) =>
             {
-                Assert.True( false, "Listener action called when it shouldn't have been" );
+                Assert.Fail( "Listener action called when it shouldn't have been" );
             } );
 
             DebugLog.WriteLine( "category", "msg" );

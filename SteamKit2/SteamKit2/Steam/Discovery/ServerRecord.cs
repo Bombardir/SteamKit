@@ -74,7 +74,7 @@ namespace SteamKit2.Discovery
         /// <param name="endPoint">The IP address and port of the server.</param>
         /// <returns>A new <see cref="ServerRecord"/> instance</returns>
         public static ServerRecord CreateSocketServer(IPEndPoint endPoint)
-            => new ServerRecord(endPoint, ProtocolTypes.Tcp | ProtocolTypes.Udp);
+            => new(endPoint, ProtocolTypes.Tcp | ProtocolTypes.Udp);
 
         /// <summary>
         /// Creates a Socket server given an IP endpoint.
@@ -86,7 +86,7 @@ namespace SteamKit2.Discovery
         {
             if (!NetHelpers.TryParseIPEndPoint(address, out var endPoint))
             {
-                serverRecord = default(ServerRecord);
+                serverRecord = default;
                 return false;
             }
 
@@ -101,10 +101,7 @@ namespace SteamKit2.Discovery
         /// <returns>A new <see cref="ServerRecord"/> instance</returns>
         public static ServerRecord CreateWebSocketServer(string address)
         {
-            if (address == null)
-            {
-                throw new ArgumentNullException(nameof(address));
-            }
+            ArgumentNullException.ThrowIfNull( address );
 
             EndPoint endPoint;
             const int DefaultPort = 443;
@@ -112,8 +109,8 @@ namespace SteamKit2.Discovery
             var indexOfColon = address.IndexOf(':');
             if (indexOfColon >= 0)
             {
-                var hostname = address.Substring(0, indexOfColon);
-                var portNumber = address.Substring(indexOfColon + 1);
+                var hostname = address[ ..indexOfColon ];
+                var portNumber = address[ ( indexOfColon + 1 ).. ];
 
                 if (!int.TryParse(portNumber, out var port))
                 {

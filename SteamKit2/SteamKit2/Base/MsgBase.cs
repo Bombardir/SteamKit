@@ -215,10 +215,7 @@ namespace SteamKit2
                 return;
             }
 
-            if ( encoding == null )
-            {
-                throw new ArgumentNullException( nameof(encoding) );
-            }
+            ArgumentNullException.ThrowIfNull( encoding );
 
             Write( encoding.GetBytes( data ) );
         }
@@ -419,10 +416,7 @@ namespace SteamKit2
         /// /// <returns>The string.</returns>
         public string ReadNullTermString( Encoding encoding )
         {
-            if ( encoding == null )
-            {
-                throw new ArgumentNullException( nameof(encoding) );
-            }
+            ArgumentNullException.ThrowIfNull( encoding );
 
             return Payload.ReadNullTermString( encoding );
         }

@@ -101,7 +101,7 @@ enum EAccountFlags flags
 	Lockdown = 8388608;
 	MasterAppEditor = 16777216;
 	BannedFromWebAPI = 33554432;
-	ClansOnlyFromFriends = 67108864;
+	PartnerMember = 67108864;
 	GlobalModerator = 134217728;
 	ParentalSettings = 268435456;
 	ThirdPartySupport = 536870912;
@@ -181,13 +181,9 @@ enum EPersonaStateFlag flags
 	Golden = 4;
 	RemotePlayTogether = 8;
 
-	OnlineUsingWeb = 256; removed "renamed to ClientTypeWeb"
 	ClientTypeWeb = 256;
-	OnlineUsingMobile = 512; removed "renamed to ClientTypeMobile"
 	ClientTypeMobile = 512;
-	OnlineUsingBigPicture = 1024; removed "renamed to ClientTypeTenfoot"
 	ClientTypeTenfoot = 1024;
-	OnlineUsingVR = 2048; removed "renamed to ClientTypeVR"
 	ClientTypeVR = 2048;
 	LaunchTypeGamepad = 4096;
 	LaunchTypeCompatTool = 8192;
@@ -202,11 +198,9 @@ enum EClientPersonaStateFlag flags
 	Presence = 16;
 	Metadata = 32; removed
 	LastSeen = 64;
-	ClanInfo = 128; obsolete "renamed to UserClanRank"
 	UserClanRank = 128;
 	GameExtraInfo = 256;
 	GameDataBlob = 512;
-	ClanTag = 1024; obsolete "renamed to ClanData"
 	ClanData = 1024;
 	Facebook = 2048;
 	RichPresence = 4096;
@@ -295,7 +289,6 @@ enum EPaymentMethod
 	EClubPoints = 35;
 	CreditCardJapan = 36;
 	BankTransferJapan = 37;
-	PayEasyJapan = 38; removed "renamed to PayEasy"
 	PayEasy = 38;
 	Zong = 39;
 	CultureVoucher = 40;
@@ -305,7 +298,6 @@ enum EPaymentMethod
 	GameVoucher = 44;
 	Multibanco = 45;
 	Payshop = 46;
-	Maestro = 47; removed "renamed to MaestroBoaCompra"
 	MaestroBoaCompra = 47;
 	OXXO = 48;
 	ToditoCash = 49;
@@ -340,9 +332,7 @@ enum EPaymentMethod
 	BitCoin = 79;
 	Wallet = 128;
 	Valve = 129;
-	SteamPressMaster = 130; removed "renamed to MasterComp"
 	MasterComp = 130;
-	StorePromotion = 131; removed "renamed to Promotional"
 	Promotional = 131;
 	MasterSubscription = 134;
 	Payco = 135;
@@ -707,7 +697,13 @@ enum EOSType
 	MacOS111 = -79;
 	MacOS1017 = -78;
 	MacOS12 = -77;
-	MacOS13 = -76;
+	MacOS1018 = -76;
+	MacOS13 = -75;
+	MacOS1019 = -74;
+	MacOS14 = -73;
+	MacOS1020 = -72;
+	MacOS15 = -71;
+
 	MacOSMax = -1;
 
 	LinuxUnknown = -203;
@@ -740,21 +736,16 @@ enum EOSType
 	Win98 = 3;
 	WinME = 4;
 	WinNT = 5;
-	Win200 = 6; removed "renamed to Win2000"
 	Win2000 = 6;
 	WinXP = 7;
 	Win2003 = 8;
 	WinVista = 9;
-	Win7 = 10; removed "renamed to Windows7"
 	Windows7 = 10;
 	Win2008 = 11;
 	Win2012 = 12;
-	Win8 = 13; removed "renamed to Windows8"
 	Windows8 = 13;
-	Win81 = 14; removed "renamed to Windows81"
 	Windows81 = 14;
 	Win2012R2 = 15;
-	Win10 = 16; removed "renamed to Windows10"
 	Windows10 = 16;
 	Win2016 = 17;
 	Win2019 = 18;
@@ -784,7 +775,6 @@ enum EServerType
 	ATS = 6;
 	CM = 7;
 	FBS = 8;
-	FG = 9; removed "renamed to BoxMonitor"
 	BoxMonitor = 9;
 	SS = 10;
 	DRMS = 11;
@@ -801,7 +791,6 @@ enum EServerType
 	SLC = 20;
 	UFS = 21;
 	Util = 23; removed
-	DSS = 24; removed "renamed to Community"
 	Community = 24;
 	P2PRelayOBSOLETE = 25; removed
 	AppInformation = 26;
@@ -831,7 +820,6 @@ enum EServerType
 	Econ = 48;
 	Backpack = 49;
 	UGS = 50;
-	Store = 51; removed "renamed to StoreFeature"
 	StoreFeature = 51;
 	MoneyStats = 52;
 	CRE = 53;
@@ -863,7 +851,7 @@ enum EServerType
 	Steam2Emulator = 79;
 	PublicTest = 80;
 	SolrMgr = 81;
-	BroadcastRelay = 82;
+	BroadcastIngestor = 82;
 	BroadcastDirectory = 83;
 	VideoManager = 84;
 	TradeOffer = 85;
@@ -1022,6 +1010,12 @@ enum ECurrencyCode
 	QAR = 39;
 	CRC = 40;
 	UYU = 41;
+	BGN = 42;
+	HRK = 43;
+	CZK = 44;
+	DKK = 45;
+	HUF = 46;
+	RON = 47;
 };
 
 enum EDepotFileFlag flags
@@ -1054,6 +1048,7 @@ enum EPublishedFileVisibility
 	Public = 0;
 	FriendsOnly = 1;
 	Private = 2;
+	Unlisted = 3;
 };
 
 enum EWorkshopFileType
@@ -1278,8 +1273,9 @@ enum EUCMFilePrivacyState flags
 	Private = 2;
 	FriendsOnly = 4;
 	Public = 8;
+	Unlisted = 16;
 
-	All = Public | FriendsOnly | Private; // 14
+	All = Public | FriendsOnly | Private | Unlisted; // 30
 };
 
 enum EPublishedFileQueryType
@@ -1357,6 +1353,11 @@ enum EDisplayStatus
 	AvailToBorrow = 29;
 	AvailGuestPass = 30;
 	Purchase = 31;
+	Unavailable = 32;
+	NotLaunchable = 33;
+	CloudError = 34;
+	CloudOutOfDate = 35;
+	Terminating = 36;
 };
 
 enum EAppType flags
@@ -1436,6 +1437,7 @@ enum EChatRoomGroupRank
 	Moderator = 30;
 	Officer = 40;
 	Owner = 50;
+	TestInvalid = 99;
 };
 
 enum EChatRoomGroupPermissions flags
@@ -1469,6 +1471,7 @@ enum EChatRoomJoinState
 	Default = 0;
 	None = 1;
 	Joined = 2;
+	TestInvalid = 99;
 };
 
 enum EVoiceCallState
@@ -1575,4 +1578,5 @@ enum ELauncherType
 	Headless = 6;
 	SteamChina = 7;
 	SingleApp = 8;
+	GameServer = 9;
 }
