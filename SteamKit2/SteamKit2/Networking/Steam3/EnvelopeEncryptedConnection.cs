@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.IO.Hashing;
 using System.Net;
 using System.Threading.Tasks;
 using SteamKit2.Internal;
