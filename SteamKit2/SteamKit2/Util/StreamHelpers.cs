@@ -76,7 +76,7 @@ namespace SteamKit2
         {
             int characterSize = encoding.GetByteCount( "e" );
 
-            using MemoryStream ms = new SharedArrayMemoryStream();
+            using MemoryStream ms = new MemoryStream();
 
             while ( true )
             {
