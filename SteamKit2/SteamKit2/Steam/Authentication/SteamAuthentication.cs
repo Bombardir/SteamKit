@@ -75,7 +75,7 @@ namespace SteamKit2.Authentication
                 request.renewal_type = ETokenRenewalType.k_ETokenRenewalType_Allow;
             }
 
-            var message = await AuthenticationService.SendMessage( api => api.GenerateAccessTokenForApp( request ) );
+            var message = await AuthenticationService.SendMessage( api => api.GenerateAccessTokenForApp( request ) ).WaitResultAsync();
 
             if ( message.Result != EResult.OK )
             {
