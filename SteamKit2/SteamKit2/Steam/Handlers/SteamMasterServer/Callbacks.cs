@@ -25,6 +25,7 @@ namespace SteamKit2
             {
                 public IPAddress Ip { get; }
                 public uint QueryPort { get; }
+                public uint GamePort { get; }
                 public uint MaxPlayers { get; }
                 public uint? AuthPlayers { get; }
                 public string? Name { get; }
@@ -34,11 +35,12 @@ namespace SteamKit2
                 public string? GameDesc { get; }
                 public string? Tags { get; set; }
 
-                public Server( IPAddress ip, uint queryPort, uint? authPlayers, uint maxPlayers, string? name, string? version, string? map, 
+                public Server( IPAddress ip, uint queryPort, uint gamePort, uint? authPlayers, uint maxPlayers, string? name, string? version, string? map, 
                     string? gameDir, string? gameDesc, string? tags )
                 {
                     Ip = ip;
                     QueryPort = queryPort;
+                    GamePort = gamePort;
                     AuthPlayers = authPlayers;
                     MaxPlayers = maxPlayers;
                     Name = name;
@@ -130,8 +132,8 @@ namespace SteamKit2
                     var queryPort = serverResponse.query_port;
                     uint? authPlayers = serverResponse.ShouldSerializeauth_players() ? serverResponse.auth_players : null;
                     var maxPlayers = serverResponse.max_players;
-
-                    serverList[index] = new Server( ip, queryPort, authPlayers, maxPlayers, name, version, map, gamedir, gamedesc, tags );
+                   
+                    serverList[index] = new Server( ip, queryPort, serverResponse.game_port, authPlayers, maxPlayers, name, version, map, gamedir, gamedesc, tags );
                 }
 
                 this.Servers = serverList;
