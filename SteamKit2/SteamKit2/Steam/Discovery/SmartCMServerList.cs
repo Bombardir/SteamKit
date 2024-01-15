@@ -127,15 +127,19 @@ namespace SteamKit2.Discovery
             if ( configuration.CustomServerRecordComparerForOrder != null )
                 endpointList = endpointList.Order( configuration.CustomServerRecordComparerForOrder );
 
-            var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & ProtocolTypes.Tcp ) != 0 ).Distinct().ToArray();
-            var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() ).Distinct().Take( configuration.MaxCMServerListDatacenterCount ).ToHashSet();
+            var distinctEndPoints = endpointList.Where( sr => ( sr.ProtocolTypes & configuration.ProtocolTypes ) != 0 ).Distinct().ToArray();
+            var dataCenterHosts = distinctEndPoints.Select( s => s.GetHost() )
+                .Where(host => !configuration.CMServersToIgnore.Contains(host))
+                .Distinct()
+                .Take( configuration.MaxCMServerListDatacenterCount )
+                .ToHashSet();
 
             lock ( servers )
             {
                 foreach (var endPoint in distinctEndPoints)
                 {
                     if (!dataCenterHosts.Contains( endPoint.GetHost() ))
-                        break;
+                        continue;
 
                     AddCore( endPoint );
                 }

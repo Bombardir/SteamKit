@@ -117,6 +117,8 @@ namespace SteamKit2
 
         public Int32 MaxCMServerListDatacenterCount { get; set; } = 20;
 
+        public HashSet<string> CMServersToIgnore { get; set; } = new HashSet<string>();
+
         public IComparer<ServerRecord> CustomServerRecordComparerForOrder { get; set; }
 
         /// <summary>
