@@ -359,6 +359,26 @@ namespace SteamKit2
                 _ = generationTable.GetValue(machineInfoProvider, p => Task.Factory.StartNew( GenerateMachineID, state: p ));
             }
         }
+        
+        public static byte[] GenerateRandomMachineId()
+        {
+            var machineId = new MachineID();
+
+            var bytes = new byte[128];
+
+            Random.Shared.NextBytes( bytes );
+            machineId.SetBB3( GetHexString( bytes ) );
+
+            Random.Shared.NextBytes( bytes );
+            machineId.SetFF2( GetHexString( bytes ) );
+
+            Random.Shared.NextBytes( bytes );
+            machineId.Set3B3( GetHexString( bytes ) );
+
+            using MemoryStream ms = new MemoryStream();
+            machineId.WriteToStream( ms );
+            return ms.ToArray();
+        }
 
         public static byte[]? GetMachineID(IMachineInfoProvider machineInfoProvider)
         {
