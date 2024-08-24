@@ -7,12 +7,14 @@ namespace SteamKit2
 {
     partial class WebSocketConnection : IConnection
     {
-        public WebSocketConnection(ILogContext log)
+        public WebSocketConnection( ILogContext log, EndPoint localEndPoint )
         {
             this.log = log ?? throw new ArgumentNullException( nameof( log ) );
+            _localEndPoint = localEndPoint;
         }
 
         readonly ILogContext log;
+        private readonly EndPoint _localEndPoint;
 
         WebSocketContext? currentContext;
 
@@ -37,9 +39,7 @@ namespace SteamKit2
             }
 
             CurrentEndPoint = newContext.EndPoint;
-            newContext.Start(TimeSpan.FromMilliseconds(timeout));
-
-            return Task.CompletedTask;
+            return newContext.Start(TimeSpan.FromMilliseconds(timeout));
         }
 
         public void Disconnect(bool userInitiated)

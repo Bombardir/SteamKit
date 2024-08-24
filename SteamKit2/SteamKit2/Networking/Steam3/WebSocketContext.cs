@@ -32,9 +32,9 @@ namespace SteamKit2
 
             public EndPoint EndPoint { get; }
 
-            public void Start(TimeSpan connectionTimeout)
+            public Task Start(TimeSpan connectionTimeout)
             {
-                runloopTask = RunCore(connectionTimeout, cts.Token).IgnoringCancellation(cts.Token);
+                return RunCore(connectionTimeout, cts.Token).IgnoringCancellation(cts.Token);
             }
 
             async Task RunCore(TimeSpan connectionTimeout, CancellationToken cancellationToken)
