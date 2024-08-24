@@ -58,9 +58,12 @@ namespace SteamKit2
             public IReadOnlyList<Server> Servers { get; private set; }
 
 
-            internal QueryCallback( JobID jobID, CMsgGMSClientServerQueryResponse msg )
+            internal QueryCallback( IPacketMsg packetMsg )
             {
-                JobID = jobID;
+                var queryResponse = new ClientMsgProtobuf<CMsgGMSClientServerQueryResponse>( packetMsg );
+                var msg = queryResponse.Body;
+
+                JobID = queryResponse.TargetJobID;
 
                 var serverList = new Server[msg.servers.Count];
 

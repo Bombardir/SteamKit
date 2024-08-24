@@ -14,7 +14,7 @@ namespace SteamKit2
     interface IConnection
     {
         /// <summary>
-        /// Occurs when a net message is recieved over the network.
+        /// Occurs when a net message is received over the network.
         /// </summary>
         event EventHandler<NetMsgEventArgs> NetMsgReceived;
 
@@ -50,7 +50,7 @@ namespace SteamKit2
         /// Sends the specified data packet.
         /// </summary>
         /// <param name="data">The data packet to send.</param>
-        void Send( byte[] data );
+        void Send( Memory<byte> data );
 
         /// <summary>
         /// Gets the local IP.

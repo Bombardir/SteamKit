@@ -21,7 +21,7 @@ namespace SteamKit2
         /// <summary>
         /// Represents an invalid JobID.
         /// </summary>
-        public static readonly JobID Invalid = new JobID();
+        public static readonly JobID Invalid = new();
 
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace SteamKit2
 
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="SteamKit2.JobID"/> to <see cref="System.UInt64"/>.
+        /// Performs an implicit conversion from <see cref="SteamKit2.JobID"/> to <see cref="ulong"/>.
         /// </summary>
         /// <param name="jobId">The Job ID.</param>
         /// <returns>
@@ -50,16 +50,13 @@ namespace SteamKit2
         /// </returns>
         public static implicit operator ulong ( JobID jobId )
         {
-            if ( jobId == null )
-            {
-                throw new ArgumentNullException( nameof(jobId) );
-            }
+            ArgumentNullException.ThrowIfNull( jobId );
 
             return jobId.Value;
         }
 
         /// <summary>
-        /// Performs an implicit conversion from <see cref="System.UInt64"/> to <see cref="SteamKit2.JobID"/>.
+        /// Performs an implicit conversion from <see cref="ulong"/> to <see cref="SteamKit2.JobID"/>.
         /// </summary>
         /// <param name="jobId">The Job ID.</param>
         /// <returns>
@@ -79,10 +76,7 @@ namespace SteamKit2
         /// </returns>
         public static implicit operator JobID( AsyncJob asyncJob )
         {
-            if ( asyncJob == null )
-            {
-                throw new ArgumentNullException( nameof(asyncJob) );
-            }
+            ArgumentNullException.ThrowIfNull( asyncJob );
 
             return asyncJob.JobID;
         }
@@ -115,20 +109,12 @@ namespace SteamKit2
 
         internal AsyncJob( SteamClient client, JobID jobId )
         {
-            if ( client == null )
-            {
-                throw new ArgumentNullException( nameof(client) );
-            }
-            
-            if ( jobId == null )
-            {
-                throw new ArgumentNullException( nameof(jobId) );
-            }
+            ArgumentNullException.ThrowIfNull( client );
+
+            ArgumentNullException.ThrowIfNull( jobId );
 
             ResetTimeout();
             JobID = jobId;
-
-            
         }
 
         public void ResetTimeout() => jobStart = DateTime.UtcNow;
@@ -333,10 +319,7 @@ namespace SteamKit2
         /// <returns><c>true</c> if this result completes the set; otherwise, <c>false</c>.</returns>
         internal override bool AddResult( CallbackMsg callback )
         {
-            if ( callback == null )
-            {
-                throw new ArgumentNullException( nameof( callback ) );
-            }
+            ArgumentNullException.ThrowIfNull( callback );
 
             T callbackMsg = (T)callback;
 

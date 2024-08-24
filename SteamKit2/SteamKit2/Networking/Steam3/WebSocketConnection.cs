@@ -47,7 +47,7 @@ namespace SteamKit2
 
         public IPAddress GetLocalIP() => IPAddress.None;
 
-        public void Send(byte[] data)
+        public void Send(Memory<byte> data)
         {
             try
             {
