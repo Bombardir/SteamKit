@@ -29,6 +29,7 @@ namespace SteamKit2
             /// Check https://developer.valvesoftware.com/wiki/Master_Server_Query_Protocol for details on how the filter is structured.
             /// </summary>
             public string? Filter { get; set; }
+
             /// <summary>
             /// Gets or sets the region that servers will be returned from.
             /// </summary>
@@ -73,10 +74,10 @@ namespace SteamKit2
 
             query.Body.filter_text = details.Filter;
 
-            if ( details.Region.HasValue)
+            if ( details.Region.HasValue )
                 query.Body.region_code = ( uint )details.Region;
 
-            if ( details.MaxServers.HasValue)
+            if ( details.MaxServers.HasValue )
                 query.Body.max_servers = details.MaxServers.Value;
 
             this.Client.Send( query );
@@ -92,25 +93,6 @@ namespace SteamKit2
         public override void HandleMsg( IPacketMsg packetMsg )
         {
             ArgumentNullException.ThrowIfNull( packetMsg );
-
-            switch ( packetMsg.MsgType )
-            {
-                case EMsg.GMSClientServerQueryResponse:
-                    HandleServerQueryResponse( packetMsg );
-                    break;
-            }
         }
-
-
-        #region ClientMsg Handlers
-        void HandleServerQueryResponse( IPacketMsg packetMsg )
-        {
-            var queryResponse = new ClientMsgProtobuf<CMsgGMSClientServerQueryResponse>( packetMsg );
-
-            var callback = new QueryCallback(queryResponse.TargetJobID, queryResponse.Body);
-            Client.PostCallback( callback );
-        }
-        #endregion
-
     }
 }

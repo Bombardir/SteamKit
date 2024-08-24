@@ -13,7 +13,7 @@ using SteamKit2.Internal;
 
 namespace SteamKit2
 {
-    static class NetHelpers
+    public static class NetHelpers
     {
         public static IPAddress GetLocalIP(Socket activeSocket)
         {

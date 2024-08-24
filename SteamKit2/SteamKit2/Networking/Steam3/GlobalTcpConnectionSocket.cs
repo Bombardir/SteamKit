@@ -80,7 +80,7 @@ namespace SteamKit2.Networking.Steam3
             socketHandler?.SendQueue.Clear();
         }
 
-        public void Send( Socket socket, byte[] data )
+        public void Send( Socket socket, Memory<byte> data )
         {
             var handler = _pollGroup.Get(socket);
             if (handler == null)
@@ -88,7 +88,8 @@ namespace SteamKit2.Networking.Steam3
 
             lock ( handler.SendQueue )
             {
-                handler.SendQueue.Enqueue( data );
+                // TODO: Optimize
+                handler.SendQueue.Enqueue( data.ToArray() );
                 _pollGroup.Modify( socket, PollEvents.All );
             }
         }

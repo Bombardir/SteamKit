@@ -141,7 +141,7 @@ namespace SteamKit2
             await TryConnect( timeout );
         }
 
-        public void Send( byte[] data )
+        public void Send( Memory<byte> data )
         {
             if ( socket is not { Connected: true } )
             {
