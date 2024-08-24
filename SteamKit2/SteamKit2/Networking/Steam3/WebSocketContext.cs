@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -13,14 +17,58 @@ namespace SteamKit2
     {
         internal class WebSocketContext : IDisposable
         {
-            public WebSocketContext(WebSocketConnection connection, EndPoint endPoint)
+            private static readonly Dictionary<EndPoint, HttpMessageInvoker> _invokers = new();
+            
+            public WebSocketContext( WebSocketConnection connection, EndPoint endPoint, EndPoint localEndPoint )
             {
                 this.connection = connection ?? throw new ArgumentNullException( nameof( connection ) );
                 EndPoint = endPoint ?? throw new ArgumentNullException( nameof( endPoint ) );
 
                 cts = new CancellationTokenSource();
                 socket = new ClientWebSocket();
+
+                _invoker = CreateHttpInvoker(localEndPoint);
                 connectionUri = ConstructUri(endPoint);
+            }
+
+            private static HttpMessageInvoker CreateHttpInvoker(EndPoint localEndPoint)
+            {
+                lock ( _invokers )
+                {
+                    if ( _invokers.TryGetValue( localEndPoint, out var invoker ) )
+                        return invoker;
+                    
+                    var handler = new SocketsHttpHandler
+                    {
+                        PooledConnectionLifetime = TimeSpan.Zero,
+                        MaxConnectionsPerServer = int.MaxValue,
+                        UseProxy = false,
+                        UseCookies = false,
+                        ActivityHeadersPropagator = DistributedContextPropagator.CreateNoOutputPropagator()
+                    };
+                
+                    handler.ConnectCallback = async (context, cancellationToken) =>
+                    {
+                        Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        socket.Bind(localEndPoint);
+                        socket.NoDelay = true;
+
+                        try
+                        {
+                            await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
+                            return new NetworkStream(socket, true);
+                        }
+                        catch
+                        {
+                            socket.Dispose();
+                            throw;
+                        }
+                    };
+                
+                    invoker = new HttpMessageInvoker(handler);
+                    _invokers.Add( localEndPoint, invoker );
+                    return invoker;
+                }
             }
 
             readonly WebSocketConnection connection;
@@ -29,6 +77,7 @@ namespace SteamKit2
             readonly Uri connectionUri;
             Task? runloopTask;
             int disposed;
+            private HttpMessageInvoker _invoker;
 
             public EndPoint EndPoint { get; }
 
@@ -46,7 +95,7 @@ namespace SteamKit2
 
                     try
                     {
-                        await socket.ConnectAsync(connectionUri, combinedCancellation.Token).ConfigureAwait(false);
+                        await socket.ConnectAsync(connectionUri, _invoker, combinedCancellation.Token).ConfigureAwait(false);
                     }
                     catch (TaskCanceledException) when (timeout.IsCancellationRequested)
                     {

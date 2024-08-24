@@ -29,7 +29,7 @@ namespace SteamKit2
 
         public Task Connect( EndPoint endPoint, int timeout = 5000 )
         {
-            var newContext = new WebSocketContext(this, endPoint);
+            var newContext = new WebSocketContext(this, endPoint, _localEndPoint);
             var oldContext = Interlocked.Exchange(ref currentContext, newContext);
             if (oldContext != null)
             {
