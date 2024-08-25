@@ -81,15 +81,10 @@ namespace SteamKit2
 
             public EndPoint EndPoint { get; }
 
-            public Task Start(TimeSpan connectionTimeout)
-            {
-                return RunCore(connectionTimeout, cts.Token).IgnoringCancellation(cts.Token);
-            }
-
-            async Task RunCore(TimeSpan connectionTimeout, CancellationToken cancellationToken)
+            public async Task Start(TimeSpan connectionTimeout)
             {
                 using (var timeout = new CancellationTokenSource())
-                using (var combinedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token))
+                using (var combinedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, timeout.Token))
                 {
                     timeout.CancelAfter(connectionTimeout);
 
@@ -110,10 +105,15 @@ namespace SteamKit2
                         return;
                     }
                 }
-
+                
                 connection.log.LogDebug( nameof(WebSocketContext), "Connected to {0}", connectionUri);
                 connection.Connected?.Invoke(connection, EventArgs.Empty);
+                
+                RunCore(cts.Token).IgnoringCancellation(cts.Token);
+            }
 
+            async Task RunCore( CancellationToken cancellationToken)
+            {
                 while (!cancellationToken.IsCancellationRequested && socket.State == WebSocketState.Open)
                 {
                     byte[]? packet = null;
