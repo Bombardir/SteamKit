@@ -676,7 +676,16 @@ namespace SteamKit2.Internal
                 DebugLog.Assert( connection.CurrentEndPoint != null, nameof( CMClient ), "No connection endpoint after connecting - cannot update server list" );
                 Servers.TryMark( connection.CurrentEndPoint, ServerQuality.Good );
                 _isConnected = true;
-                OnClientConnected();
+                
+                try
+                {
+                    OnClientConnected();
+                }
+                catch ( Exception ex )
+                {
+                    DebugLog.WriteLine( nameof(CMClient), "Unhandled exception after connecting: {0}", ex );
+                    Disconnect(userInitiated: false);
+                }
 
                 connectionCancellation?.Cancel();
             }
