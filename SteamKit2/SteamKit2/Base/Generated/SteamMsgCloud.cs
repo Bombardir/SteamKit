@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -2496,45 +2496,282 @@ namespace SteamKit2.Internal
 
     }
 
-    public interface ICloud
+    public class Cloud : SteamUnifiedMessages.UnifiedService
     {
-        NoResponse ClientLogUploadCheck(CCloud_ClientLogUploadCheck_Notification request);
-        NoResponse ClientLogUploadComplete(CCloud_ClientLogUploadComplete_Notification request);
-        CCloud_GetUploadServerInfo_Response GetUploadServerInfo(CCloud_GetUploadServerInfo_Request request);
-        CCloud_BeginHTTPUpload_Response BeginHTTPUpload(CCloud_BeginHTTPUpload_Request request);
-        CCloud_CommitHTTPUpload_Response CommitHTTPUpload(CCloud_CommitHTTPUpload_Request request);
-        CCloud_BeginUGCUpload_Response BeginUGCUpload(CCloud_BeginUGCUpload_Request request);
-        CCloud_CommitUGCUpload_Response CommitUGCUpload(CCloud_CommitUGCUpload_Request request);
-        CCloud_GetFileDetails_Response GetFileDetails(CCloud_GetFileDetails_Request request);
-        CCloud_EnumerateUserFiles_Response EnumerateUserFiles(CCloud_EnumerateUserFiles_Request request);
-        CCloud_Delete_Response Delete(CCloud_Delete_Request request);
-        CCloud_GetClientEncryptionKey_Response GetClientEncryptionKey(CCloud_GetClientEncryptionKey_Request request);
-        NoResponse CDNReport(CCloud_CDNReport_Notification request);
-        NoResponse ExternalStorageTransferReport(CCloud_ExternalStorageTransferReport_Notification request);
-        CCloud_BeginAppUploadBatch_Response BeginAppUploadBatch(CCloud_BeginAppUploadBatch_Request request);
-        NoResponse CompleteAppUploadBatch(CCloud_CompleteAppUploadBatch_Notification request);
-        CCloud_CompleteAppUploadBatch_Response CompleteAppUploadBatchBlocking(CCloud_CompleteAppUploadBatch_Request request);
-        CCloud_ClientBeginFileUpload_Response ClientBeginFileUpload(CCloud_ClientBeginFileUpload_Request request);
-        CCloud_ClientCommitFileUpload_Response ClientCommitFileUpload(CCloud_ClientCommitFileUpload_Request request);
-        CCloud_ClientFileDownload_Response ClientFileDownload(CCloud_ClientFileDownload_Request request);
-        CCloud_ClientDeleteFile_Response ClientDeleteFile(CCloud_ClientDeleteFile_Request request);
-        NoResponse ClientConflictResolution(CCloud_ClientConflictResolution_Notification request);
-        CCloud_EnumerateUserApps_Response EnumerateUserApps(CCloud_EnumerateUserApps_Request request);
-        CCloud_GetAppFileChangelist_Response GetAppFileChangelist(CCloud_GetAppFileChangelist_Request request);
-        CCloud_AppSessionSuspend_Response SuspendAppSession(CCloud_AppSessionSuspend_Request request);
-        CCloud_AppSessionResume_Response ResumeAppSession(CCloud_AppSessionResume_Request request);
-        CCloud_AppLaunchIntent_Response SignalAppLaunchIntent(CCloud_AppLaunchIntent_Request request);
-        NoResponse SignalAppExitSyncDone(CCloud_AppExitSyncDone_Notification request);
-        CCloud_ClientGetAppQuotaUsage_Response ClientGetAppQuotaUsage(CCloud_ClientGetAppQuotaUsage_Request request);
+        public override string ServiceName { get; } = "Cloud";
+
+        public void ClientLogUploadCheck(CCloud_ClientLogUploadCheck_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_ClientLogUploadCheck_Notification>( "Cloud.ClientLogUploadCheck#1", request );
+        }
+
+        public void ClientLogUploadComplete(CCloud_ClientLogUploadComplete_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_ClientLogUploadComplete_Notification>( "Cloud.ClientLogUploadComplete#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_GetUploadServerInfo_Response>> GetUploadServerInfo( CCloud_GetUploadServerInfo_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_GetUploadServerInfo_Request, CCloud_GetUploadServerInfo_Response>( "Cloud.GetUploadServerInfo#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_BeginHTTPUpload_Response>> BeginHTTPUpload( CCloud_BeginHTTPUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_BeginHTTPUpload_Request, CCloud_BeginHTTPUpload_Response>( "Cloud.BeginHTTPUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_CommitHTTPUpload_Response>> CommitHTTPUpload( CCloud_CommitHTTPUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_CommitHTTPUpload_Request, CCloud_CommitHTTPUpload_Response>( "Cloud.CommitHTTPUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_BeginUGCUpload_Response>> BeginUGCUpload( CCloud_BeginUGCUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_BeginUGCUpload_Request, CCloud_BeginUGCUpload_Response>( "Cloud.BeginUGCUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_CommitUGCUpload_Response>> CommitUGCUpload( CCloud_CommitUGCUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_CommitUGCUpload_Request, CCloud_CommitUGCUpload_Response>( "Cloud.CommitUGCUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_GetFileDetails_Response>> GetFileDetails( CCloud_GetFileDetails_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_GetFileDetails_Request, CCloud_GetFileDetails_Response>( "Cloud.GetFileDetails#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_EnumerateUserFiles_Response>> EnumerateUserFiles( CCloud_EnumerateUserFiles_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_EnumerateUserFiles_Request, CCloud_EnumerateUserFiles_Response>( "Cloud.EnumerateUserFiles#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_Delete_Response>> Delete( CCloud_Delete_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_Delete_Request, CCloud_Delete_Response>( "Cloud.Delete#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_GetClientEncryptionKey_Response>> GetClientEncryptionKey( CCloud_GetClientEncryptionKey_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_GetClientEncryptionKey_Request, CCloud_GetClientEncryptionKey_Response>( "Cloud.GetClientEncryptionKey#1", request );
+        }
+
+        public void CDNReport(CCloud_CDNReport_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_CDNReport_Notification>( "Cloud.CDNReport#1", request );
+        }
+
+        public void ExternalStorageTransferReport(CCloud_ExternalStorageTransferReport_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_ExternalStorageTransferReport_Notification>( "Cloud.ExternalStorageTransferReport#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_BeginAppUploadBatch_Response>> BeginAppUploadBatch( CCloud_BeginAppUploadBatch_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_BeginAppUploadBatch_Request, CCloud_BeginAppUploadBatch_Response>( "Cloud.BeginAppUploadBatch#1", request );
+        }
+
+        public void CompleteAppUploadBatch(CCloud_CompleteAppUploadBatch_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_CompleteAppUploadBatch_Notification>( "Cloud.CompleteAppUploadBatch#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_CompleteAppUploadBatch_Response>> CompleteAppUploadBatchBlocking( CCloud_CompleteAppUploadBatch_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_CompleteAppUploadBatch_Request, CCloud_CompleteAppUploadBatch_Response>( "Cloud.CompleteAppUploadBatchBlocking#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_ClientBeginFileUpload_Response>> ClientBeginFileUpload( CCloud_ClientBeginFileUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_ClientBeginFileUpload_Request, CCloud_ClientBeginFileUpload_Response>( "Cloud.ClientBeginFileUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_ClientCommitFileUpload_Response>> ClientCommitFileUpload( CCloud_ClientCommitFileUpload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_ClientCommitFileUpload_Request, CCloud_ClientCommitFileUpload_Response>( "Cloud.ClientCommitFileUpload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_ClientFileDownload_Response>> ClientFileDownload( CCloud_ClientFileDownload_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_ClientFileDownload_Request, CCloud_ClientFileDownload_Response>( "Cloud.ClientFileDownload#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_ClientDeleteFile_Response>> ClientDeleteFile( CCloud_ClientDeleteFile_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_ClientDeleteFile_Request, CCloud_ClientDeleteFile_Response>( "Cloud.ClientDeleteFile#1", request );
+        }
+
+        public void ClientConflictResolution(CCloud_ClientConflictResolution_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_ClientConflictResolution_Notification>( "Cloud.ClientConflictResolution#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_EnumerateUserApps_Response>> EnumerateUserApps( CCloud_EnumerateUserApps_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_EnumerateUserApps_Request, CCloud_EnumerateUserApps_Response>( "Cloud.EnumerateUserApps#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_GetAppFileChangelist_Response>> GetAppFileChangelist( CCloud_GetAppFileChangelist_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_GetAppFileChangelist_Request, CCloud_GetAppFileChangelist_Response>( "Cloud.GetAppFileChangelist#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_AppSessionSuspend_Response>> SuspendAppSession( CCloud_AppSessionSuspend_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_AppSessionSuspend_Request, CCloud_AppSessionSuspend_Response>( "Cloud.SuspendAppSession#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_AppSessionResume_Response>> ResumeAppSession( CCloud_AppSessionResume_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_AppSessionResume_Request, CCloud_AppSessionResume_Response>( "Cloud.ResumeAppSession#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_AppLaunchIntent_Response>> SignalAppLaunchIntent( CCloud_AppLaunchIntent_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_AppLaunchIntent_Request, CCloud_AppLaunchIntent_Response>( "Cloud.SignalAppLaunchIntent#1", request );
+        }
+
+        public void SignalAppExitSyncDone(CCloud_AppExitSyncDone_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_AppExitSyncDone_Notification>( "Cloud.SignalAppExitSyncDone#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CCloud_ClientGetAppQuotaUsage_Response>> ClientGetAppQuotaUsage( CCloud_ClientGetAppQuotaUsage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CCloud_ClientGetAppQuotaUsage_Request, CCloud_ClientGetAppQuotaUsage_Response>( "Cloud.ClientGetAppQuotaUsage#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "GetUploadServerInfo":
+                    PostResponseMsg<CCloud_GetUploadServerInfo_Response>( packetMsg );
+                    break;
+                case "BeginHTTPUpload":
+                    PostResponseMsg<CCloud_BeginHTTPUpload_Response>( packetMsg );
+                    break;
+                case "CommitHTTPUpload":
+                    PostResponseMsg<CCloud_CommitHTTPUpload_Response>( packetMsg );
+                    break;
+                case "BeginUGCUpload":
+                    PostResponseMsg<CCloud_BeginUGCUpload_Response>( packetMsg );
+                    break;
+                case "CommitUGCUpload":
+                    PostResponseMsg<CCloud_CommitUGCUpload_Response>( packetMsg );
+                    break;
+                case "GetFileDetails":
+                    PostResponseMsg<CCloud_GetFileDetails_Response>( packetMsg );
+                    break;
+                case "EnumerateUserFiles":
+                    PostResponseMsg<CCloud_EnumerateUserFiles_Response>( packetMsg );
+                    break;
+                case "Delete":
+                    PostResponseMsg<CCloud_Delete_Response>( packetMsg );
+                    break;
+                case "GetClientEncryptionKey":
+                    PostResponseMsg<CCloud_GetClientEncryptionKey_Response>( packetMsg );
+                    break;
+                case "BeginAppUploadBatch":
+                    PostResponseMsg<CCloud_BeginAppUploadBatch_Response>( packetMsg );
+                    break;
+                case "CompleteAppUploadBatchBlocking":
+                    PostResponseMsg<CCloud_CompleteAppUploadBatch_Response>( packetMsg );
+                    break;
+                case "ClientBeginFileUpload":
+                    PostResponseMsg<CCloud_ClientBeginFileUpload_Response>( packetMsg );
+                    break;
+                case "ClientCommitFileUpload":
+                    PostResponseMsg<CCloud_ClientCommitFileUpload_Response>( packetMsg );
+                    break;
+                case "ClientFileDownload":
+                    PostResponseMsg<CCloud_ClientFileDownload_Response>( packetMsg );
+                    break;
+                case "ClientDeleteFile":
+                    PostResponseMsg<CCloud_ClientDeleteFile_Response>( packetMsg );
+                    break;
+                case "EnumerateUserApps":
+                    PostResponseMsg<CCloud_EnumerateUserApps_Response>( packetMsg );
+                    break;
+                case "GetAppFileChangelist":
+                    PostResponseMsg<CCloud_GetAppFileChangelist_Response>( packetMsg );
+                    break;
+                case "SuspendAppSession":
+                    PostResponseMsg<CCloud_AppSessionSuspend_Response>( packetMsg );
+                    break;
+                case "ResumeAppSession":
+                    PostResponseMsg<CCloud_AppSessionResume_Response>( packetMsg );
+                    break;
+                case "SignalAppLaunchIntent":
+                    PostResponseMsg<CCloud_AppLaunchIntent_Response>( packetMsg );
+                    break;
+                case "ClientGetAppQuotaUsage":
+                    PostResponseMsg<CCloud_ClientGetAppQuotaUsage_Response>( packetMsg );
+                    break;
+            }
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "ClientLogUploadCheck":
+                    PostNotificationMsg<CCloud_ClientLogUploadCheck_Notification>( packetMsg );
+                    break;
+                case "ClientLogUploadComplete":
+                    PostNotificationMsg<CCloud_ClientLogUploadComplete_Notification>( packetMsg );
+                    break;
+                case "CDNReport":
+                    PostNotificationMsg<CCloud_CDNReport_Notification>( packetMsg );
+                    break;
+                case "ExternalStorageTransferReport":
+                    PostNotificationMsg<CCloud_ExternalStorageTransferReport_Notification>( packetMsg );
+                    break;
+                case "CompleteAppUploadBatch":
+                    PostNotificationMsg<CCloud_CompleteAppUploadBatch_Notification>( packetMsg );
+                    break;
+                case "ClientConflictResolution":
+                    PostNotificationMsg<CCloud_ClientConflictResolution_Notification>( packetMsg );
+                    break;
+                case "SignalAppExitSyncDone":
+                    PostNotificationMsg<CCloud_AppExitSyncDone_Notification>( packetMsg );
+                    break;
+            }
+        }
     }
 
-    public interface ICloudClient
+    public class CloudClient : SteamUnifiedMessages.UnifiedService
     {
-        NoResponse NotifyAppStateChange(CCloud_AppCloudStateChange_Notification request);
-        NoResponse ClientLogUploadRequest(CCloud_ClientLogUploadRequest_Notification request);
+        public override string ServiceName { get; } = "CloudClient";
+
+        public void NotifyAppStateChange(CCloud_AppCloudStateChange_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_AppCloudStateChange_Notification>( "CloudClient.NotifyAppStateChange#1", request );
+        }
+
+        public void ClientLogUploadRequest(CCloud_ClientLogUploadRequest_Notification request )
+        {
+            UnifiedMessages.SendNotification<CCloud_ClientLogUploadRequest_Notification>( "CloudClient.ClientLogUploadRequest#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "NotifyAppStateChange":
+                    PostNotificationMsg<CCloud_AppCloudStateChange_Notification>( packetMsg );
+                    break;
+                case "ClientLogUploadRequest":
+                    PostNotificationMsg<CCloud_ClientLogUploadRequest_Notification>( packetMsg );
+                    break;
+            }
+        }
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

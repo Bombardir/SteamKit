@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.GC.Dota.Internal
 {
 
@@ -827,7 +827,6 @@ namespace SteamKit2.GC.Dota.Internal
         k_EMsgGCToClientCollectorsCacheAvailableDataResponse = 8872,
         k_EMsgClientToGCUploadMatchClip = 8873,
         k_EMsgGCToClientUploadMatchClipResponse = 8874,
-        k_EMsgGCToServerSteamLearnAccessTokensChanged = 8876,
         k_EMsgSignOutMuertaMinigame = 8877,
         k_EMsgGCToServerLobbyHeroRoleStats = 8878,
         k_EMsgClientToGCRankRequest = 8879,
@@ -946,7 +945,6 @@ namespace SteamKit2.GC.Dota.Internal
         k_EMsgGCToClientFightingGameChallenge = 8995,
         k_EMsgGCToClientFightingGameStartMatch = 8996,
         k_EMsgGCToClientFightingGameChallengeCanceled = 8997,
-        k_EMsgGCToServerSteamLearnUseHTTP = 8998,
         k_EMsgClientToGCBingoShuffleCard = 8999,
         k_EMsgClientToGCBingoShuffleCardResponse = 9000,
         k_EMsgClientToGCBingoModifySquare = 9001,
@@ -957,9 +955,23 @@ namespace SteamKit2.GC.Dota.Internal
         k_EMsgClientToGCBingoDevClearInventoryResponse = 9006,
         k_EMsgGCCompendiumRemoveAllSelections = 9007,
         k_EMsgGCCompendiumRemoveAllSelectionsResponse = 9008,
+        k_EMsgClientToGCOverworldMinigameAction = 9009,
+        k_EMsgClientToGCOverworldMinigameActionResponse = 9010,
+        k_EMsgClientToGCSurvivorsTelemetry = 9011,
+        k_EMsgClientToGCSurvivorsTelemetryResponse = 9012,
+        k_EMsgClientToGCOverworldRequestTokensNeededByFriend = 9013,
+        k_EMsgClientToGCOverworldRequestTokensNeededByFriendResponse = 9014,
+        k_EMsgClientToGCCraftworksGetUserData = 9015,
+        k_EMsgClientToGCCraftworksGetUserDataResponse = 9016,
+        k_EMsgGCToClientCraftworksUserDataUpdated = 9017,
+        k_EMsgClientToGCCraftworksCraftRecipe = 9018,
+        k_EMsgClientToGCCraftworksCraftRecipeResponse = 9019,
+        k_EMsgClientToGCCraftworksDevModifyComponents = 9020,
+        k_EMsgClientToGCCraftworksDevModifyComponentsResponse = 9021,
+        k_EMsgSignOutCraftworks = 9022,
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

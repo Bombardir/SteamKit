@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -1162,6 +1162,76 @@ namespace SteamKit2.Internal
     }
 
     [global::ProtoBuf.ProtoContract()]
+    public partial class CClientMetrics_ReportLinuxStats_Notification : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public int glibc_version_major
+        {
+            get => __pbn__glibc_version_major.GetValueOrDefault();
+            set => __pbn__glibc_version_major = value;
+        }
+        public bool ShouldSerializeglibc_version_major() => __pbn__glibc_version_major != null;
+        public void Resetglibc_version_major() => __pbn__glibc_version_major = null;
+        private int? __pbn__glibc_version_major;
+
+        [global::ProtoBuf.ProtoMember(2)]
+        public int glibc_version_minor
+        {
+            get => __pbn__glibc_version_minor.GetValueOrDefault();
+            set => __pbn__glibc_version_minor = value;
+        }
+        public bool ShouldSerializeglibc_version_minor() => __pbn__glibc_version_minor != null;
+        public void Resetglibc_version_minor() => __pbn__glibc_version_minor = null;
+        private int? __pbn__glibc_version_minor;
+
+        [global::ProtoBuf.ProtoMember(3)]
+        public int account_type
+        {
+            get => __pbn__account_type.GetValueOrDefault();
+            set => __pbn__account_type = value;
+        }
+        public bool ShouldSerializeaccount_type() => __pbn__account_type != null;
+        public void Resetaccount_type() => __pbn__account_type = null;
+        private int? __pbn__account_type;
+
+        [global::ProtoBuf.ProtoMember(4)]
+        public int launcher_type
+        {
+            get => __pbn__launcher_type.GetValueOrDefault();
+            set => __pbn__launcher_type = value;
+        }
+        public bool ShouldSerializelauncher_type() => __pbn__launcher_type != null;
+        public void Resetlauncher_type() => __pbn__launcher_type = null;
+        private int? __pbn__launcher_type;
+
+        [global::ProtoBuf.ProtoMember(5)]
+        public int game_server_appid
+        {
+            get => __pbn__game_server_appid.GetValueOrDefault();
+            set => __pbn__game_server_appid = value;
+        }
+        public bool ShouldSerializegame_server_appid() => __pbn__game_server_appid != null;
+        public void Resetgame_server_appid() => __pbn__game_server_appid = null;
+        private int? __pbn__game_server_appid;
+
+        [global::ProtoBuf.ProtoMember(6)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string process_name
+        {
+            get => __pbn__process_name ?? "";
+            set => __pbn__process_name = value;
+        }
+        public bool ShouldSerializeprocess_name() => __pbn__process_name != null;
+        public void Resetprocess_name() => __pbn__process_name = null;
+        private string __pbn__process_name;
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
     public partial class CClientMetrics_ClipShare_Notification : global::ProtoBuf.IExtensible
     {
         private global::ProtoBuf.IExtension __pbn__extensionData;
@@ -1405,27 +1475,146 @@ namespace SteamKit2.Internal
         k_EClipRangeMethod_ContextMenu = 4,
         k_EClipRangeMethod_Drag = 5,
         k_EClipRangeMethod_EntireClip = 6,
+        k_EClipRangeMethod_PhaseRecording = 7,
     }
 
-    public interface IClientMetrics
+    public class ClientMetrics : SteamUnifiedMessages.UnifiedService
     {
-        NoResponse ClientAppInterfaceStatsReport(CClientMetrics_AppInterfaceStats_Notification request);
-        NoResponse ClientIPv6ConnectivityReport(CClientMetrics_IPv6Connectivity_Notification request);
-        NoResponse SteamPipeWorkStatsReport(CClientMetrics_SteamPipeWorkStats_Notification request);
-        NoResponse ReportReactUsage(CClientMetrics_ReportReactUsage_Notification request);
-        NoResponse ReportClientError(CClientMetrics_ReportClientError_Notification request);
-        NoResponse ClientBootstrapReport(CClientMetrics_ClientBootstrap_Notification request);
-        NoResponse ClientDownloadRatesReport(CClientMetrics_DownloadRates_Notification request);
-        NoResponse ClientContentValidationReport(CClientMetrics_ContentValidation_Notification request);
-        NoResponse ClientCloudAppSyncStats(CClientMetrics_CloudAppSyncStats_Notification request);
-        NoResponse ClientDownloadResponseCodeCounts(CClientMetrics_ContentDownloadResponse_Counts_Notification request);
-        NoResponse ReportClientArgs(CClientMetrics_ReportClientArgs_Notification request);
-        NoResponse ReportClipShare(CClientMetrics_ClipShare_Notification request);
-        NoResponse ReportClipRange(CClientMetrics_ClipRange_Notification request);
-        NoResponse ReportEndGameRecording(CClientMetrics_EndGameRecording_Notification request);
+        public override string ServiceName { get; } = "ClientMetrics";
+
+        public void ClientAppInterfaceStatsReport(CClientMetrics_AppInterfaceStats_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_AppInterfaceStats_Notification>( "ClientMetrics.ClientAppInterfaceStatsReport#1", request );
+        }
+
+        public void ClientIPv6ConnectivityReport(CClientMetrics_IPv6Connectivity_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_IPv6Connectivity_Notification>( "ClientMetrics.ClientIPv6ConnectivityReport#1", request );
+        }
+
+        public void SteamPipeWorkStatsReport(CClientMetrics_SteamPipeWorkStats_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_SteamPipeWorkStats_Notification>( "ClientMetrics.SteamPipeWorkStatsReport#1", request );
+        }
+
+        public void ReportReactUsage(CClientMetrics_ReportReactUsage_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ReportReactUsage_Notification>( "ClientMetrics.ReportReactUsage#1", request );
+        }
+
+        public void ReportClientError(CClientMetrics_ReportClientError_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ReportClientError_Notification>( "ClientMetrics.ReportClientError#1", request );
+        }
+
+        public void ClientBootstrapReport(CClientMetrics_ClientBootstrap_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ClientBootstrap_Notification>( "ClientMetrics.ClientBootstrapReport#1", request );
+        }
+
+        public void ClientDownloadRatesReport(CClientMetrics_DownloadRates_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_DownloadRates_Notification>( "ClientMetrics.ClientDownloadRatesReport#1", request );
+        }
+
+        public void ClientContentValidationReport(CClientMetrics_ContentValidation_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ContentValidation_Notification>( "ClientMetrics.ClientContentValidationReport#1", request );
+        }
+
+        public void ClientCloudAppSyncStats(CClientMetrics_CloudAppSyncStats_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_CloudAppSyncStats_Notification>( "ClientMetrics.ClientCloudAppSyncStats#1", request );
+        }
+
+        public void ClientDownloadResponseCodeCounts(CClientMetrics_ContentDownloadResponse_Counts_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ContentDownloadResponse_Counts_Notification>( "ClientMetrics.ClientDownloadResponseCodeCounts#1", request );
+        }
+
+        public void ReportClientArgs(CClientMetrics_ReportClientArgs_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ReportClientArgs_Notification>( "ClientMetrics.ReportClientArgs#1", request );
+        }
+
+        public void ReportLinuxStats(CClientMetrics_ReportLinuxStats_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ReportLinuxStats_Notification>( "ClientMetrics.ReportLinuxStats#1", request );
+        }
+
+        public void ReportClipShare(CClientMetrics_ClipShare_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ClipShare_Notification>( "ClientMetrics.ReportClipShare#1", request );
+        }
+
+        public void ReportClipRange(CClientMetrics_ClipRange_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_ClipRange_Notification>( "ClientMetrics.ReportClipRange#1", request );
+        }
+
+        public void ReportEndGameRecording(CClientMetrics_EndGameRecording_Notification request )
+        {
+            UnifiedMessages.SendNotification<CClientMetrics_EndGameRecording_Notification>( "ClientMetrics.ReportEndGameRecording#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "ClientAppInterfaceStatsReport":
+                    PostNotificationMsg<CClientMetrics_AppInterfaceStats_Notification>( packetMsg );
+                    break;
+                case "ClientIPv6ConnectivityReport":
+                    PostNotificationMsg<CClientMetrics_IPv6Connectivity_Notification>( packetMsg );
+                    break;
+                case "SteamPipeWorkStatsReport":
+                    PostNotificationMsg<CClientMetrics_SteamPipeWorkStats_Notification>( packetMsg );
+                    break;
+                case "ReportReactUsage":
+                    PostNotificationMsg<CClientMetrics_ReportReactUsage_Notification>( packetMsg );
+                    break;
+                case "ReportClientError":
+                    PostNotificationMsg<CClientMetrics_ReportClientError_Notification>( packetMsg );
+                    break;
+                case "ClientBootstrapReport":
+                    PostNotificationMsg<CClientMetrics_ClientBootstrap_Notification>( packetMsg );
+                    break;
+                case "ClientDownloadRatesReport":
+                    PostNotificationMsg<CClientMetrics_DownloadRates_Notification>( packetMsg );
+                    break;
+                case "ClientContentValidationReport":
+                    PostNotificationMsg<CClientMetrics_ContentValidation_Notification>( packetMsg );
+                    break;
+                case "ClientCloudAppSyncStats":
+                    PostNotificationMsg<CClientMetrics_CloudAppSyncStats_Notification>( packetMsg );
+                    break;
+                case "ClientDownloadResponseCodeCounts":
+                    PostNotificationMsg<CClientMetrics_ContentDownloadResponse_Counts_Notification>( packetMsg );
+                    break;
+                case "ReportClientArgs":
+                    PostNotificationMsg<CClientMetrics_ReportClientArgs_Notification>( packetMsg );
+                    break;
+                case "ReportLinuxStats":
+                    PostNotificationMsg<CClientMetrics_ReportLinuxStats_Notification>( packetMsg );
+                    break;
+                case "ReportClipShare":
+                    PostNotificationMsg<CClientMetrics_ClipShare_Notification>( packetMsg );
+                    break;
+                case "ReportClipRange":
+                    PostNotificationMsg<CClientMetrics_ClipRange_Notification>( packetMsg );
+                    break;
+                case "ReportEndGameRecording":
+                    PostNotificationMsg<CClientMetrics_EndGameRecording_Notification>( packetMsg );
+                    break;
+            }
+        }
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

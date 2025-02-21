@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -1184,6 +1184,16 @@ namespace SteamKit2.Internal
         public void Resetclip_id() => __pbn__clip_id = null;
         private string __pbn__clip_id;
 
+        [global::ProtoBuf.ProtoMember(3)]
+        public float duration_secs
+        {
+            get => __pbn__duration_secs.GetValueOrDefault();
+            set => __pbn__duration_secs = value;
+        }
+        public bool ShouldSerializeduration_secs() => __pbn__duration_secs != null;
+        public void Resetduration_secs() => __pbn__duration_secs = null;
+        private float? __pbn__duration_secs;
+
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1232,6 +1242,16 @@ namespace SteamKit2.Internal
         public bool ShouldSerializeclip_id() => __pbn__clip_id != null;
         public void Resetclip_id() => __pbn__clip_id = null;
         private string __pbn__clip_id;
+
+        [global::ProtoBuf.ProtoMember(3)]
+        public float duration_secs
+        {
+            get => __pbn__duration_secs.GetValueOrDefault();
+            set => __pbn__duration_secs = value;
+        }
+        public bool ShouldSerializeduration_secs() => __pbn__duration_secs != null;
+        public void Resetduration_secs() => __pbn__duration_secs = null;
+        private float? __pbn__duration_secs;
 
     }
 
@@ -1316,5 +1336,5 @@ namespace SteamKit2.Internal
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -330,6 +330,47 @@ namespace SteamKit2.Internal
         public bool ShouldSerializetime_next_message_age() => __pbn__time_next_message_age != null;
         public void Resettime_next_message_age() => __pbn__time_next_message_age = null;
         private uint? __pbn__time_next_message_age;
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CMarketingMessages_GetPastMarketingMessages_Request : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public uint start_past_days
+        {
+            get => __pbn__start_past_days.GetValueOrDefault();
+            set => __pbn__start_past_days = value;
+        }
+        public bool ShouldSerializestart_past_days() => __pbn__start_past_days != null;
+        public void Resetstart_past_days() => __pbn__start_past_days = null;
+        private uint? __pbn__start_past_days;
+
+        [global::ProtoBuf.ProtoMember(2)]
+        public uint upto_past_days
+        {
+            get => __pbn__upto_past_days.GetValueOrDefault();
+            set => __pbn__upto_past_days = value;
+        }
+        public bool ShouldSerializeupto_past_days() => __pbn__upto_past_days != null;
+        public void Resetupto_past_days() => __pbn__upto_past_days = null;
+        private uint? __pbn__upto_past_days;
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CMarketingMessages_GetPastMarketingMessages_Response : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public global::System.Collections.Generic.List<CMarketingMessageProto> messages { get; } = new global::System.Collections.Generic.List<CMarketingMessageProto>();
 
     }
 
@@ -1182,6 +1223,9 @@ namespace SteamKit2.Internal
         k_EMarketingMessageMidweekDeal = 11,
         k_EMarketingMessageDailyDeal = 12,
         k_EMarketingMessageNewDLC = 13,
+        k_EMarketingMessageFreeWeekend = 14,
+        k_EMarketingMessageSalePages = 15,
+        k_EMarketingMessagePlaytestAvailable = 16,
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -1225,30 +1269,186 @@ namespace SteamKit2.Internal
         k_EMarketingMessageLookupByGIDList = 4,
     }
 
-    public interface IMarketingMessages
+    public class MarketingMessages : SteamUnifiedMessages.UnifiedService
     {
-        CMarketingMessages_GetActiveMarketingMessages_Response GetActiveMarketingMessages(CMarketingMessages_GetActiveMarketingMessages_Request request);
-        CMarketingMessages_GetMarketingMessagesForUser_Response GetMarketingMessagesForUser(CMarketingMessages_GetMarketingMessagesForUser_Request request);
-        CMarketingMessages_DoesUserHavePendingMarketingMessages_Response DoesUserHavePendingMarketingMessages(CMarketingMessages_DoesUserHavePendingMarketingMessages_Request request);
-        CMarketingMessages_GetDisplayMarketingMessage_Response GetDisplayMarketingMessage(CMarketingMessages_GetDisplayMarketingMessage_Request request);
-        CMarketingMessages_GetDisplayMarketingMessage_Response GetDisplayMarketingMessageForUser(CMarketingMessages_GetDisplayMarketingMessage_Request request);
-        CMarketingMessages_GetDisplayMarketingMessage_Response GetDisplayMarketingMessageAdmin(CMarketingMessages_GetDisplayMarketingMessage_Request request);
-        NoResponse MarkMessageSeen(CMarketingMessages_MarkMessageSeen_Notification request);
-        CMarketingMessages_GetMarketingMessage_Response GetMarketingMessage(CMarketingMessages_GetMarketingMessage_Request request);
-        CMarketingMessages_CreateMarketingMessage_Response CreateMarketingMessage(CMarketingMessages_CreateMarketingMessage_Request request);
-        CMarketingMessages_UpdateMarketingMessage_Response UpdateMarketingMessage(CMarketingMessages_UpdateMarketingMessage_Request request);
-        CMarketingMessages_DeleteMarketingMessage_Response DeleteMarketingMessage(CMarketingMessages_DeleteMarketingMessage_Request request);
-        CMarketingMessages_FindMarketingMessages_Response FindMarketingMessages(CMarketingMessages_FindMarketingMessages_Request request);
-        CMarketingMessages_GetMarketingMessageViewerStats_Response GetMarketingMessageViewerStats(CMarketingMessages_GetMarketingMessageViewerStats_Request request);
-        CMarketingMessages_GetMarketingMessagesViewerRangeStats_Response GetMarketingMessagesViewerRangeStats(CMarketingMessages_GetMarketingMessagesViewerRangeStats_Request request);
-        CMarketingMessages_GetPartnerReadyToPublishMessages_Response GetPartnerReadyToPublishMessages(CMarketingMessages_GetPartnerReadyToPublishMessages_Request request);
-        CMarketingMessages_PartnerPublishMessage_Response PublishPartnerMessage(CMarketingMessages_PartnerPublishMessage_Request request);
-        CMarketingMessages_GetPartnerMessagePreview_Response GetPartnerMessagePreview(CMarketingMessages_GetPartnerMessagePreview_Request request);
-        CMarketingMessage_GetMarketingMessagesForPartner_Response GetMarketingMessagesForPartner(CMarketingMessage_GetMarketingMessagesForPartner_Request request);
-        CMarketingMessage_GetMarketingMessagesForApps_Response GetMarketingMessagesForApps(CMarketingMessage_GetMarketingMessagesForApps_Request request);
+        public override string ServiceName { get; } = "MarketingMessages";
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetActiveMarketingMessages_Response>> GetActiveMarketingMessages( CMarketingMessages_GetActiveMarketingMessages_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetActiveMarketingMessages_Request, CMarketingMessages_GetActiveMarketingMessages_Response>( "MarketingMessages.GetActiveMarketingMessages#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetPastMarketingMessages_Response>> GetPastMarketingMessages( CMarketingMessages_GetPastMarketingMessages_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetPastMarketingMessages_Request, CMarketingMessages_GetPastMarketingMessages_Response>( "MarketingMessages.GetPastMarketingMessages#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetMarketingMessagesForUser_Response>> GetMarketingMessagesForUser( CMarketingMessages_GetMarketingMessagesForUser_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetMarketingMessagesForUser_Request, CMarketingMessages_GetMarketingMessagesForUser_Response>( "MarketingMessages.GetMarketingMessagesForUser#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_DoesUserHavePendingMarketingMessages_Response>> DoesUserHavePendingMarketingMessages( CMarketingMessages_DoesUserHavePendingMarketingMessages_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_DoesUserHavePendingMarketingMessages_Request, CMarketingMessages_DoesUserHavePendingMarketingMessages_Response>( "MarketingMessages.DoesUserHavePendingMarketingMessages#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetDisplayMarketingMessage_Response>> GetDisplayMarketingMessage( CMarketingMessages_GetDisplayMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetDisplayMarketingMessage_Request, CMarketingMessages_GetDisplayMarketingMessage_Response>( "MarketingMessages.GetDisplayMarketingMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetDisplayMarketingMessage_Response>> GetDisplayMarketingMessageForUser( CMarketingMessages_GetDisplayMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetDisplayMarketingMessage_Request, CMarketingMessages_GetDisplayMarketingMessage_Response>( "MarketingMessages.GetDisplayMarketingMessageForUser#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetDisplayMarketingMessage_Response>> GetDisplayMarketingMessageAdmin( CMarketingMessages_GetDisplayMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetDisplayMarketingMessage_Request, CMarketingMessages_GetDisplayMarketingMessage_Response>( "MarketingMessages.GetDisplayMarketingMessageAdmin#1", request );
+        }
+
+        public void MarkMessageSeen(CMarketingMessages_MarkMessageSeen_Notification request )
+        {
+            UnifiedMessages.SendNotification<CMarketingMessages_MarkMessageSeen_Notification>( "MarketingMessages.MarkMessageSeen#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetMarketingMessage_Response>> GetMarketingMessage( CMarketingMessages_GetMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetMarketingMessage_Request, CMarketingMessages_GetMarketingMessage_Response>( "MarketingMessages.GetMarketingMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_CreateMarketingMessage_Response>> CreateMarketingMessage( CMarketingMessages_CreateMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_CreateMarketingMessage_Request, CMarketingMessages_CreateMarketingMessage_Response>( "MarketingMessages.CreateMarketingMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_UpdateMarketingMessage_Response>> UpdateMarketingMessage( CMarketingMessages_UpdateMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_UpdateMarketingMessage_Request, CMarketingMessages_UpdateMarketingMessage_Response>( "MarketingMessages.UpdateMarketingMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_DeleteMarketingMessage_Response>> DeleteMarketingMessage( CMarketingMessages_DeleteMarketingMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_DeleteMarketingMessage_Request, CMarketingMessages_DeleteMarketingMessage_Response>( "MarketingMessages.DeleteMarketingMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_FindMarketingMessages_Response>> FindMarketingMessages( CMarketingMessages_FindMarketingMessages_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_FindMarketingMessages_Request, CMarketingMessages_FindMarketingMessages_Response>( "MarketingMessages.FindMarketingMessages#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetMarketingMessageViewerStats_Response>> GetMarketingMessageViewerStats( CMarketingMessages_GetMarketingMessageViewerStats_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetMarketingMessageViewerStats_Request, CMarketingMessages_GetMarketingMessageViewerStats_Response>( "MarketingMessages.GetMarketingMessageViewerStats#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetMarketingMessagesViewerRangeStats_Response>> GetMarketingMessagesViewerRangeStats( CMarketingMessages_GetMarketingMessagesViewerRangeStats_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetMarketingMessagesViewerRangeStats_Request, CMarketingMessages_GetMarketingMessagesViewerRangeStats_Response>( "MarketingMessages.GetMarketingMessagesViewerRangeStats#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetPartnerReadyToPublishMessages_Response>> GetPartnerReadyToPublishMessages( CMarketingMessages_GetPartnerReadyToPublishMessages_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetPartnerReadyToPublishMessages_Request, CMarketingMessages_GetPartnerReadyToPublishMessages_Response>( "MarketingMessages.GetPartnerReadyToPublishMessages#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_PartnerPublishMessage_Response>> PublishPartnerMessage( CMarketingMessages_PartnerPublishMessage_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_PartnerPublishMessage_Request, CMarketingMessages_PartnerPublishMessage_Response>( "MarketingMessages.PublishPartnerMessage#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessages_GetPartnerMessagePreview_Response>> GetPartnerMessagePreview( CMarketingMessages_GetPartnerMessagePreview_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessages_GetPartnerMessagePreview_Request, CMarketingMessages_GetPartnerMessagePreview_Response>( "MarketingMessages.GetPartnerMessagePreview#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessage_GetMarketingMessagesForPartner_Response>> GetMarketingMessagesForPartner( CMarketingMessage_GetMarketingMessagesForPartner_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessage_GetMarketingMessagesForPartner_Request, CMarketingMessage_GetMarketingMessagesForPartner_Response>( "MarketingMessages.GetMarketingMessagesForPartner#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CMarketingMessage_GetMarketingMessagesForApps_Response>> GetMarketingMessagesForApps( CMarketingMessage_GetMarketingMessagesForApps_Request request )
+        {
+            return UnifiedMessages.SendMessage<CMarketingMessage_GetMarketingMessagesForApps_Request, CMarketingMessage_GetMarketingMessagesForApps_Response>( "MarketingMessages.GetMarketingMessagesForApps#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "GetActiveMarketingMessages":
+                    PostResponseMsg<CMarketingMessages_GetActiveMarketingMessages_Response>( packetMsg );
+                    break;
+                case "GetPastMarketingMessages":
+                    PostResponseMsg<CMarketingMessages_GetPastMarketingMessages_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessagesForUser":
+                    PostResponseMsg<CMarketingMessages_GetMarketingMessagesForUser_Response>( packetMsg );
+                    break;
+                case "DoesUserHavePendingMarketingMessages":
+                    PostResponseMsg<CMarketingMessages_DoesUserHavePendingMarketingMessages_Response>( packetMsg );
+                    break;
+                case "GetDisplayMarketingMessage":
+                    PostResponseMsg<CMarketingMessages_GetDisplayMarketingMessage_Response>( packetMsg );
+                    break;
+                case "GetDisplayMarketingMessageForUser":
+                    PostResponseMsg<CMarketingMessages_GetDisplayMarketingMessage_Response>( packetMsg );
+                    break;
+                case "GetDisplayMarketingMessageAdmin":
+                    PostResponseMsg<CMarketingMessages_GetDisplayMarketingMessage_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessage":
+                    PostResponseMsg<CMarketingMessages_GetMarketingMessage_Response>( packetMsg );
+                    break;
+                case "CreateMarketingMessage":
+                    PostResponseMsg<CMarketingMessages_CreateMarketingMessage_Response>( packetMsg );
+                    break;
+                case "UpdateMarketingMessage":
+                    PostResponseMsg<CMarketingMessages_UpdateMarketingMessage_Response>( packetMsg );
+                    break;
+                case "DeleteMarketingMessage":
+                    PostResponseMsg<CMarketingMessages_DeleteMarketingMessage_Response>( packetMsg );
+                    break;
+                case "FindMarketingMessages":
+                    PostResponseMsg<CMarketingMessages_FindMarketingMessages_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessageViewerStats":
+                    PostResponseMsg<CMarketingMessages_GetMarketingMessageViewerStats_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessagesViewerRangeStats":
+                    PostResponseMsg<CMarketingMessages_GetMarketingMessagesViewerRangeStats_Response>( packetMsg );
+                    break;
+                case "GetPartnerReadyToPublishMessages":
+                    PostResponseMsg<CMarketingMessages_GetPartnerReadyToPublishMessages_Response>( packetMsg );
+                    break;
+                case "PublishPartnerMessage":
+                    PostResponseMsg<CMarketingMessages_PartnerPublishMessage_Response>( packetMsg );
+                    break;
+                case "GetPartnerMessagePreview":
+                    PostResponseMsg<CMarketingMessages_GetPartnerMessagePreview_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessagesForPartner":
+                    PostResponseMsg<CMarketingMessage_GetMarketingMessagesForPartner_Response>( packetMsg );
+                    break;
+                case "GetMarketingMessagesForApps":
+                    PostResponseMsg<CMarketingMessage_GetMarketingMessagesForApps_Response>( packetMsg );
+                    break;
+            }
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "MarkMessageSeen":
+                    PostNotificationMsg<CMarketingMessages_MarkMessageSeen_Notification>( packetMsg );
+                    break;
+            }
+        }
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -482,6 +482,16 @@ namespace SteamKit2.Internal
         [global::ProtoBuf.ProtoMember(33)]
         public StoreGameRating game_rating { get; set; }
 
+        [global::ProtoBuf.ProtoMember(34)]
+        public bool is_coming_soon
+        {
+            get => __pbn__is_coming_soon.GetValueOrDefault();
+            set => __pbn__is_coming_soon = value;
+        }
+        public bool ShouldSerializeis_coming_soon() => __pbn__is_coming_soon != null;
+        public void Resetis_coming_soon() => __pbn__is_coming_soon = null;
+        private bool? __pbn__is_coming_soon;
+
         [global::ProtoBuf.ProtoMember(40)]
         public PurchaseOption best_purchase_option { get; set; }
 
@@ -594,6 +604,12 @@ namespace SteamKit2.Internal
             public bool ShouldSerializeparent_appid() => __pbn__parent_appid != null;
             public void Resetparent_appid() => __pbn__parent_appid = null;
             private uint? __pbn__parent_appid;
+
+            [global::ProtoBuf.ProtoMember(2)]
+            public global::System.Collections.Generic.List<uint> demo_appid { get; } = new global::System.Collections.Generic.List<uint>();
+
+            [global::ProtoBuf.ProtoMember(3)]
+            public global::System.Collections.Generic.List<uint> standalone_demo_appid { get; } = new global::System.Collections.Generic.List<uint>();
 
         }
 
@@ -1259,16 +1275,6 @@ namespace SteamKit2.Internal
             public void Resetoriginal_price_in_cents() => __pbn__original_price_in_cents = null;
             private long? __pbn__original_price_in_cents;
 
-            [global::ProtoBuf.ProtoMember(7)]
-            public long user_final_price_in_cents
-            {
-                get => __pbn__user_final_price_in_cents.GetValueOrDefault();
-                set => __pbn__user_final_price_in_cents = value;
-            }
-            public bool ShouldSerializeuser_final_price_in_cents() => __pbn__user_final_price_in_cents != null;
-            public void Resetuser_final_price_in_cents() => __pbn__user_final_price_in_cents = null;
-            private long? __pbn__user_final_price_in_cents;
-
             [global::ProtoBuf.ProtoMember(8)]
             [global::System.ComponentModel.DefaultValue("")]
             public string formatted_final_price
@@ -1301,16 +1307,6 @@ namespace SteamKit2.Internal
             public void Resetdiscount_pct() => __pbn__discount_pct = null;
             private int? __pbn__discount_pct;
 
-            [global::ProtoBuf.ProtoMember(11)]
-            public int user_discount_pct
-            {
-                get => __pbn__user_discount_pct.GetValueOrDefault();
-                set => __pbn__user_discount_pct = value;
-            }
-            public bool ShouldSerializeuser_discount_pct() => __pbn__user_discount_pct != null;
-            public void Resetuser_discount_pct() => __pbn__user_discount_pct = null;
-            private int? __pbn__user_discount_pct;
-
             [global::ProtoBuf.ProtoMember(12)]
             public int bundle_discount_pct
             {
@@ -1321,24 +1317,39 @@ namespace SteamKit2.Internal
             public void Resetbundle_discount_pct() => __pbn__bundle_discount_pct = null;
             private int? __pbn__bundle_discount_pct;
 
+            [global::ProtoBuf.ProtoMember(13)]
+            public bool is_free_to_keep
+            {
+                get => __pbn__is_free_to_keep.GetValueOrDefault();
+                set => __pbn__is_free_to_keep = value;
+            }
+            public bool ShouldSerializeis_free_to_keep() => __pbn__is_free_to_keep != null;
+            public void Resetis_free_to_keep() => __pbn__is_free_to_keep = null;
+            private bool? __pbn__is_free_to_keep;
+
+            [global::ProtoBuf.ProtoMember(14)]
+            public long price_before_bundle_discount
+            {
+                get => __pbn__price_before_bundle_discount.GetValueOrDefault();
+                set => __pbn__price_before_bundle_discount = value;
+            }
+            public bool ShouldSerializeprice_before_bundle_discount() => __pbn__price_before_bundle_discount != null;
+            public void Resetprice_before_bundle_discount() => __pbn__price_before_bundle_discount = null;
+            private long? __pbn__price_before_bundle_discount;
+
+            [global::ProtoBuf.ProtoMember(15)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string formatted_price_before_bundle_discount
+            {
+                get => __pbn__formatted_price_before_bundle_discount ?? "";
+                set => __pbn__formatted_price_before_bundle_discount = value;
+            }
+            public bool ShouldSerializeformatted_price_before_bundle_discount() => __pbn__formatted_price_before_bundle_discount != null;
+            public void Resetformatted_price_before_bundle_discount() => __pbn__formatted_price_before_bundle_discount = null;
+            private string __pbn__formatted_price_before_bundle_discount;
+
             [global::ProtoBuf.ProtoMember(20)]
             public global::System.Collections.Generic.List<Discount> active_discounts { get; } = new global::System.Collections.Generic.List<Discount>();
-
-            [global::ProtoBuf.ProtoMember(21)]
-            public global::System.Collections.Generic.List<Discount> user_active_discounts { get; } = new global::System.Collections.Generic.List<Discount>();
-
-            [global::ProtoBuf.ProtoMember(22)]
-            public global::System.Collections.Generic.List<Discount> inactive_discounts { get; } = new global::System.Collections.Generic.List<Discount>();
-
-            [global::ProtoBuf.ProtoMember(30)]
-            public bool user_can_purchase
-            {
-                get => __pbn__user_can_purchase.GetValueOrDefault();
-                set => __pbn__user_can_purchase = value;
-            }
-            public bool ShouldSerializeuser_can_purchase() => __pbn__user_can_purchase != null;
-            public void Resetuser_can_purchase() => __pbn__user_can_purchase = null;
-            private bool? __pbn__user_can_purchase;
 
             [global::ProtoBuf.ProtoMember(31)]
             public bool user_can_purchase_as_gift
@@ -1382,9 +1393,10 @@ namespace SteamKit2.Internal
             private bool? __pbn__hide_discount_pct_for_compliance;
 
             [global::ProtoBuf.ProtoMember(43)]
+            [global::System.ComponentModel.DefaultValue(1)]
             public int included_game_count
             {
-                get => __pbn__included_game_count.GetValueOrDefault();
+                get => __pbn__included_game_count ?? 1;
                 set => __pbn__included_game_count = value;
             }
             public bool ShouldSerializeincluded_game_count() => __pbn__included_game_count != null;
@@ -1413,6 +1425,16 @@ namespace SteamKit2.Internal
 
             [global::ProtoBuf.ProtoMember(46)]
             public RecurrenceInfo recurrence_info { get; set; }
+
+            [global::ProtoBuf.ProtoMember(47)]
+            public uint free_to_keep_ends
+            {
+                get => __pbn__free_to_keep_ends.GetValueOrDefault();
+                set => __pbn__free_to_keep_ends = value;
+            }
+            public bool ShouldSerializefree_to_keep_ends() => __pbn__free_to_keep_ends != null;
+            public void Resetfree_to_keep_ends() => __pbn__free_to_keep_ends = null;
+            private uint? __pbn__free_to_keep_ends;
 
             [global::ProtoBuf.ProtoContract()]
             public partial class Discount : global::ProtoBuf.IExtensible
@@ -1644,6 +1666,17 @@ namespace SteamKit2.Internal
                 public void Resettrailer_url_format() => __pbn__trailer_url_format = null;
                 private string __pbn__trailer_url_format;
 
+                [global::ProtoBuf.ProtoMember(13)]
+                [global::System.ComponentModel.DefaultValue(ETrailerCategory.k_ETrailerCategory_Invalid)]
+                public ETrailerCategory trailer_category
+                {
+                    get => __pbn__trailer_category ?? ETrailerCategory.k_ETrailerCategory_Invalid;
+                    set => __pbn__trailer_category = value;
+                }
+                public bool ShouldSerializetrailer_category() => __pbn__trailer_category != null;
+                public void Resettrailer_category() => __pbn__trailer_category = null;
+                private ETrailerCategory? __pbn__trailer_category;
+
                 [global::ProtoBuf.ProtoMember(3)]
                 public global::System.Collections.Generic.List<StoreItem.Trailers.VideoSource> trailer_480p { get; } = new global::System.Collections.Generic.List<StoreItem.Trailers.VideoSource>();
 
@@ -1818,6 +1851,17 @@ namespace SteamKit2.Internal
             public bool ShouldSerializeurl() => __pbn__url != null;
             public void Reseturl() => __pbn__url = null;
             private string __pbn__url;
+
+            [global::ProtoBuf.ProtoMember(3)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string text
+            {
+                get => __pbn__text ?? "";
+                set => __pbn__text = value;
+            }
+            public bool ShouldSerializetext() => __pbn__text != null;
+            public void Resettext() => __pbn__text = null;
+            private string __pbn__text;
 
         }
 
@@ -2149,6 +2193,111 @@ namespace SteamKit2.Internal
             public bool ShouldSerializecomputed() => __pbn__computed != null;
             public void Resetcomputed() => __pbn__computed = null;
             private bool? __pbn__computed;
+
+            [global::ProtoBuf.ProtoMember(8)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string edit_url
+            {
+                get => __pbn__edit_url ?? "";
+                set => __pbn__edit_url = value;
+            }
+            public bool ShouldSerializeedit_url() => __pbn__edit_url != null;
+            public void Resetedit_url() => __pbn__edit_url = null;
+            private string __pbn__edit_url;
+
+            [global::ProtoBuf.ProtoMember(9)]
+            public uint edit_sort_order
+            {
+                get => __pbn__edit_sort_order.GetValueOrDefault();
+                set => __pbn__edit_sort_order = value;
+            }
+            public bool ShouldSerializeedit_sort_order() => __pbn__edit_sort_order != null;
+            public void Resetedit_sort_order() => __pbn__edit_sort_order = null;
+            private uint? __pbn__edit_sort_order;
+
+        }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CStoreBrowse_GetPriceStops_Request : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string country_code
+        {
+            get => __pbn__country_code ?? "";
+            set => __pbn__country_code = value;
+        }
+        public bool ShouldSerializecountry_code() => __pbn__country_code != null;
+        public void Resetcountry_code() => __pbn__country_code = null;
+        private string __pbn__country_code;
+
+        [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string currency_code
+        {
+            get => __pbn__currency_code ?? "";
+            set => __pbn__currency_code = value;
+        }
+        public bool ShouldSerializecurrency_code() => __pbn__currency_code != null;
+        public void Resetcurrency_code() => __pbn__currency_code = null;
+        private string __pbn__currency_code;
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class CStoreBrowse_GetPriceStops_Response : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        public global::System.Collections.Generic.List<PriceStop> price_stops { get; } = new global::System.Collections.Generic.List<PriceStop>();
+
+        [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string currency_code
+        {
+            get => __pbn__currency_code ?? "";
+            set => __pbn__currency_code = value;
+        }
+        public bool ShouldSerializecurrency_code() => __pbn__currency_code != null;
+        public void Resetcurrency_code() => __pbn__currency_code = null;
+        private string __pbn__currency_code;
+
+        [global::ProtoBuf.ProtoContract()]
+        public partial class PriceStop : global::ProtoBuf.IExtensible
+        {
+            private global::ProtoBuf.IExtension __pbn__extensionData;
+            global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+                => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+            [global::ProtoBuf.ProtoMember(1)]
+            [global::System.ComponentModel.DefaultValue("")]
+            public string formatted_amount
+            {
+                get => __pbn__formatted_amount ?? "";
+                set => __pbn__formatted_amount = value;
+            }
+            public bool ShouldSerializeformatted_amount() => __pbn__formatted_amount != null;
+            public void Resetformatted_amount() => __pbn__formatted_amount = null;
+            private string __pbn__formatted_amount;
+
+            [global::ProtoBuf.ProtoMember(2)]
+            public long amount_in_cents
+            {
+                get => __pbn__amount_in_cents.GetValueOrDefault();
+                set => __pbn__amount_in_cents = value;
+            }
+            public bool ShouldSerializeamount_in_cents() => __pbn__amount_in_cents != null;
+            public void Resetamount_in_cents() => __pbn__amount_in_cents = null;
+            private long? __pbn__amount_in_cents;
 
         }
 
@@ -2634,6 +2783,18 @@ namespace SteamKit2.Internal
     }
 
     [global::ProtoBuf.ProtoContract()]
+    public enum ETrailerCategory
+    {
+        k_ETrailerCategory_Invalid = 0,
+        k_ETrailerCategory_Gameplay = 1,
+        k_ETrailerCategory_Teaser = 2,
+        k_ETrailerCategory_Cinematic = 3,
+        k_ETrailerCategory_Update = 4,
+        k_ETrailerCategory_Accolades = 5,
+        k_ETrailerCategory_Interview = 6,
+    }
+
+    [global::ProtoBuf.ProtoContract()]
     public enum EStoreBrowseFilterFailure
     {
         k_EStoreBrowseFilterFailure_None = 0,
@@ -2653,7 +2814,24 @@ namespace SteamKit2.Internal
         k_EStoreLinkType_Twitter = 3,
         k_EStoreLinkType_Twitch = 4,
         k_EStoreLinkType_Discord = 5,
-        k_EStoreLinkType_MAX = 6,
+        k_EStoreLinkType_QQ = 6,
+        k_EStoreLinkType_VK = 7,
+        k_EStoreLinkType_Bilibili = 8,
+        k_EStoreLinkType_Weibo = 9,
+        k_EStoreLinkType_Reddit = 10,
+        k_EStoreLinkType_Instagram = 11,
+        k_EStoreLinkType_Tumblr = 12,
+        k_EStoreLinkType_Tieba = 13,
+        k_EStoreLinkType_Tiktok = 14,
+        k_EStoreLinkType_Telegram = 15,
+        k_EStoreLinkType_LinkedIn = 16,
+        k_EStoreLinkType_WeChat = 17,
+        k_EStoreLinkType_QQLink = 18,
+        k_EStoreLinkType_Douyin = 19,
+        k_EStoreLinkType_Bluesky = 20,
+        k_EStoreLinkType_Mastodon = 21,
+        k_EStoreLinkType_Threads = 22,
+        k_EStoreLinkType_MAX = 23,
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -2667,16 +2845,71 @@ namespace SteamKit2.Internal
         k_EStoreCategoryType_MAX = 5,
     }
 
-    public interface IStoreBrowse
+    public class StoreBrowse : SteamUnifiedMessages.UnifiedService
     {
-        CStoreBrowse_GetItems_Response GetItems(CStoreBrowse_GetItems_Request request);
-        CStoreBrowse_GetStoreCategories_Response GetStoreCategories(CStoreBrowse_GetStoreCategories_Request request);
-        CStoreBrowse_GetDLCForApps_Response GetDLCForApps(CStoreBrowse_GetDLCForApps_Request request);
-        CStoreBrowse_GetDLCForAppsSolr_Response GetDLCForAppsSolr(CStoreBrowse_GetDLCForAppsSolr_Request request);
-        CStoreBrowse_GetHardwareItems_Response GetHardwareItems(CStoreBrowse_GetHardwareItems_Request request);
+        public override string ServiceName { get; } = "StoreBrowse";
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetItems_Response>> GetItems( CStoreBrowse_GetItems_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetItems_Request, CStoreBrowse_GetItems_Response>( "StoreBrowse.GetItems#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetStoreCategories_Response>> GetStoreCategories( CStoreBrowse_GetStoreCategories_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetStoreCategories_Request, CStoreBrowse_GetStoreCategories_Response>( "StoreBrowse.GetStoreCategories#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetPriceStops_Response>> GetPriceStops( CStoreBrowse_GetPriceStops_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetPriceStops_Request, CStoreBrowse_GetPriceStops_Response>( "StoreBrowse.GetPriceStops#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetDLCForApps_Response>> GetDLCForApps( CStoreBrowse_GetDLCForApps_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetDLCForApps_Request, CStoreBrowse_GetDLCForApps_Response>( "StoreBrowse.GetDLCForApps#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetDLCForAppsSolr_Response>> GetDLCForAppsSolr( CStoreBrowse_GetDLCForAppsSolr_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetDLCForAppsSolr_Request, CStoreBrowse_GetDLCForAppsSolr_Response>( "StoreBrowse.GetDLCForAppsSolr#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CStoreBrowse_GetHardwareItems_Response>> GetHardwareItems( CStoreBrowse_GetHardwareItems_Request request )
+        {
+            return UnifiedMessages.SendMessage<CStoreBrowse_GetHardwareItems_Request, CStoreBrowse_GetHardwareItems_Response>( "StoreBrowse.GetHardwareItems#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "GetItems":
+                    PostResponseMsg<CStoreBrowse_GetItems_Response>( packetMsg );
+                    break;
+                case "GetStoreCategories":
+                    PostResponseMsg<CStoreBrowse_GetStoreCategories_Response>( packetMsg );
+                    break;
+                case "GetPriceStops":
+                    PostResponseMsg<CStoreBrowse_GetPriceStops_Response>( packetMsg );
+                    break;
+                case "GetDLCForApps":
+                    PostResponseMsg<CStoreBrowse_GetDLCForApps_Response>( packetMsg );
+                    break;
+                case "GetDLCForAppsSolr":
+                    PostResponseMsg<CStoreBrowse_GetDLCForAppsSolr_Response>( packetMsg );
+                    break;
+                case "GetHardwareItems":
+                    PostResponseMsg<CStoreBrowse_GetHardwareItems_Response>( packetMsg );
+                    break;
+            }
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+        }
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

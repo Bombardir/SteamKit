@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.GC.CSGO.Internal
 {
 
@@ -444,6 +444,16 @@ namespace SteamKit2.GC.CSGO.Internal
         public bool ShouldSerializeadditional_backpack_slots() => __pbn__additional_backpack_slots != null;
         public void Resetadditional_backpack_slots() => __pbn__additional_backpack_slots = null;
         private uint? __pbn__additional_backpack_slots;
+
+        [global::ProtoBuf.ProtoMember(6, DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
+        public uint trade_ban_expiration
+        {
+            get => __pbn__trade_ban_expiration.GetValueOrDefault();
+            set => __pbn__trade_ban_expiration = value;
+        }
+        public bool ShouldSerializetrade_ban_expiration() => __pbn__trade_ban_expiration != null;
+        public void Resettrade_ban_expiration() => __pbn__trade_ban_expiration = null;
+        private uint? __pbn__trade_ban_expiration;
 
         [global::ProtoBuf.ProtoMember(12, DataFormat = global::ProtoBuf.DataFormat.FixedSize)]
         public uint bonus_xp_timestamp_refresh
@@ -1025,6 +1035,26 @@ namespace SteamKit2.GC.CSGO.Internal
         public bool ShouldSerializesticker_offset_y() => __pbn__sticker_offset_y != null;
         public void Resetsticker_offset_y() => __pbn__sticker_offset_y = null;
         private float? __pbn__sticker_offset_y;
+
+        [global::ProtoBuf.ProtoMember(10)]
+        public float sticker_offset_z
+        {
+            get => __pbn__sticker_offset_z.GetValueOrDefault();
+            set => __pbn__sticker_offset_z = value;
+        }
+        public bool ShouldSerializesticker_offset_z() => __pbn__sticker_offset_z != null;
+        public void Resetsticker_offset_z() => __pbn__sticker_offset_z = null;
+        private float? __pbn__sticker_offset_z;
+
+        [global::ProtoBuf.ProtoMember(11)]
+        public float sticker_wear_target
+        {
+            get => __pbn__sticker_wear_target.GetValueOrDefault();
+            set => __pbn__sticker_wear_target = value;
+        }
+        public bool ShouldSerializesticker_wear_target() => __pbn__sticker_wear_target != null;
+        public void Resetsticker_wear_target() => __pbn__sticker_wear_target = null;
+        private float? __pbn__sticker_wear_target;
 
     }
 
@@ -3493,5 +3523,5 @@ namespace SteamKit2.GC.CSGO.Internal
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.GC.Dota.Internal
 {
 
@@ -2490,6 +2490,17 @@ namespace SteamKit2.GC.Dota.Internal
 
         [global::ProtoBuf.ProtoMember(4)]
         public CMsgDOTAClaimEventActionData data { get; set; }
+
+        [global::ProtoBuf.ProtoMember(5)]
+        [global::System.ComponentModel.DefaultValue(EEventActionScoreMode.k_eEventActionScoreMode_Add)]
+        public EEventActionScoreMode score_mode
+        {
+            get => __pbn__score_mode ?? EEventActionScoreMode.k_eEventActionScoreMode_Add;
+            set => __pbn__score_mode = value;
+        }
+        public bool ShouldSerializescore_mode() => __pbn__score_mode != null;
+        public void Resetscore_mode() => __pbn__score_mode = null;
+        private EEventActionScoreMode? __pbn__score_mode;
 
     }
 
@@ -15975,5 +15986,5 @@ namespace SteamKit2.GC.Dota.Internal
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

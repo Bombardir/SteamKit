@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.Internal
 {
 
@@ -286,6 +286,17 @@ namespace SteamKit2.Internal
         public bool ShouldSerializelabel() => __pbn__label != null;
         public void Resetlabel() => __pbn__label = null;
         private string __pbn__label;
+
+        [global::ProtoBuf.ProtoMember(5)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string name
+        {
+            get => __pbn__name ?? "";
+            set => __pbn__name = value;
+        }
+        public bool ShouldSerializename() => __pbn__name != null;
+        public void Resetname() => __pbn__name = null;
+        private string __pbn__name;
 
     }
 
@@ -583,6 +594,16 @@ namespace SteamKit2.Internal
         public void Resetmarket_sell_country_restriction() => __pbn__market_sell_country_restriction = null;
         private string __pbn__market_sell_country_restriction;
 
+        [global::ProtoBuf.ProtoMember(32)]
+        public bool @sealed
+        {
+            get => __pbn__sealed.GetValueOrDefault();
+            set => __pbn__sealed = value;
+        }
+        public bool ShouldSerializesealed() => __pbn__sealed != null;
+        public void Resetsealed() => __pbn__sealed = null;
+        private bool? __pbn__sealed;
+
     }
 
     [global::ProtoBuf.ProtoContract()]
@@ -870,15 +891,55 @@ namespace SteamKit2.Internal
 
     }
 
-    public interface IEcon
+    public class Econ : SteamUnifiedMessages.UnifiedService
     {
-        CEcon_GetInventoryItemsWithDescriptions_Response GetInventoryItemsWithDescriptions(CEcon_GetInventoryItemsWithDescriptions_Request request);
-        CEcon_GetTradeOfferAccessToken_Response GetTradeOfferAccessToken(CEcon_GetTradeOfferAccessToken_Request request);
-        CEcon_ClientGetItemShopOverlayAuthURL_Response ClientGetItemShopOverlayAuthURL(CEcon_ClientGetItemShopOverlayAuthURL_Request request);
-        CEcon_GetAssetClassInfo_Response GetAssetClassInfo(CEcon_GetAssetClassInfo_Request request);
+        public override string ServiceName { get; } = "Econ";
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CEcon_GetInventoryItemsWithDescriptions_Response>> GetInventoryItemsWithDescriptions( CEcon_GetInventoryItemsWithDescriptions_Request request )
+        {
+            return UnifiedMessages.SendMessage<CEcon_GetInventoryItemsWithDescriptions_Request, CEcon_GetInventoryItemsWithDescriptions_Response>( "Econ.GetInventoryItemsWithDescriptions#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CEcon_GetTradeOfferAccessToken_Response>> GetTradeOfferAccessToken( CEcon_GetTradeOfferAccessToken_Request request )
+        {
+            return UnifiedMessages.SendMessage<CEcon_GetTradeOfferAccessToken_Request, CEcon_GetTradeOfferAccessToken_Response>( "Econ.GetTradeOfferAccessToken#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CEcon_ClientGetItemShopOverlayAuthURL_Response>> ClientGetItemShopOverlayAuthURL( CEcon_ClientGetItemShopOverlayAuthURL_Request request )
+        {
+            return UnifiedMessages.SendMessage<CEcon_ClientGetItemShopOverlayAuthURL_Request, CEcon_ClientGetItemShopOverlayAuthURL_Response>( "Econ.ClientGetItemShopOverlayAuthURL#1", request );
+        }
+
+        public AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CEcon_GetAssetClassInfo_Response>> GetAssetClassInfo( CEcon_GetAssetClassInfo_Request request )
+        {
+            return UnifiedMessages.SendMessage<CEcon_GetAssetClassInfo_Request, CEcon_GetAssetClassInfo_Response>( "Econ.GetAssetClassInfo#1", request );
+        }
+
+        public override void HandleResponseMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+            switch ( methodName )
+            {
+                case "GetInventoryItemsWithDescriptions":
+                    PostResponseMsg<CEcon_GetInventoryItemsWithDescriptions_Response>( packetMsg );
+                    break;
+                case "GetTradeOfferAccessToken":
+                    PostResponseMsg<CEcon_GetTradeOfferAccessToken_Response>( packetMsg );
+                    break;
+                case "ClientGetItemShopOverlayAuthURL":
+                    PostResponseMsg<CEcon_ClientGetItemShopOverlayAuthURL_Response>( packetMsg );
+                    break;
+                case "GetAssetClassInfo":
+                    PostResponseMsg<CEcon_GetAssetClassInfo_Response>( packetMsg );
+                    break;
+            }
+        }
+
+        public override void HandleNotificationMsg( string methodName, PacketClientMsgProtobuf packetMsg )
+        {
+        }
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

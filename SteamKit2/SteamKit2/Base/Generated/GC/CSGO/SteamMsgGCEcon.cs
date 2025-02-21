@@ -5,7 +5,7 @@
 // </auto-generated>
 
 #region Designer generated code
-#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 namespace SteamKit2.GC.CSGO.Internal
 {
 
@@ -179,6 +179,9 @@ namespace SteamKit2.GC.CSGO.Internal
         public bool ShouldSerializerequest() => __pbn__request != null;
         public void Resetrequest() => __pbn__request = null;
         private uint? __pbn__request;
+
+        [global::ProtoBuf.ProtoMember(3)]
+        public global::System.Collections.Generic.List<ulong> extra_data { get; } = new global::System.Collections.Generic.List<ulong>();
 
     }
 
@@ -382,15 +385,19 @@ namespace SteamKit2.GC.CSGO.Internal
         k_EGCItemCustomizationNotification_StatTrakSwap = 1088,
         k_EGCItemCustomizationNotification_RemovePatch = 1089,
         k_EGCItemCustomizationNotification_ApplyPatch = 1090,
+        k_EGCItemCustomizationNotification_ApplyKeychain = 1091,
+        k_EGCItemCustomizationNotification_RemoveKeychain = 1092,
         k_EGCItemCustomizationNotification_ActivateFanToken = 9178,
         k_EGCItemCustomizationNotification_ActivateOperationCoin = 9179,
         k_EGCItemCustomizationNotification_GraffitiUnseal = 9185,
         k_EGCItemCustomizationNotification_GenerateSouvenir = 9204,
         k_EGCItemCustomizationNotification_ClientRedeemMissionReward = 9209,
         k_EGCItemCustomizationNotification_ClientRedeemFreeReward = 9219,
+        k_EGCItemCustomizationNotification_XpShopUseTicket = 9221,
+        k_EGCItemCustomizationNotification_XpShopAckTracks = 9222,
     }
 
 }
 
-#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
 #endregion

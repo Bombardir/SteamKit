@@ -31,7 +31,7 @@ namespace SteamKit2
 
         SteamAuthentication? _authentication = null;
 
-        public event Action<ICallbackMsg> OnCallback;
+        public event Action<CallbackMsg> OnCallback;
 
         /// <summary>
         /// Handler used for authenticating on Steam.
@@ -154,8 +154,9 @@ namespace SteamKit2
         public T? GetHandler<T>()
             where T : ClientMsgHandler
         {
-            Type type = typeof(T);
-            return handlers.Find( hand => hand.GetType() == type ) as T;
+            Type type = typeof( T );
+
+            return handlers.Find( h => h.GetType() == type ) as T;
         }
         #endregion
 
@@ -174,7 +175,6 @@ namespace SteamKit2
             OnCallback.Invoke( msg );
             jobManager.TryCompleteJob( msg.JobID, msg );
         }
-
         #endregion
 
 
@@ -214,35 +214,36 @@ namespace SteamKit2
                 return false;
             }
 
+            ArgumentNullException.ThrowIfNull( packetMsg );
+
+            // we want to handle some of the clientmsgs before we pass them along to registered handlers
             switch ( packetMsg.MsgType )
             {
-                case EMsg.ClientCMList:
-                    HandleCMList( packetMsg );
-                    break;
                 case EMsg.JobHeartbeat:
                     HandleJobHeartbeat( packetMsg );
                     break;
+
                 case EMsg.DestJobFailed:
                     HandleJobFailed( packetMsg );
                     break;
             }
 
             // pass along the clientmsg to all registered handlers
-            foreach ( var handler in handlers )
+            foreach ( var value in handlers )
             {
                 try
                 {
-                    handler.HandleMsg( packetMsg );
+                    value.HandleMsg( packetMsg );
                 }
                 catch ( ProtoException ex )
                 {
-                    LogDebug( nameof( SteamClient ), $"'{handler.GetType().Name}' handler failed to (de)serialize a protobuf: {ex}" );
+                    LogDebug( nameof( SteamClient ), $"'{value.GetType().Name}' handler failed to (de)serialize a protobuf: {ex}" );
                     Disconnect( userInitiated: false );
                     return false;
                 }
                 catch ( Exception ex )
                 {
-                    LogDebug( nameof( SteamClient ), $"Unhandled exception from '{handler.GetType().Name}' handler: {ex}" );
+                    LogDebug( nameof( SteamClient ), $"Unhandled exception from '{value.GetType().Name}' handler: {ex}" );
                     Disconnect( userInitiated: false );
                     return false;
                 }
@@ -282,13 +283,6 @@ namespace SteamKit2
         void ClearHandlerCaches()
         {
             GetHandler<SteamMatchmaking>()?.ClearLobbyCache();
-        }
-
-        void HandleCMList( IPacketMsg packetMsg )
-        {
-            var cmMsg = new ClientMsgProtobuf<CMsgClientCMList>( packetMsg );
-
-            PostCallback( new CMListCallback( cmMsg.Body ) );
         }
 
         void HandleJobHeartbeat( IPacketMsg packetMsg )
