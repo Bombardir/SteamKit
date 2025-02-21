@@ -49,14 +49,14 @@ namespace SteamKit2
             if ( Client.CellID == null ) throw new Exception( "User not logged in." );
 
             var apps = Client.GetHandler<SteamApps>() ?? throw new Exception( "Steam Apps instance was null." );
-            var appTicket = await apps.GetAppOwnershipTicket( appid );
+            var appTicket = await apps.GetAppOwnershipTicket( appid ).WaitResultAsync();
 
             if ( appTicket.Result != EResult.OK ) throw new Exception( $"Failed to obtain app ownership ticket. Result: {appTicket.Result}. The user may not own the game or there was an error." );
 
             if ( GameConnectTokens.TryDequeue( out var token ) )
             {
                 var authTicket = BuildAuthTicket( token );
-                var ticket = await VerifyTicket( appid, authTicket, out var crc );
+                var ticket = await VerifyTicket( appid, authTicket, out var crc ).WaitResultAsync();
 
                 // Verify just in case
                 if ( ticket.ActiveTicketsCRC.Any( x => x == crc ) )

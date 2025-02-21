@@ -13,7 +13,7 @@ namespace SteamKit2.Internal
     /// This is the base class for the utility <see cref="Callback&lt;TCall&gt;" /> class.
     /// This is for internal use only, and shouldn't be used directly.
     /// </summary>
-    abstract class CallbackBase
+    public abstract class CallbackBase
     {
         internal abstract Type CallbackType { get; }
         internal abstract void Run( CallbackMsg callback );

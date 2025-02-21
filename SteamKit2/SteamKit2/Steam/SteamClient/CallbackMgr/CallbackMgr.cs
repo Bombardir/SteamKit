@@ -15,14 +15,14 @@ namespace SteamKit2
     /// In order to bind callbacks to functions, an instance of this class must be created for the
     /// <see cref="SteamClient"/> instance that will be posting callbacks.
     /// </summary>
-    public sealed class CallbackManager : ICallbackMgrInternals
+    public sealed class CallbackManager
     {
         private readonly struct CallbackQueueEntry
         {
             public CallbackManager Manager { get; }
-            public ICallbackMsg Callback { get; }
+            public CallbackMsg Callback { get; }
 
-            public CallbackQueueEntry( CallbackManager manager, ICallbackMsg callback )
+            public CallbackQueueEntry( CallbackManager manager, CallbackMsg callback )
             {
                 Manager = manager;
                 Callback = callback;
@@ -73,7 +73,7 @@ namespace SteamKit2
             }
         }
 
-        private void OnClientCallback( ICallbackMsg msg )
+        private void OnClientCallback( CallbackMsg msg )
         {
             lock ( GlobalCallbackQueue )
             {
@@ -91,7 +91,7 @@ namespace SteamKit2
         /// <typeparam name="TCallback">The type of callback to subscribe to.</typeparam>
         /// <returns>An <see cref="IDisposable"/>. Disposing of the return value will unsubscribe the <paramref name="callbackFunc"/>.</returns>
         public IDisposable Subscribe<TCallback>( JobID jobID, Action<TCallback> callbackFunc )
-            where TCallback : class, ICallbackMsg
+            where TCallback : CallbackMsg
         {
             if ( jobID == null )
             {
@@ -113,12 +113,12 @@ namespace SteamKit2
         /// <param name="callbackFunc">The function to invoke with the callback.</param>
         /// <returns>An <see cref="IDisposable"/>. Disposing of the return value will unsubscribe the <paramref name="callbackFunc"/>.</returns>
         public IDisposable Subscribe<TCallback>( Action<TCallback> callbackFunc )
-            where TCallback : class, ICallbackMsg
+            where TCallback : CallbackMsg
         {
             return Subscribe( JobID.Invalid, callbackFunc );
         }
 
-        void ICallbackMgrInternals.Register( CallbackBase call )
+        public void Register( CallbackBase call )
         {
             if ( registeredCallbacks.Contains( call ) )
                 return;
@@ -126,7 +126,7 @@ namespace SteamKit2
             registeredCallbacks.Add( call );
         }
 
-        void Handle( ICallbackMsg call )
+        void Handle( CallbackMsg call )
         {
             var type = call.GetType();
 
@@ -137,20 +137,20 @@ namespace SteamKit2
             }
         }
 
-        void ICallbackMgrInternals.Unregister( CallbackBase call )
+        public void Unregister( CallbackBase call )
         {
             registeredCallbacks.Remove( call );
         }
 
         sealed class Subscription : IDisposable
         {
-            public Subscription( CallbackBase call, ICallbackMgrInternals manager )
+            public Subscription( CallbackBase call, CallbackManager manager )
             {
                 this.manager = manager;
                 this.call = call;
             }
 
-            ICallbackMgrInternals? manager;
+            CallbackManager? manager;
             CallbackBase? call;
 
             void IDisposable.Dispose()

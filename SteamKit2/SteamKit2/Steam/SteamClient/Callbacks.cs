@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using SteamKit2.Discovery;
 using SteamKit2.Internal;
+using SteamKit2.WebUI.Internal;
 
 namespace SteamKit2
 {
