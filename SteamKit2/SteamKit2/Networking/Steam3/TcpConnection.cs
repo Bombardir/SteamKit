@@ -98,6 +98,8 @@ namespace SteamKit2
 
             using var timeoutTokenSource = new CancellationTokenSource( timeout );
 
+            Console.WriteLine($"Connecting TCP socket from {_localEndPoint} to {CurrentEndPoint}");
+
             var newSocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
 
             try
@@ -107,10 +109,6 @@ namespace SteamKit2
                 newSocket.SendTimeout = timeout;
                 newSocket.LingerState = new LingerOption( false, 0 );
                 newSocket.NoDelay = true;
-                newSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
-                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 4 );
-                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 3 );
-                newSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 5 );
 
                 await newSocket.ConnectAsync( CurrentEndPoint, timeoutTokenSource.Token );
 
